@@ -1,0 +1,104 @@
+name: Living Memory validated V1.1 APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ['work/living-memory-v1.1-apk']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: living-memory-validated-apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: samples/litert/flutter
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 2
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: SDK versions
+        run: |
+          flutter --version
+          java -version
+          python --version
+      - name: Prepare pinned plugin and bundled public models
+        run: |
+          bash tool/flutter_litert/vendor.sh
+          bash tool/fetch_models.sh
+          bash tool/fetch_models.sh --check
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Verify exact application source already tested
+        run: |
+          git -C ../../.. diff --exit-code 89de7bd6b76c8ba8889ab1c17b4c1da8b99cf31a HEAD -- samples/litert/flutter
+          mkdir -p build/evidence
+          echo 'Application source unchanged from 89de7bd6b76c8ba8889ab1c17b4c1da8b99cf31a.' > build/evidence/TESTED-SOURCE.txt
+          echo '35 focused tests, full suite 2966 passed / 15 skipped; analyze clean. Evidence: Actions 40478470088.' >> build/evidence/TESTED-SOURCE.txt
+      - name: Build installable arm64 APK
+        run: |
+          flutter build apk --release --target-platform android-arm64
+          mkdir -p build/evidence
+          sha256sum build/app/outputs/flutter-apk/app-release.apk > build/evidence/APK-SHA256.txt
+          (cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath) > build/evidence/android-dependencies.txt
+      - name: Verify built APK signature and contents
+        run: |
+          tools_version=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools_version/apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | tee build/evidence/apk-signature.txt
+          "$tools_version/aapt" dump badging build/app/outputs/flutter-apk/app-release.apk > build/evidence/apk-badging.txt
+          python3 - <<'PYAPK'
+          import hashlib, json, re, zipfile
+          from pathlib import Path
+          apk=Path('build/app/outputs/flutter-apk/app-release.apk')
+          with zipfile.ZipFile(apk) as z:
+              abis=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')})
+              assert abis==['arm64-v8a'], abis
+              size=z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm').file_size
+              assert size==484622336, size
+          signature=Path('build/evidence/apk-signature.txt').read_text()
+          cert=re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)',signature)
+          assert cert, 'Missing signer digest'
+          previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
+          metadata={'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
+                    'certificate_sha256':cert.group(1).lower(),'v1_certificate_matches':cert.group(1).lower()==previous}
+          Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
+          print(json.dumps(metadata,indent=2))
+          PYAPK
+      - name: Upload APK and evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: living-memory-android-${{ github.sha }}
+          path: |
+            samples/litert/flutter/build/app/outputs/flutter-apk/app-release.apk
+            samples/litert/flutter/build/evidence/
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Upload light validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: living-memory-v1.1-validation-${{ github.sha }}
+          path: samples/litert/flutter/build/evidence/
+          if-no-files-found: warn
+          retention-days: 30
