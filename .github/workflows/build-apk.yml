@@ -87,7 +87,7 @@ jobs:
           "$tools_version/apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | tee build/evidence/apk-signature.txt
           "$tools_version/aapt" dump badging build/app/outputs/flutter-apk/app-release.apk > build/evidence/apk-badging.txt
           python3 - <<'PYAPK'
-          import hashlib, json, re, zipfile, sys
+          import hashlib, json, os, re, zipfile, sys
           sys.path.insert(0, "tool")
           from apk_signer import certificate_sha256
           from pathlib import Path
@@ -97,10 +97,14 @@ jobs:
               assert abis==['arm64-v8a'], abis
               size=z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm').file_size
               assert size==484622336, size
+              lock=next(line.split() for line in Path('tool/models.lock').read_text().splitlines() if line.startswith('hf embeddinggemma-2-740m.litertlm '))
+              with z.open('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm') as model:
+                  model_sha=hashlib.file_digest(model, 'sha256').hexdigest()
+              assert model_sha==lock[3], (model_sha, lock[3])
           signature=Path('build/evidence/apk-signature.txt').read_text()
           cert=certificate_sha256(signature)
           previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
-          metadata={'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
+          metadata={'commit_sha':os.environ['GITHUB_SHA'],'embedding_model_sha256':model_sha,'hardware_tested':False,'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
                     'certificate_sha256':cert,'v1_certificate_matches':cert==previous}
           Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
           print(json.dumps(metadata,indent=2))
