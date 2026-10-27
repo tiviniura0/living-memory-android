@@ -98,7 +98,10 @@ void main() {
       await tester.pumpAndSettle();
       expect(chat.prompts, isEmpty);
       expect(loads, 0);
-      await tester.scrollUntilVisible(find.textContaining('e4b non enregistré'), 100);
+      await tester.scrollUntilVisible(
+        find.textContaining('e4b non enregistré'),
+        100,
+      );
       expect(find.textContaining('e4b non enregistré'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

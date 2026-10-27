@@ -378,10 +378,12 @@ void main() {
       final pending = Completer<InferenceModel>();
       final lateModel = FakeInferenceModel();
       final started = Completer<void>();
-      final llm = LlmService(loadModel: (_) {
-        started.complete();
-        return pending.future;
-      });
+      final llm = LlmService(
+        loadModel: (_) {
+          started.complete();
+          return pending.future;
+        },
+      );
 
       final loading = llm.load(kDefineChatModel); // first GPU compile in flight
       await started.future;
