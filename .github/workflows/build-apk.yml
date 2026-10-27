@@ -120,6 +120,14 @@ jobs:
           from pathlib import Path
           with Path('build/evidence/validation-report.md').open('a') as report:
               report.write('\n\n## Exécution associée\nCommit : ' + os.environ['GITHUB_SHA'] + '\nRun : https://github.com/' + os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID'] + '\nVérifier le statut final et les journaux. Tests matériels : non exécutés.\n')
+              for label, name in [('Tests cibles', 'auto-memory-test.log'), ('Suite complete', 'flutter-test.log')]:
+                  log = Path('build/evidence') / name
+                  lines = log.read_text(errors='replace').splitlines() if log.exists() else []
+                  summaries = [line for line in lines if 'All tests passed!' in line or 'Some tests failed.' in line]
+                  report.write('\n' + label + ' : ' + (summaries[-1] if summaries else 'non termine / non execute, consulter le journal') + '\n')
+              metadata = Path('build/evidence/apk-metadata.json')
+              if metadata.exists():
+                  report.write('\nMetadonnees APK controlees :\n' + metadata.read_text() + '\n')
           PYREPORT
       - name: Upload APK and evidence
         if: always()
