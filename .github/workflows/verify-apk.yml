@@ -1,0 +1,72 @@
+name: Verify Living Memory APK artifact
+on:
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful Living Memory APK workflow run
+        default: '40434835372'
+        required: true
+      artifact_name:
+        description: Artifact from that run
+        default: living-memory-android-2ebcad7ae79805019ed242555c0170d90484b8b2
+        required: true
+  push:
+    branches: ['work/living-memory-local-rag']
+    paths: ['.github/workflows/verify-apk.yml']
+permissions:
+  actions: read
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          run-id: ${{ inputs.run_id || '40434835372' }}
+          name: ${{ inputs.artifact_name || 'living-memory-android-2ebcad7ae79805019ed242555c0170d90484b8b2' }}
+          github-token: ${{ github.token }}
+          path: downloaded
+      - name: Verify bytes, arm64 and bundled embedder
+        shell: bash
+        run: |
+          mkdir verified
+          cp downloaded/evidence/* verified/
+          python3 - <<'PY'
+          import hashlib, json, re, zipfile
+          from pathlib import Path
+          apk = Path('downloaded/app/outputs/flutter-apk/app-release.apk')
+          expected = Path('downloaded/evidence/APK-SHA256.txt').read_text().split()[0]
+          h = hashlib.sha256()
+          with apk.open('rb') as f:
+              for part in iter(lambda: f.read(8 * 1024 * 1024), b''):
+                  h.update(part)
+          actual = h.hexdigest()
+          assert actual == expected, (actual, expected)
+          with zipfile.ZipFile(apk) as z:
+              abis = sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')})
+              assert abis == ['arm64-v8a'], abis
+              embedder = z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm')
+              assert embedder.file_size == 484622336, embedder.file_size
+          deps = Path('verified/android-dependencies.txt').read_text()
+          for module in ('bcprov', 'bcpkix', 'bcutil'):
+              assert re.search(module + r'-jdk15to18:(?:1\.72 -> )?1\.86', deps), module
+          metadata = {'apk_bytes': apk.stat().st_size, 'apk_sha256': actual, 'abis': abis,
+                      'embedded_model_bytes': embedder.file_size,
+                      'crypto_dependencies': [line.strip() for line in deps.splitlines() if 'org.bouncycastle:' in line]}
+          Path('verified/apk-metadata.json').write_text(json.dumps(metadata, indent=2))
+          print(json.dumps(metadata, indent=2))
+          PY
+      - name: Verify Android signature and manifest
+        shell: bash
+        run: |
+          tools_version=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools_version/apksigner" verify --verbose --print-certs downloaded/app/outputs/flutter-apk/app-release.apk | tee verified/apk-signature.txt
+          "$tools_version/aapt" dump badging downloaded/app/outputs/flutter-apk/app-release.apk > verified/apk-badging.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: living-memory-apk-verified-evidence
+          path: verified/
+          retention-days: 30
+          if-no-files-found: error
