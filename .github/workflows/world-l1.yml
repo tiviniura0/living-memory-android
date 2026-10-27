@@ -1,0 +1,48 @@
+name: Living World L1
+on:
+  push:
+    branches: ['work/living-world-l1-observable']
+    paths: ['packages/**', 'apps/**', 'tools/world_headless/**', 'scripts/check_world_boundaries.py', 'tests/test_world_boundaries.py', '.github/workflows/world-l1.yml']
+permissions:
+  contents: read
+concurrency:
+  group: world-l1-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: Pure Dart suites
+        run: |
+          set -euo pipefail
+          mkdir -p evidence
+          for package in world_contracts world_core agent_runtime world_persistence; do
+            (cd packages/$package && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded) 2>&1 | tee evidence/$package.log
+          done
+      - name: Flutter tests
+        working-directory: apps/world_observer
+        run: |
+          set -euo pipefail
+          flutter pub get
+          flutter analyze
+          flutter test --reporter expanded 2>&1 | tee ../../evidence/flutter.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-l1-evidence-${{ github.sha }}
+          path: |
+            evidence/
+            apps/world_observer/pubspec.lock

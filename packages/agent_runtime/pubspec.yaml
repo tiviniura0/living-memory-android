@@ -1,0 +1,12 @@
+name: agent_runtime
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  world_contracts:
+    path: ../world_contracts
+  world_core:
+    path: ../world_core
+dev_dependencies:
+  test: 1.26.3
