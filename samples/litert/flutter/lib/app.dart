@@ -21,6 +21,7 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import 'config/demos.dart';
+import 'living_memory/memory_screen.dart';
 import 'config/dependencies.dart';
 import 'config/model_catalog.dart';
 import 'config/voice_config.dart';
@@ -61,6 +62,7 @@ abstract final class Routes {
   static const chat = '/chat';
   static const camera = '/camera';
   static const models = '/models';
+  static const memory = '/memory';
 
   static String of(Demo demo) => switch (demo) {
     Demo.voiceChat => chat,
@@ -160,7 +162,7 @@ class _AppState extends State<App> {
     return MultiProvider(
       providers: deps.providers,
       child: MaterialApp(
-        title: 'LiteRT Demos',
+        title: 'Living Memory',
         // The debug overlay already marks debug builds; the banner would hide
         // the New conversation button.
         debugShowCheckedModeBanner: false,
@@ -190,6 +192,10 @@ class _AppState extends State<App> {
             providers: _modelsScreen(deps, SetupMode.manage),
             child: const SetupScreen(),
           ),
+          Routes.memory: (context) => MemoryScreen(
+            embedder: deps.memoryEmbedder,
+            conversation: deps.conversation,
+          ),
           Routes.home: (context) => ChangeNotifierProvider(
             create: (c) => HomeViewModel(
               models: c.read<ModelStates>().states,
@@ -197,6 +203,8 @@ class _AppState extends State<App> {
               hardware: c.read<HardwareRepository>(),
             ),
             child: HomeScreen(
+              onOpenMemory: () =>
+                  Navigator.of(context).pushNamed<void>(Routes.memory),
               onOpen: (demo) =>
                   Navigator.of(context).pushNamed<void>(Routes.of(demo)),
               onOpenModels: () =>

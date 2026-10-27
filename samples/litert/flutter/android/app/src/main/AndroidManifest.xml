@@ -34,7 +34,9 @@
          offers a notification permission for it. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove"/>
     <application
-        android:label="LiteRT Demos"
+        android:label="Living Memory"
+        android:allowBackup="false"
+        android:fullBackupContent="false"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

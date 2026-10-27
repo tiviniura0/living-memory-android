@@ -380,6 +380,8 @@ void main() {
         mic: FakeMicService(), // as above: its calls stay in this zone
         player: player,
         deviceService: devices,
+        // Match build(): this fake-clock test must not probe the Linux host.
+        platform: HostPlatform.macos,
         clockMicros: () => async.elapsed.inMicroseconds,
       );
       unawaited(local.prepare());

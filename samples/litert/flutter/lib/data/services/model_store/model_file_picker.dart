@@ -14,6 +14,8 @@
 
 import 'dart:io';
 
+import 'package:flutter/services.dart';
+
 import 'package:file_selector/file_selector.dart';
 
 import '../../../domain/ports/model_file_picker.dart';
@@ -24,22 +26,17 @@ final class FileSelectorModelFilePicker implements ModelFilePicker {
 
   @override
   ImportSupport get support {
-    if (Platform.isAndroid) {
-      // file_selector_android 0.5.2+11 reads a picked file into one Java
-      // byte[] sized by an int (`toFileResponse`): a 2.5 GB .litertlm
-      // overflows it and even a 180 MB file risks an out-of-memory.
-      return const ImportUnsupported(
-        'Importing files is not available on Android yet (the system picker '
-        'plugin loads whole files into memory): adb push the .litertlm into '
-        'a models folder, or use "Download from URL…".',
-      );
-    }
+    if (Platform.isAndroid) return const ImportFromFiles();
     if (Platform.isIOS) return const ImportFromFiles();
     return const ImportFromFolder();
   }
 
   @override
   Future<String?> pickModelFile() async {
+    if (Platform.isAndroid) {
+      return const MethodChannel('living_memory/documents')
+          .invokeMethod<String>('pickModel');
+    }
     final group = Platform.isIOS
         ? const XTypeGroup(
             label: 'LiteRT-LM model',
@@ -58,6 +55,11 @@ final class FileSelectorModelFilePicker implements ModelFilePicker {
   /// `NSTemporaryDirectory()` (`Directory.systemTemp`), not under
   /// path_provider's `getTemporaryDirectory()` (the Caches folder).
   @override
-  Future<String?> temporaryCopiesDirectory() async =>
-      Platform.isIOS ? Directory.systemTemp.path : null;
+  Future<String?> temporaryCopiesDirectory() async {
+    if (Platform.isAndroid) {
+      return const MethodChannel('living_memory/documents')
+          .invokeMethod<String>('modelCache');
+    }
+    return Platform.isIOS ? Directory.systemTemp.path : null;
+  }
 }

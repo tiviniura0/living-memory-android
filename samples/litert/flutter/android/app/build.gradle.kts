@@ -118,5 +118,7 @@ flutter {
 }
 
 dependencies {
+    // Apache-2.0, text extraction on device, no cloud/OCR.
+    implementation("com.tom-roush:pdfbox-android:2.0.27.0")
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }

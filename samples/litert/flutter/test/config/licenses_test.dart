@@ -154,7 +154,7 @@ void main() {
   });
 
   test('the repository LICENSE is the full Apache-2.0 text', () {
-    final license = File('LICENSE').readAsStringSync();
+    final license = File('../../../LICENSE').readAsStringSync();
     expect(license, contains('Apache License'));
     expect(license, contains('Version 2.0, January 2004'));
     expect(license, contains('END OF TERMS AND CONDITIONS'));

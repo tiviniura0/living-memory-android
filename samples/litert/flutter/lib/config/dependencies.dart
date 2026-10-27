@@ -432,6 +432,9 @@ final class AppDependencies {
   /// EmbeddingGemma's service ([ModelRepository] owns its lifecycle): the
   /// in-app self-test borrows it.
   final EmbedderService _embedder;
+
+  /// Borrowed by the private document screen; lifecycle remains model-owned.
+  EmbedderService get memoryEmbedder => _embedder;
   final SelfTestOptions _selfTestOptions;
 
   /// The runtime skills (app-scoped).

@@ -59,6 +59,8 @@ dependencies:
   # Persisted settings (the chat model choice, Demo 3's camera and detector
   # backend); already resolved transitively (flutter_edge_ai).
   shared_preferences: ^2.5.5
+  # Already used transitively by flutter_edge_ai_sqlite; private agent store.
+  sqlite3: 3.7.1
 
 dev_dependencies:
   # Tests build real CameraImage frames (CameraImageData is not re-exported by

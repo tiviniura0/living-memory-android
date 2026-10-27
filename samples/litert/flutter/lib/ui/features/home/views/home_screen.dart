@@ -33,7 +33,12 @@ abstract final class HomeKeys {
 
 /// The launcher: one tile per demo, enabled when its models are ready.
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key, required this.onOpen, this.onOpenModels});
+  const HomeScreen({
+    super.key,
+    required this.onOpen,
+    this.onOpenModels,
+    this.onOpenMemory,
+  });
 
   /// Opens [Demo]'s screen; completes when that screen is closed. Only
   /// called for an available tile.
@@ -42,6 +47,7 @@ class HomeScreen extends StatefulWidget {
   /// Opens the Models screen (download or import more models); the menu
   /// entry is hidden without it.
   final Future<void> Function()? onOpenModels;
+  final Future<void> Function()? onOpenMemory;
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -120,6 +126,18 @@ class _HomeScreenState extends State<HomeScreen> {
         builder: (context, _) => ListView(
           padding: const EdgeInsets.all(16),
           children: [
+            if (widget.onOpenMemory case final openMemory?)
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.psychology),
+                  title: const Text('Living Memory'),
+                  subtitle: const Text(
+                    'Documents TXT/PDF • mémoire individuelle • RAG local',
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => unawaited(_openModels(openMemory)),
+                ),
+              ),
             for (final tile in viewModel.tiles)
               _DemoCard(
                 tile: tile,
