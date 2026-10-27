@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: ['work/living-memory-v1.1-apk']
+    paths: ['samples/litert/flutter/**']
 
 permissions:
   contents: read
@@ -76,7 +77,7 @@ jobs:
               size=z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm').file_size
               assert size==484622336, size
           signature=Path('build/evidence/apk-signature.txt').read_text()
-          cert=re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)',signature)
+          cert=re.search(r'certificate SHA-256 digest: ([a-fA-F0-9]{64})',signature)
           assert cert, 'Missing signer digest'
           previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
           metadata={'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
