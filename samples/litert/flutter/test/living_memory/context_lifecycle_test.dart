@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/living_memory/context_lifecycle_manager.dart';
 import 'package:litert_edge_demos/living_memory/memory_store.dart';
@@ -40,6 +41,17 @@ void main() {
     expect(() => b.messages(id), throwsStateError);
     expect(() => b.append(id, 'user', 'injection'), throwsStateError);
     expect(() => a.append(id, 'tool', 'model claims tool ran'), throwsArgumentError);
+  });
+  test('oversized input is refused and repeated compaction is idempotent', () {
+    final manager = ContextLifecycleManager(store, scope, tokenBudget: 256);
+    final id = manager.startSession();
+    expect(() => manager.append(id, 'user', 'x' * 20001), throwsArgumentError);
+    manager.append(id, 'user', 'Décision explicite', decision: true);
+    final a = manager.compact(id);
+    final b = manager.compact(id);
+    expect(a.id, b.id);
+    expect(manager.checkpoints(id), hasLength(1));
+    expect(manager.activeTokenEstimate(id), lessThan(256));
   });
   test('reset retains originals and permanent documents', () {
     final doc = store.addDocument(agentId: 'aru', name: 'note', digest: 'a',

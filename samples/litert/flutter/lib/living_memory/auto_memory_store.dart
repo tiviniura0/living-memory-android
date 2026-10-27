@@ -1,6 +1,7 @@
 part of 'memory_store.dart';
 
 void _migrateAutoMemory(Database db) {
+  if ((db.select('PRAGMA user_version').single.values.first as int) >= 2) return;
   db.execute('BEGIN IMMEDIATE');
   try {
     db.execute(
@@ -140,6 +141,7 @@ extension AutoMemoryStorage on MemoryStore {
     String agentId, {
     int limit = 100,
     int offset = 0,
+    String projectId = '', String worldId = '',
   }) {
     if (limit < 1 || limit > 100 || offset < 0) {
       throw ArgumentError('Pagination invalide');
@@ -149,8 +151,8 @@ extension AutoMemoryStorage on MemoryStore {
         '''SELECT m.*,d.name AS source_name,c.page
       FROM memories m JOIN documents d ON d.id=m.document_id
       JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
-      WHERE m.agent_id=? ORDER BY m.created_at DESC,m.id LIMIT ? OFFSET ?''',
-        [agentId, limit, offset],
+      WHERE m.agent_id=? AND d.project_id=? AND d.world_id=? ORDER BY m.created_at DESC,m.id LIMIT ? OFFSET ?''',
+        [agentId, projectId, worldId, limit, offset],
       ))
         AutoMemoryRecord._(r),
     ];
@@ -174,6 +176,7 @@ extension AutoMemoryStorage on MemoryStore {
     List<double> vector, {
     int topK = 3,
     double minSimilarity = 0.65,
+    String projectId = '', String worldId = '',
   }) {
     _validateVector(vector);
     if (topK < 1 ||
@@ -188,9 +191,9 @@ extension AutoMemoryStorage on MemoryStore {
     final query = _db.prepare('''SELECT m.*,d.name,c.page FROM memories m
       JOIN documents d ON d.id=m.document_id
       JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
-      WHERE m.agent_id=? AND m.status='user_confirmed' ORDER BY m.id''');
+      WHERE m.agent_id=? AND m.status='user_confirmed' AND d.project_id=? AND d.world_id=? ORDER BY m.id''');
     try {
-      final cursor = query.selectCursor([agentId]);
+      final cursor = query.selectCursor([agentId, projectId, worldId]);
       while (cursor.moveNext()) {
         final r = cursor.current;
         final v = (jsonDecode(r['vector'] as String) as List)
@@ -314,10 +317,10 @@ extension AutoMemoryStorage on MemoryStore {
     AutoMemoryCandidate candidate,
   ) {
     final query = _db.prepare(
-      'SELECT * FROM memories WHERE agent_id=? AND id<>?',
+      "SELECT m.* FROM memories m JOIN documents d ON d.id=m.document_id WHERE m.agent_id=? AND m.id<>? AND m.status<>'archived' AND d.project_id=(SELECT project_id FROM documents WHERE id=(SELECT document_id FROM memories WHERE id=?)) AND d.world_id=(SELECT world_id FROM documents WHERE id=(SELECT document_id FROM memories WHERE id=?))",
     );
     try {
-      final cursor = query.selectCursor([agentId, id]);
+      final cursor = query.selectCursor([agentId, id, id, id]);
       final suggestions = <({String id, String kind, double score})>[];
       final qnorm = math.sqrt(vector.fold(0.0, (s, v) => s + v * v));
       while (cursor.moveNext()) {
@@ -457,6 +460,15 @@ extension AutoMemoryStorage on MemoryStore {
         [DateTime.now().toUtc().toIso8601String(), agentId, id],
       );
       _snapshot(agentId, id);
+    });
+  }
+
+  void archiveMemory(String agentId, String id) {
+    _memory(agentId, id);
+    _transaction(() {
+      _db.execute("UPDATE memories SET status='archived',version=version+1,updated_at=? WHERE agent_id=? AND id=?",
+        [DateTime.now().toUtc().toIso8601String(),agentId,id]);
+      _snapshot(agentId,id);
     });
   }
 

@@ -49,3 +49,11 @@ V1.1 : compléter le moteur existant, sessions persistantes et Centre de mémoir
 4. Tests Flutter ciblés puis suite complète, analyse, format, APK Actions ; rapport fondé uniquement sur les résultats observés.
 
 Points de revue : source supprimée pendant recherche ; JSON/document hostile ; budget insuffisant ; interruption après question avant réponse ; collisions de session entre projets ; migration depuis V1 et V1.1 ; négation tronquée dans une citation. La citation garantit la correspondance textuelle uniquement, pas l'implication logique.
+
+## Références consultées
+
+- SQLite FTS5 : https://www.sqlite.org/fts5.html — index externe, rebuild initial, triggers d'insertion/suppression/mise à jour et classement.
+- Android background tasks : https://developer.android.com/develop/background-work/background-tasks
+- Android long-running workers : https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/long-running — WorkManager et Foreground Service sont soumis aux restrictions système, pas une garantie de fonctionnement permanent.
+
+Décision d'implémentation : le budget estimé compte conservativement les octets UTF-8 + surcoût par message (ce n'est pas une mesure du tokenizer). Le runtime conserve son contrôle exact `firstFittingPrompt` avant inférence. Les checkpoints n'ajoutent pas de modèle résident. L'historique est consultable, mais seules la question courante et les sources RAG entrent dans les réponses V1.1 : ne pas réinjecter implicitement une ancienne réponse IA dans le prompt.

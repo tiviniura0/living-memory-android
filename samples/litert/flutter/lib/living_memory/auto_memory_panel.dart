@@ -17,10 +17,12 @@ class AutoMemoryPanel extends StatefulWidget {
     required this.embed,
     required this.process,
     this.cancelled,
+    this.projectId = '',
   });
   final bool Function()? cancelled;
   final MemoryStore store;
   final String agentId;
+  final String projectId;
   final bool busy;
   final Future<void> Function(Future<void> Function()) run;
   final Future<List<double>> Function(String) embed;
@@ -82,7 +84,7 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
     final store = widget.store;
     final agent = widget.agentId;
     final enabled = store.autoMemoryEnabled(agent);
-    final memories = store.memories(agent, limit: 20, offset: _offset);
+    final memories = store.memories(agent, limit: 20, offset: _offset, projectId: widget.projectId);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -164,6 +166,12 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
                                 ? null
                                 : () => unawaited(_perform(() => _edit(m))),
                             child: const Text('Corriger'),
+                          ),
+                          OutlinedButton(
+                            onPressed: widget.busy || m.status == 'archived' ? null : () => unawaited(_perform(() async {
+                              store.archiveMemory(agent, m.id);
+                            })),
+                            child: const Text('Archiver'),
                           ),
                           TextButton(
                             onPressed: widget.busy
@@ -267,7 +275,7 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
           const Text(
             'Reprendre les sources existantes • jusqu’à 8 passages par action',
           ),
-          for (final doc in store.documents(agent))
+          for (final doc in store.documents(agent, projectId: widget.projectId))
             OutlinedButton.icon(
               onPressed: widget.busy
                   ? null
@@ -282,6 +290,7 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
 }
 
 String _status(String status) => switch (status) {
+  'archived' => 'Archivé',
   'review' => 'À revoir : contradiction possible',
   'user_confirmed' => 'Confirmé par toi',
   _ => 'À examiner',
