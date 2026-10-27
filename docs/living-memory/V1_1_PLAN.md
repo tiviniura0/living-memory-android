@@ -34,3 +34,6 @@ Pas de test matériel S22 dans ce runner : qualité des modèles réels, install
 
 - Ruling : recherche des souvenirs confirmés explicitement dans le RAG, avec attribution et mention de l’absence de vérification externe. Les corrections réindexées seraient sinon ignorées par le parcours V1. Les candidats non confirmés n’entrent pas dans cette recherche.
 - Régressions Actions 40476641376 : absence de searchMemories/callback d’annulation, et deux tests widget reproduisent une génération après Arrêter (ouverture et vérification de contexte).
+
+- Actions 40477062946 : 34 tests ciblés réussis, un test de correction révèle l’usage d’un TextEditingController déjà libéré pendant la fermeture du dialogue. Cause reproduite ; nouveau MemoryTextDialog propriétaire de son contrôleur, réutilisé pour notes/agents V1 et corrections V1.1.
+- Revue de suivi : annulations et recherche confirmée validées par inspection ; étiquette des corrections clarifiée.

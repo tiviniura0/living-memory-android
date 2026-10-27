@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 
 import 'memory_store.dart';
+import 'memory_text_dialog.dart';
 
 /// Review stays separate from the V1 source list and question flow.
 class AutoMemoryPanel extends StatefulWidget {
@@ -56,37 +57,13 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
       false;
 
   Future<void> _edit(AutoMemoryRecord m) async {
-    final controller = TextEditingController(text: m.text);
-    String? text;
-    try {
-      text = await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Corriger le souvenir'),
-          content: TextField(
-            controller: controller,
-            maxLines: 5,
-            maxLength: 700,
-            decoration: const InputDecoration(
-              labelText: 'Correction (700 octets UTF-8 maximum)',
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Enregistrer'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      controller.dispose();
+    final text=await showDialog<String>(context:context,builder:(context)=>MemoryTextDialog(
+      title:'Corriger le souvenir',initialText:m.text,lines:5,
+      hint:'Correction (700 octets UTF-8 maximum)',
+    ));
+    if (text == null || text.isEmpty || !mounted || (widget.cancelled?.call() ?? false)) {
+      return;
     }
-    if (text == null || text.isEmpty || !mounted || (widget.cancelled?.call() ?? false)) return;
     final vector = await widget.embed(text);
     if (!mounted || (widget.cancelled?.call() ?? false)) return;
     widget.store.correctMemory(widget.agentId, m.id, text, vector);
@@ -133,7 +110,7 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
             child: ExpansionTile(
               title: Text(m.text),
               subtitle: Text(
-                '${m.kind == 'inference' ? 'Déduction citée' : 'Observation citée'} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
+                '${m.provenance == 'user_correction' ? 'Correction de l’utilisateur' : m.kind == 'inference' ? 'Déduction citée' : 'Observation citée'} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
               ),
               children: [
                 Padding(

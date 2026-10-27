@@ -103,6 +103,12 @@ void main() {
     cancelled=true;gate.complete([0,1]);await tester.pumpAndSettle();
     expect(store.memoryRecord('aru',id)!.text,'Original');
     expect(store.memoryHistory('aru',id),hasLength(1));
+    store.correctMemory('aru',id,'Correction manuelle',[0,1]);
+    await tester.pumpWidget(MaterialApp(home:Scaffold(body:SingleChildScrollView(child:AutoMemoryPanel(
+      key:const ValueKey('corrected'),store:store,agentId:'aru',busy:false,
+      run:(action) async {await action();},embed:(_) async => [1,0],process:(_) async {},
+    )))));
+    expect(find.textContaining('Correction de l’utilisateur'),findsOneWidget);
   });
 
 }

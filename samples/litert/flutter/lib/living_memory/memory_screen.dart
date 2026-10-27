@@ -20,6 +20,7 @@ import 'auto_memory_panel.dart';
 import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
 import 'memory_store.dart';
+import 'memory_text_dialog.dart';
 
 const _profile = ConversationProfile(
   name: 'living-memory',
@@ -166,7 +167,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
 
   Future<void> _cancel() async {
     _cancelled = true;
-    _status = 'Arrêt demandé. Les sources déjà importées sont conservées.';
+    if (!_closed) {
+      setState(() => _status = 'Arrêt demandé. Les sources déjà importées sont conservées.');
+    }
     await widget.conversation.stop();
   }
 
@@ -268,33 +271,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
     String hint = '',
     int lines = 1,
   }) async {
-    final controller = TextEditingController();
-    try {
-      return await showDialog<String>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: Text(title),
-          content: TextField(
-            controller: controller,
-            maxLines: lines,
-            maxLength: lines > 1 ? 20000 : 64,
-            decoration: InputDecoration(hintText: hint),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Annuler'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(context, controller.text.trim()),
-              child: const Text('Enregistrer'),
-            ),
-          ],
-        ),
-      );
-    } finally {
-      controller.dispose();
-    }
+    return showDialog<String>(context:context,builder:(context)=>MemoryTextDialog(
+      title:title,hint:hint,lines:lines,maxLength:lines>1?20000:64,
+    ));
   }
 
   Future<void> _note() async {
