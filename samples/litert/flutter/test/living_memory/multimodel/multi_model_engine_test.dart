@@ -1,6 +1,10 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:litert_edge_demos/living_memory/auto_memory_candidate.dart';
+import 'package:litert_edge_demos/living_memory/auto_memory_engine.dart';
+import 'package:litert_edge_demos/living_memory/memory_store.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/multi_model_engine.dart';
 
 class Runtime implements LocalModelRuntime {
@@ -16,12 +20,14 @@ class Runtime implements LocalModelRuntime {
     _tail = result.then<void>((_) {}, onError: (Object _, StackTrace _) {});
     return result;
   }
+
   @override
   Future<void> unload() async {
     events.add('unload');
     if (releaseFails) throw const ModelReleaseFailure();
     held = 0;
   }
+
   @override
   Future<void> load(String id) async {
     events.add('load:$id');
@@ -41,8 +47,14 @@ void main() {
   test('routes extraction and simple questions to E2B, synthesis to E4B', () {
     expect(engine.choose(const ModelTask.extraction()), 'e2b');
     expect(engine.choose(const ModelTask.question('Où ?')), 'e2b');
-    expect(engine.choose(const ModelTask.question('Compare les sources')), 'e4b');
-    expect(engine.choose(const ModelTask.question('court', sourceCount: 4)), 'e4b');
+    expect(
+      engine.choose(const ModelTask.question('Compare les sources')),
+      'e4b',
+    );
+    expect(
+      engine.choose(const ModelTask.question('court', sourceCount: 4)),
+      'e4b',
+    );
     engine.mode = ModelMode.e2b;
     expect(engine.choose(const ModelTask.question('Compare')), 'e2b');
     engine.mode = ModelMode.e4b;
@@ -57,20 +69,32 @@ void main() {
   test('unloads before every activation; never two resident models', () async {
     await engine.run(const ModelTask.extraction(), (_) async => 'ok');
     await engine.run(const ModelTask.question('Compare'), (_) async => 'ok');
-    expect(runtime.events, ['unload', 'load:e2b', 'unload', 'unload', 'load:e4b', 'unload']);
+    expect(runtime.events, [
+      'unload',
+      'load:e2b',
+      'unload',
+      'unload',
+      'load:e4b',
+      'unload',
+    ]);
     expect(runtime.maxHeld, 1);
     expect(runtime.held, 0);
   });
   test('E4B load failure retries once on E2B and reports fallback', () async {
     runtime.failures.add('e4b');
-    final model = await engine.run(const ModelTask.question('Compare'), (id) async => id);
+    final model = await engine.run(
+      const ModelTask.question('Compare'),
+      (id) async => id,
+    );
     expect(model, 'e2b');
     expect(engine.lastUsed, 'e2b');
     expect(engine.fallbackReason, contains('cannot load e4b'));
   });
   test('generation failure discards result before retrying E2B', () async {
     final ids = <String>[];
-    final result = await engine.run(const ModelTask.question('Compare'), (id) async {
+    final result = await engine.run(const ModelTask.question('Compare'), (
+      id,
+    ) async {
       ids.add(id);
       if (id == 'e4b') throw StateError('generation failed');
       return 'grounded';
@@ -81,22 +105,34 @@ void main() {
   });
   test('native release refusal never loads or falls back', () async {
     runtime.releaseFails = true;
-    await expectLater(engine.run(const ModelTask.question('Compare'), (_) async => 1), throwsA(isA<ModelReleaseFailure>()));
+    await expectLater(
+      engine.run(const ModelTask.question('Compare'), (_) async => 1),
+      throwsA(isA<ModelReleaseFailure>()),
+    );
     expect(runtime.events, ['unload']);
   });
   test('cancellation after E4B failure prevents fallback', () async {
     var cancelled = false;
-    await expectLater(engine.run(const ModelTask.question('Compare'), (_) async {
-      cancelled = true;
-      throw StateError('stopped');
-    }, cancelled: () => cancelled), throwsA(isA<ModelCancelled>()));
+    await expectLater(
+      engine.run(const ModelTask.question('Compare'), (_) async {
+        cancelled = true;
+        throw StateError('stopped');
+      }, cancelled: () => cancelled),
+      throwsA(isA<ModelCancelled>()),
+    );
     expect(runtime.events.where((e) => e == 'load:e2b'), isEmpty);
     expect(runtime.held, 0);
   });
   test('concurrent operations hold lock through inference', () async {
     final gate = Completer<void>();
-    final first = engine.run(const ModelTask.extraction(), (_) async { await gate.future; return 1; });
-    final second = engine.run(const ModelTask.question('Compare'), (_) async => 2);
+    final first = engine.run(const ModelTask.extraction(), (_) async {
+      await gate.future;
+      return 1;
+    });
+    final second = engine.run(
+      const ModelTask.question('Compare'),
+      (_) async => 2,
+    );
     await Future<void>.delayed(Duration.zero);
     expect(runtime.events, ['unload', 'load:e2b']);
     gate.complete();
@@ -105,8 +141,41 @@ void main() {
   });
   test('both failures surface and queue remains usable', () async {
     runtime.failures.addAll({'e2b', 'e4b'});
-    await expectLater(engine.run(const ModelTask.question('Compare'), (_) async => 1), throwsStateError);
+    await expectLater(
+      engine.run(const ModelTask.question('Compare'), (_) async => 1),
+      throwsStateError,
+    );
     runtime.failures.clear();
     expect(await engine.run(const ModelTask.extraction(), (_) async => 2), 2);
   });
+  test('E2B then E4B preserve real SQLite sources, provenance and isolation after reopen', () async {
+    final dir = Directory.systemTemp.createTempSync('switch-db-');
+    var store = MemoryStore.open('${dir.path}/memory.db', profile: 'synthetic', dimension: 2);
+    addTearDown(() { store.close(); dir.deleteSync(recursive: true); });
+    store.createAgent('aru', 'Aru');
+    store.createAgent('bea', 'Bea');
+    store.setAutoMemoryEnabled('aru', enabled: true);
+    const candidate = AutoMemoryCandidate(quote: 'Une note.', kind: 'observation',
+      subject: '', relation: '', value: '', uncertain: true);
+    for (final id in ['e2b', 'e4b']) {
+      final document = store.addDocument(agentId: 'aru', name: '$id.txt', digest: id,
+        chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Une note.')], vectors: [[1, 0]]);
+      engine.mode = ModelMode.values.byName(id);
+      await engine.run(const ModelTask.extraction(), (used) => AutoMemoryEngine(
+        store: store, extract: (_) async => [candidate], embed: (_) async => [1, 0],
+        cancelled: () => false, extractorIdentity: 'Gemma 4 ${used.toUpperCase()}/extractive-v1',
+      ).process('aru', document));
+    }
+    final ids = store.memories('aru').map((m) => m.id).toSet();
+    expect(ids, hasLength(2));
+    store.close();
+    store = MemoryStore.open('${dir.path}/memory.db', profile: 'synthetic', dimension: 2);
+    expect(store.documents('aru'), hasLength(2));
+    expect(store.memories('aru').map((m) => m.id).toSet(), ids);
+    expect(store.memories('aru').map((m) => m.extractor).toSet(),
+      {'Gemma 4 E2B/extractive-v1', 'Gemma 4 E4B/extractive-v1'});
+    expect(store.memories('bea'), isEmpty);
+    expect(store.documents('bea'), isEmpty);
+  });
+
 }

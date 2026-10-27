@@ -1,8 +1,9 @@
 import '../../data/repositories/chat_model_repository.dart';
+import '../../data/services/model_store/models_folder.dart'
+    show inspectLitertlm;
 import '../../domain/models/chat_model.dart';
 import '../../domain/use_cases/chat_model_switcher.dart';
 import '../../utils/result.dart';
-import '../../data/services/model_store/models_folder.dart' show inspectLitertlm;
 import 'model_registry.dart';
 import 'multi_model_engine.dart';
 
@@ -20,10 +21,15 @@ class LiteRtMemoryRuntime implements LocalModelRuntime {
   ChatModelOps? _ops;
 
   @override
-  Future<T> exclusive<T>(Future<T> Function() operation) => switcher.exclusive((ops) async {
-    _ops = ops;
-    try { return await operation(); } finally { _ops = null; }
-  });
+  Future<T> exclusive<T>(Future<T> Function() operation) =>
+      switcher.exclusive((ops) async {
+        _ops = ops;
+        try {
+          return await operation();
+        } finally {
+          _ops = null;
+        }
+      });
 
   @override
   Future<void> unload() async {
@@ -38,7 +44,9 @@ class LiteRtMemoryRuntime implements LocalModelRuntime {
     }
     final path = (saved.source as LocalModelSource).path;
     final bundle = _value(await inspectLitertlm(path));
-    if (models.cannotRunHere(bundle.info) case final why?) throw StateError(why);
+    if (models.cannotRunHere(bundle.info) case final why?) {
+      throw StateError(why);
+    }
     final plan = CustomChatPlan(path: path, model: saved, bundle: bundle);
     final loaded = await models.withRuntimePlan(plan, _ops!.reload);
     if (loaded case Error(error: ReplyStillStoppingException())) {

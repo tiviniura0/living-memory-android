@@ -1,6 +1,7 @@
 import 'dart:io';
-import 'package:flutter_test/flutter_test.dart';
+
 import 'package:flutter_edge_ai/flutter_edge_ai.dart' show PreferredBackend;
+import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/domain/models/chat_model.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/model_registry.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/multi_model_engine.dart';
@@ -9,43 +10,66 @@ void main() {
   late Directory dir;
   setUp(() => dir = Directory.systemTemp.createTempSync('model-registry-'));
   tearDown(() => dir.deleteSync(recursive: true));
-  CustomChatModel model(String path) => CustomChatModel(displayName: 'Gemma 4 E2B', source: LocalModelSource(path),
-      backend: PreferredBackend.gpu, maxTokens: 8192,
-      file: const CustomModelFile(name: 'gemma.litertlm', sizeBytes: 4, checksumMatched: false));
+  CustomChatModel model(String path) => CustomChatModel(
+    displayName: 'Gemma 4 E2B',
+    source: LocalModelSource(path),
+    backend: PreferredBackend.gpu,
+    maxTokens: 8192,
+    file: const CustomModelFile(
+      name: 'gemma.litertlm',
+      sizeBytes: 4,
+      checksumMatched: false,
+    ),
+  );
   // The registry only copies bytes and metadata, it never claims to validate AI weights.
-  test('private copies survive source removal, mode and hashes persist', () async {
-    final source = File('${dir.path}/source.litertlm')..writeAsStringSync('data');
-    final r = ModelRegistry(Directory('${dir.path}/registry'));
-    await r.load();
-    expect(r.models, isEmpty);
-    // register accepts a model and a source path, not an invented bundle.
-    await r.register('e2b', source.path, model(source.path));
-    source.deleteSync();
-    await r.setMode(ModelMode.e2b);
-    final reopened = ModelRegistry(r.directory);
-    await reopened.load();
-    expect(reopened.mode, ModelMode.e2b);
-    expect(reopened.models['e2b']!.maxTokens, 2048);
-    expect(await reopened.verify('e2b'), isTrue);
-    final savedModel = reopened.models['e2b']!;
-    final path = (savedModel.source as LocalModelSource).path;
-    File(path).writeAsStringSync('evil');
-    expect(await reopened.verify('e2b'), isFalse);
-  });
-  test('corrupt or future manifest is rejected without overwriting it', () async {
-    final r = ModelRegistry(dir);
-    final f = File('${dir.path}/registry.json')..writeAsStringSync('{"v":99}');
-    await expectLater(r.load(), throwsFormatException);
-    expect(f.readAsStringSync(), '{"v":99}');
-  });
+  test(
+    'private copies survive source removal, mode and hashes persist',
+    () async {
+      final source = File('${dir.path}/source.litertlm')
+        ..writeAsStringSync('data');
+      final r = ModelRegistry(Directory('${dir.path}/registry'));
+      await r.load();
+      expect(r.models, isEmpty);
+      // register accepts a model and a source path, not an invented bundle.
+      await r.register('e2b', source.path, model(source.path));
+      source.deleteSync();
+      await r.setMode(ModelMode.e2b);
+      final reopened = ModelRegistry(r.directory);
+      await reopened.load();
+      expect(reopened.mode, ModelMode.e2b);
+      expect(reopened.models['e2b']!.maxTokens, 2048);
+      expect(await reopened.verify('e2b'), isTrue);
+      final savedModel = reopened.models['e2b']!;
+      final path = (savedModel.source as LocalModelSource).path;
+      File(path).writeAsStringSync('evil');
+      expect(await reopened.verify('e2b'), isFalse);
+    },
+  );
+  test(
+    'corrupt or future manifest is rejected without overwriting it',
+    () async {
+      final r = ModelRegistry(dir);
+      final f = File('${dir.path}/registry.json')
+        ..writeAsStringSync('{"v":99}');
+      await expectLater(r.load(), throwsFormatException);
+      expect(f.readAsStringSync(), '{"v":99}');
+    },
+  );
   test('failed registration leaves prior model and mode intact', () async {
     final r = ModelRegistry(Directory('${dir.path}/registry'));
-    final source = File('${dir.path}/source.litertlm')..writeAsStringSync('data');
+    final source = File('${dir.path}/source.litertlm')
+      ..writeAsStringSync('data');
     await r.load();
     await r.register('e2b', source.path, model(source.path));
     final before = File('${r.directory.path}/registry.json').readAsStringSync();
-    await expectLater(r.register('e4b', '${dir.path}/missing', model(source.path)), throwsA(isA<FileSystemException>()));
-    expect(File('${r.directory.path}/registry.json').readAsStringSync(), before);
+    await expectLater(
+      r.register('e4b', '${dir.path}/missing', model(source.path)),
+      throwsA(isA<FileSystemException>()),
+    );
+    expect(
+      File('${r.directory.path}/registry.json').readAsStringSync(),
+      before,
+    );
     expect(r.models.keys, ['e2b']);
   });
 }

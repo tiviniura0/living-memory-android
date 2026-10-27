@@ -466,10 +466,17 @@ class ChatModelRepository implements ChatModelPlanner {
 
   /// Process-local plan for a caller already holding ChatModelSwitcher.exclusive.
   /// Never saves model settings or prunes files. Cleared even when loading fails.
-  Future<T> withRuntimePlan<T>(CustomChatPlan plan, Future<T> Function() load) async {
+  Future<T> withRuntimePlan<T>(
+    CustomChatPlan plan,
+    Future<T> Function() load,
+  ) async {
     if (_runtimePlan != null) throw StateError('Runtime plan already in use.');
     _runtimePlan = plan;
-    try { return await load(); } finally { _runtimePlan = null; }
+    try {
+      return await load();
+    } finally {
+      _runtimePlan = null;
+    }
   }
 
   @override

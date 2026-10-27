@@ -30,7 +30,11 @@ T _unwrap<T>(Result<T> result) => switch (result) {
 };
 
 class GemmaMemoryExtractor {
-  GemmaMemoryExtractor(this.conversation, {required this.cancelled, this.registeredModelId});
+  GemmaMemoryExtractor(
+    this.conversation, {
+    required this.cancelled,
+    this.registeredModelId,
+  });
   final String? registeredModelId;
   final ConversationRepository conversation;
   final bool Function() cancelled;
@@ -42,14 +46,15 @@ class GemmaMemoryExtractor {
     }
     // Imported files use their filename stem as the default display name.
     // This is a compatibility label check, not authentication of model weights.
-    if (!const {'e2b', 'e4b'}.contains(registeredModelId) && !const {
-      'Gemma 4 E2B',
-      'gemma-4-E2B-it',
-      'Gemma 4 E4B',
-      'gemma-4-E4B-it',
-      'gemma-4-E4B-it.litertlm',
-      kRetiredGemmaFile,
-    }.contains(conversation.capabilities.modelName)) {
+    if (!const {'e2b', 'e4b'}.contains(registeredModelId) &&
+        !const {
+          'Gemma 4 E2B',
+          'gemma-4-E2B-it',
+          'Gemma 4 E4B',
+          'gemma-4-E4B-it',
+          'gemma-4-E4B-it.litertlm',
+          kRetiredGemmaFile,
+        }.contains(conversation.capabilities.modelName)) {
       throw StateError(
         'Sélectionne Gemma 4 E2B ou E4B pour la mémorisation automatique.',
       );

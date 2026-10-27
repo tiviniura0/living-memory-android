@@ -197,7 +197,8 @@ class _AppState extends State<App> {
             conversation: deps.conversation,
             chatModels: deps.chatModels,
             modelSwitcher: deps.chatModelSwitcher,
-            openModels: () => Navigator.of(context).pushNamed<void>(Routes.models),
+            openModels: () =>
+                Navigator.of(context).pushNamed<void>(Routes.models),
           ),
           Routes.home: (context) => ChangeNotifierProvider(
             create: (c) => HomeViewModel(
