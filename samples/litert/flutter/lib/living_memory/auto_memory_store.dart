@@ -169,41 +169,67 @@ extension AutoMemoryStorage on MemoryStore {
 
   /// Only explicit user confirmation makes a memory available to RAG.
   /// Confirmation is still an attributed assertion, never external verification.
-  List<MemoryHit> searchMemories(String agentId,List<double> vector,
-    {int topK=3,double minSimilarity=0.65}) {
+  List<MemoryHit> searchMemories(
+    String agentId,
+    List<double> vector, {
+    int topK = 3,
+    double minSimilarity = 0.65,
+  }) {
     _validateVector(vector);
-    if(topK<1 || topK>20 || !minSimilarity.isFinite || minSimilarity< -1 || minSimilarity>1) {
+    if (topK < 1 ||
+        topK > 20 ||
+        !minSimilarity.isFinite ||
+        minSimilarity < -1 ||
+        minSimilarity > 1) {
       throw ArgumentError('Paramètres de recherche invalides');
     }
-    final hits=<MemoryHit>[];
-    final qnorm=math.sqrt(vector.fold(0.0,(s,v)=>s+v*v));
-    final query=_db.prepare('''SELECT m.*,d.name,c.page FROM memories m
+    final hits = <MemoryHit>[];
+    final qnorm = math.sqrt(vector.fold(0.0, (s, v) => s + v * v));
+    final query = _db.prepare('''SELECT m.*,d.name,c.page FROM memories m
       JOIN documents d ON d.id=m.document_id
       JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
       WHERE m.agent_id=? AND m.status='user_confirmed' ORDER BY m.id''');
     try {
-      final cursor=query.selectCursor([agentId]);
-      while(cursor.moveNext()) {
-        final r=cursor.current;
-        final v=(jsonDecode(r['vector'] as String) as List).cast<num>().map((n)=>n.toDouble()).toList();
+      final cursor = query.selectCursor([agentId]);
+      while (cursor.moveNext()) {
+        final r = cursor.current;
+        final v = (jsonDecode(r['vector'] as String) as List)
+            .cast<num>()
+            .map((n) => n.toDouble())
+            .toList();
         _validateVector(v);
-        var dot=0.0;
-        var norm=0.0;
-        for(var i=0;i<dimension;i++) {dot+=vector[i]*v[i];norm+=v[i]*v[i];}
-        final score=(dot/(qnorm*math.sqrt(norm))).clamp(-1.0,1.0);
-        if(score<minSimilarity) continue;
-        final correction=r['provenance']=='user_correction';
-        final nature=r['kind']=='inference'?'déduction citée':'observation citée';
-        hits.add(MemoryHit(agentId:agentId,documentId:r['document_id'] as String,
-          name:'Souvenir ${r['id'].toString().substring(0,8)} • ${r['name']}',
-          page:r['page'] as int,ordinal:r['ordinal'] as int,
-          text:'${correction?'Correction de l’utilisateur':nature} ; confirmé par l’utilisateur, '
-            'sans vérification externe${r['uncertain']==1?' ; incertitude signalée':''} : ${r['content']}',
-          similarity:score));
-        hits.sort((a,b)=>b.similarity.compareTo(a.similarity));
-        if(hits.length>topK) hits.removeLast();
+        var dot = 0.0;
+        var norm = 0.0;
+        for (var i = 0; i < dimension; i++) {
+          dot += vector[i] * v[i];
+          norm += v[i] * v[i];
+        }
+        final score = (dot / (qnorm * math.sqrt(norm))).clamp(-1.0, 1.0);
+        if (score < minSimilarity) continue;
+        final correction = r['provenance'] == 'user_correction';
+        final nature = r['kind'] == 'inference'
+            ? 'déduction citée'
+            : 'observation citée';
+        hits.add(
+          MemoryHit(
+            agentId: agentId,
+            documentId: r['document_id'] as String,
+            name:
+                'Souvenir ${r['id'].toString().substring(0, 8)} • ${r['name']}',
+            page: r['page'] as int,
+            ordinal: r['ordinal'] as int,
+            text:
+                '${correction ? 'Correction de l’utilisateur' : nature} ; confirmé par l’utilisateur, '
+                'sans vérification externe${r['uncertain'] == 1 ? ' ; incertitude signalée' : ''} : ${r['content']}',
+            similarity: score,
+          ),
+        );
+        hits.sort((a, b) => b.similarity.compareTo(a.similarity));
+        if (hits.length > topK) hits.removeLast();
       }
-    } finally {query.close();}
+    } finally {
+      query.close();
+    }
     return hits;
   }
 

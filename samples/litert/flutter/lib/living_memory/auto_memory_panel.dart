@@ -57,11 +57,19 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
       false;
 
   Future<void> _edit(AutoMemoryRecord m) async {
-    final text=await showDialog<String>(context:context,builder:(context)=>MemoryTextDialog(
-      title:'Corriger le souvenir',initialText:m.text,lines:5,
-      hint:'Correction (700 octets UTF-8 maximum)',
-    ));
-    if (text == null || text.isEmpty || !mounted || (widget.cancelled?.call() ?? false)) {
+    final text = await showDialog<String>(
+      context: context,
+      builder: (context) => MemoryTextDialog(
+        title: 'Corriger le souvenir',
+        initialText: m.text,
+        lines: 5,
+        hint: 'Correction (700 octets UTF-8 maximum)',
+      ),
+    );
+    if (text == null ||
+        text.isEmpty ||
+        !mounted ||
+        (widget.cancelled?.call() ?? false)) {
       return;
     }
     final vector = await widget.embed(text);
@@ -110,7 +118,11 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
             child: ExpansionTile(
               title: Text(m.text),
               subtitle: Text(
-                '${m.provenance == 'user_correction' ? 'Correction de l’utilisateur' : m.kind == 'inference' ? 'Déduction citée' : 'Observation citée'} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
+                '${m.provenance == 'user_correction'
+                    ? 'Correction de l’utilisateur'
+                    : m.kind == 'inference'
+                    ? 'Déduction citée'
+                    : 'Observation citée'} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
               ),
               children: [
                 Padding(

@@ -37,3 +37,5 @@ Pas de test matériel S22 dans ce runner : qualité des modèles réels, install
 
 - Actions 40477062946 : 34 tests ciblés réussis, un test de correction révèle l’usage d’un TextEditingController déjà libéré pendant la fermeture du dialogue. Cause reproduite ; nouveau MemoryTextDialog propriétaire de son contrôleur, réutilisé pour notes/agents V1 et corrections V1.1.
 - Revue de suivi : annulations et recherche confirmée validées par inspection ; étiquette des corrections clarifiée.
+
+- Actions 40477380809 : les 35 tests ciblés passent ; analyse bloquée uniquement par un import typed_data redondant dans le nouveau test d’annulation. Import retiré, format Dart appliqué depuis la preuve CI. La CI contrôle désormais le format sans réécrire le code testé.

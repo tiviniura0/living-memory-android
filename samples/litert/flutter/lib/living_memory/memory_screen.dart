@@ -168,7 +168,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
   Future<void> _cancel() async {
     _cancelled = true;
     if (!_closed) {
-      setState(() => _status = 'Arrêt demandé. Les sources déjà importées sont conservées.');
+      setState(
+        () => _status =
+            'Arrêt demandé. Les sources déjà importées sont conservées.',
+      );
     }
     await widget.conversation.stop();
   }
@@ -271,9 +274,15 @@ class _MemoryScreenState extends State<MemoryScreen> {
     String hint = '',
     int lines = 1,
   }) async {
-    return showDialog<String>(context:context,builder:(context)=>MemoryTextDialog(
-      title:title,hint:hint,lines:lines,maxLength:lines>1?20000:64,
-    ));
+    return showDialog<String>(
+      context: context,
+      builder: (context) => MemoryTextDialog(
+        title: title,
+        hint: hint,
+        lines: lines,
+        maxLength: lines > 1 ? 20000 : 64,
+      ),
+    );
   }
 
   Future<void> _note() async {
