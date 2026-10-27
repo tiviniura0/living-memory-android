@@ -41,3 +41,9 @@ Pas de test matériel S22 dans ce runner : qualité des modèles réels, install
 - Actions 40477380809 : les 35 tests ciblés passent ; analyse bloquée uniquement par un import typed_data redondant dans le nouveau test d’annulation. Import retiré, format Dart appliqué depuis la preuve CI. La CI contrôle désormais le format sans réécrire le code testé.
 
 - Actions 40477834391 : format et analyse sans problème ; suite complète 2965 réussis / 15 ignorés / 1 échec, test existant config/build_info_test.dart. Cause : version pubspec passée à 1.1.0+2 mais constante kAppVersion restée à 1.0.0+1. Constante alignée sans modifier le test. Preuves légères séparées de l’archive APK pour permettre leur inspection sans télécharger 900 Mo.
+
+- Source finale testée 89de7bd6 : 35 tests ciblés, analyse propre, suite complète 2966 réussis / 15 ignorés (Actions 40478470088). Le build a été annulé après l’arrivée de commits concurrents 6d35d101 et 386d733f sur la même branche, pas après un échec de tests. Ces ajouts sont conservés.
+- Livraison isolée work/living-memory-v1.1-apk, base exacte 89de7bd6, workflow dédié : comparaison Git des fichiers samples/litert/flutter avant build. Pas de nouvelle exécution des tests d’une source identique ; les preuves de la suite précédente sont référencées explicitement.
+
+- Packaging 40480260704 : APK produit, script de certificat échoué à cause du nouveau préfixe apksigner V2 Signer. Regex corrigée et vérification indépendante sur l’artefact existant 40482049625 réussie : hash, v2, arm64 et modèle. Certificat différent de V1, mise à jour directe bloquée ; aucune désinstallation recommandée.
+- Rapport final et guide téléphone conservés sur la branche de livraison figée, sans écraser le chantier parallèle sur la branche demandée. Aucun merge.

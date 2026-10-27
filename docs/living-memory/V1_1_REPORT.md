@@ -37,7 +37,7 @@ chaque dépendance du dépôt amont.
   textes ou leurs sources. Correction : nouveau vecteur, nouvelle version,
   statut à examiner et ancienne citation conservée. Suppression physique du
   souvenir et de ses versions/liens. Supprimer la source purge ses souvenirs.
-- Aucun chemin de mémorisation d’une réponse générée. Questions et réponses
+- Les réponses produites par l’application ne sont jamais envoyées à l’extracteur. Questions et réponses
   ne sont pas soumises à l’extracteur. Aucun statut « fait vérifié » n’est
   accepté dans le JSON ou créé par le moteur.
 
@@ -70,13 +70,37 @@ il ne garantit pas l’interruption instantanée du parseur PDF natif.
 - Revue indépendante : deux problèmes d’annulation identifiés (correction
   différée et question après ouverture/vérification de contexte différée).
   Régressions dédiées ajoutées avant correction.
-- Validation finale et APK : résultats à compléter après exécution Actions.
+- Actions 40477380809 : 35 tests ciblés réussis ; import redondant ensuite retiré.
+- Actions 40477834391 : format/analyse OK, suite complète 2965 réussis / 15 ignorés / 1 échec de cohérence de version. Constante kAppVersion alignée sur pubspec sans changer le test.
+- Actions 40478470088, code 89de7bd6 : 35 tests ciblés réussis, analyse sans problème, suite complète **2966 réussis / 15 ignorés / 0 échec**. Le build a ensuite été annulé par le workflow concurrent déclenché sur la même branche. Cette exécution ne fournit pas d’APK.
+- Revue indépendante de suivi : plus de problème Important signalé par inspection ; les correctifs d’annulation et de dialogue sont couverts par les tests widget.
+- Les 15 tests ignorés sont ceux de V1 : 7 spécifiques macOS/iOS, 7 nécessitant TurboJPEG, 1 optionnel de captures de mise en page. Ils ne sont pas comptés comme des succès.
+- Actions 40480260704 : source d’application strictement identique à 89de7bd6, APK arm64 compilé. Contrôle arrêté sur le parseur du libellé de certificat (`Signer #1` attendu, `V2 Signer` réel). La signature v2 et la structure étaient valides ; le workflow de vérification a été corrigé.
+- Actions **40482049625 : succès** sur les octets de cet artefact : hash conforme au hash de build, signature v2 valide, ABI arm64-v8a seule, EmbeddingGemma présent à la taille attendue. Les formats ancien et actuel du libellé du signataire sont testés par le script de contrôle.
 
 Les tests utilisent SQLite réel sur disque temporaire et des vecteurs
 synthétiques explicitement identifiés. Les doubles remplacent les inférences
 natives et la conversation, pas le stockage ou l’algorithme de classement.
 Le SDK Flutter n’étant pas disponible dans l’espace local, les commandes
 Flutter exécutables sont lancées sur les runners GitHub Actions.
+
+## Révision figée et travail concurrent
+
+La source d’application validée est `89de7bd6b76c8ba8889ab1c17b4c1da8b99cf31a`.
+Après cette révision, une autre exécution a ajouté des sessions/contexte/recherche
+hybride sur la branche demandée. Ces changements ont été préservés. Ce rapport
+ne prétend pas valider cette nouvelle HEAD en cours de développement.
+
+Pour éviter l’annulation du build et ne pas écraser ces ajouts, la livraison est
+figée sur `work/living-memory-v1.1-apk`. Son workflow compare tous les fichiers
+`samples/litert/flutter` avec le commit testé avant de compiler. Les tests
+ne sont pas rejoués sur une application strictement identique ; leurs résultats
+proviennent de l’exécution 40478470088, et la compilation/les contrôles APK sont
+réalisés dans l’exécution isolée indiquée ci-dessous.
+
+[Preuves des tests](https://github.com/tiviniura0/living-memory-android/actions/runs/40478470088/artifacts/12723065512).
+La branche principale et la branche V1 n’ont pas été fusionnées ou modifiées
+par cette mission. Les 4286 fichiers suivis de la base sont encore présents.
 
 ## Téléphone physique : non exécuté
 
@@ -102,14 +126,54 @@ utilisait une clé Android Debug non pérenne ; si le nouveau certificat diffèr
 Android refuse la mise à jour. Ne pas désinstaller V1 pour contourner ce refus :
 Android supprimerait ses données privées. L’APK ne permet pas de récupérer la
 clé privée d’une ancienne compilation ; l’export/restauration V1 n’existe pas.
-La compatibilité de signature doit être mesurée sur l’APK final puis indiquée
-ici, sans promettre une mise à jour conservant les données avant cette preuve.
+**Résultat mesuré : les certificats V1 et V1.1 diffèrent.** La mise à jour directe
+de l’ancienne V1 publiée n’est donc pas compatible. La conservation des données
+est testée au niveau de la migration SQLite, mais elle ne peut pas être promise
+par installation sur une V1 déjà présente avec cette autre signature. Ne pas
+désinstaller V1 pour contourner ce blocage. La livraison est adaptée à un essai
+sur installation vierge ; une vraie trajectoire de mise à jour nécessite de
+résoudre la signature et la migration des données avant intervention sur la V1.
+Le test d’installation sur téléphone n’a pas été réalisé.
+
+## Téléchargement et preuves finales
+
+- [Archive APK expérimentale](https://github.com/tiviniura0/living-memory-android/actions/runs/40480260704/artifacts/12723352241), 660 565 913 octets (ZIP).
+- APK dans l’archive : `app/outputs/flutter-apk/app-release.apk`.
+- Version : **1.1.0+2** ; APK : **897 913 476 octets**, environ 897,9 Mo décimaux.
+- SHA-256 APK : `5bb48ab0af06d0649604f0afe03c4d177c051338530c11e062f2ead20f61edb4`.
+- SHA-256 certificat V1.1 : `f9959b02ad5ac1f0cd5ff9d9e9f42849d7cc88677e8469b597ba70f9bd8e393f`.
+- SHA-256 certificat V1 : `cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487`.
+- EmbeddingGemma embarqué : **484 622 336 octets**. Gemma 4 E2B reste à configurer/importer selon V1.
+- [Contrôle indépendant de l’artefact](https://github.com/tiviniura0/living-memory-android/actions/runs/40482049625) et [preuves légères](https://github.com/tiviniura0/living-memory-android/actions/runs/40482049625/artifacts/12722784699).
+- [Tests source : 2966 réussis / 15 ignorés](https://github.com/tiviniura0/living-memory-android/actions/runs/40478470088/artifacts/12723065512).
+- Source testée : `89de7bd6b76c8ba8889ab1c17b4c1da8b99cf31a`. Commit de packaging : `5cf1cc2e6a6b06da2d7b440143de6a0b75ca39bd` ; les changements suivants concernent les contrôles CI et la documentation, pas l’application.
+- [Guide de vérification sur S22](V1_1_PHONE_CHECKLIST.md).
+
+Les artefacts APK sont conservés 14 jours par le workflow ; les preuves légères,
+30 jours. Le téléchargement GitHub peut demander une connexion au compte.
+L’archive complète dépasse la limite de transfert de fichiers du connecteur de
+la session : téléchargement direct sur GitHub, sans ordinateur personnel.
+
+## Tests ajoutés
+
+23 nouveaux cas, plus les 12 tests Living Memory V1, forment les 35 tests ciblés.
+La suite complète conserve les tests existants, dont le test de cohérence de version.
+
+| Fichier de test | Cas | Contrôles |
+|---|---:|---|
+| auto_memory_test.dart | 10 | Migration V1, provenance, profil, agents, déduplication, contradictions possibles, historique, suppression, regroupement, recherche confirmée, JSON strict |
+| auto_memory_engine_test.dart | 5 | Intégration SQLite, activation, plafond et reprise, erreur, annulation |
+| gemma_memory_extractor_test.dart | 4 | Conversation locale sans outil, citation, interruption, modèle et contexte |
+| auto_memory_panel_test.dart | 2 | Interface de revue, fermeture de dialogue, correction annulée et attribution |
+| memory_screen_cancellation_test.dart | 2 | Arrêt pendant ouverture et vérification du contexte |
+
 
 ## Sources techniques officielles consultées
 
 - https://developers.google.com/edge/litert-lm/models/gemma-4
 - https://developers.google.com/edge/litert-lm/overview
 - https://ai.google.dev/gemma/docs/embeddinggemma
+- https://developer.android.com/google/play/app-updates
 
 Les poids, chemins, profils et versions des dépendances V1 sont réutilisés ;
 aucune nouvelle API IA distante, dépense, ni service de souvenirs cloud ajouté.

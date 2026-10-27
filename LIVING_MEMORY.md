@@ -1,5 +1,24 @@
 # Living Memory Android
 
+## V1.1 Auto-Memory — livraison expérimentale figée
+
+- [APK expérimental](https://github.com/tiviniura0/living-memory-android/actions/runs/40480260704/artifacts/12723352241).
+- [Rapport final, tests et limites](docs/living-memory/V1_1_REPORT.md).
+- [Essai sur le S22 Ultra](docs/living-memory/V1_1_PHONE_CHECKLIST.md).
+- Source testée : `89de7bd6` ; **2966 tests réussis, 15 ignorés**, analyse propre.
+- Source compilée identique, hash/signature v2/ABI/modèle contrôlés séparément.
+
+**Important : le certificat de cet APK diffère de celui de V1. Ne pas désinstaller
+V1 pour contourner le refus de mise à jour : ses données seraient perdues.**
+L’APK sert à un essai sur installation vierge. Le rapport distingue migration
+SQLite testée et installation Android non réalisée sur téléphone.
+
+La branche `work/living-memory-v1.1-apk` fige la livraison ; la branche demandée
+`work/living-memory-v1.1-auto-memory` contient ensuite d’autres travaux en cours,
+préservés et non couverts par cette validation. Aucune fusion dans main ou V1.
+
+## Historique V1
+
 Extension locale du projet existant `samples/litert/flutter`, pour Android
 arm64 API 30+ et un premier essai sur Galaxy S22 Ultra 12 Go.
 

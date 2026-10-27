@@ -1,3 +1,13 @@
+# État V1.1
+
+La livraison expérimentale figée et ses limites sont dans [V1_1_REPORT.md](V1_1_REPORT.md).
+Source testée 89de7bd6 : 2966 tests réussis / 15 ignorés. APK compilé et contrôlé
+(hash, signature v2, arm64, modèle) ; installation et inférences sur S22 non testées.
+Certificat différent de V1 : mise à jour directe incompatible, ne pas désinstaller
+V1 pour forcer l’essai. Le chantier parallèle sur la branche V1.1 reste distinct.
+
+---
+
 # État Living Memory — version d'essai compilée
 
 Source initiale préservée : 659a03c49af38e45d235c1c7fdeb504b82fbb4ea.
