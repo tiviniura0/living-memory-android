@@ -76,11 +76,15 @@ class ReliabilityEngine {
   /// Structural check only: does not prove entailment of each sentence.
   AnswerValidation validateAnswer(String answer, List<MemoryHit> evidence) {
     final citations = findCitations(answer, count: evidence.length).toList();
-    final numericMarkers = RegExp(r'\[(\d+(?:\s*[,–-]\s*\d+)*)\]').allMatches(answer).toList();
+    final numericMarkers = RegExp(r'\[(\d+(?:\s*[,–-]\s*\d+)*)\]')
+        .allMatches(answer)
+        .toList();
     if (answer.trim().isEmpty ||
         evidence.isEmpty ||
         citations.isEmpty ||
-        numericMarkers.any((m) => !citations.any((c) => c.start == m.start && c.end == m.end))) {
+        numericMarkers.any(
+          (m) => !citations.any((c) => c.start == m.start && c.end == m.end),
+        )) {
       return const AnswerValidation(accepted: false, text: abstention);
     }
     return AnswerValidation(accepted: true, text: answer);
