@@ -58,6 +58,7 @@ void main() {
       images: false,
       tools: false,
     );
+    expect(extractor.modelIdentity, 'Gemma 4 E4B');
     final result = extractor.extract('Note durable.');
     await started();
     chat.emit('[]');

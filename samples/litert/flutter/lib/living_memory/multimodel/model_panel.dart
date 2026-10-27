@@ -32,6 +32,7 @@ class ModelPanel extends StatelessWidget {
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           DropdownButtonFormField<ModelMode>(
+            isExpanded: true,
             key: ValueKey(registry.mode),
             initialValue: registry.mode,
             decoration: const InputDecoration(labelText: 'Choix du modèle'),
@@ -59,7 +60,7 @@ class ModelPanel extends StatelessWidget {
             Text(
               '$id : ${registry.models[id]?.displayName ?? 'non enregistré'}',
             ),
-          Text('État : ${engine.status}'),
+          Semantics(liveRegion: true, child: Text('État : ${engine.status}')),
           if (engine.lastUsed != null)
             Text('Dernier modèle réussi : ${engine.lastUsed}'),
           if (engine.fallbackReason != null)

@@ -88,14 +88,22 @@ final class ChatModelSwitcher {
   Future<Result<void>> unload() => exclusive((ops) => ops.unload());
 
   Future<Result<void>> _reloadNow() async {
-    if (await _release() case final refused?) return refused;
-    return _reloadChatModel();
+    try {
+      if (await _release() case final refused?) return refused;
+      return await _reloadChatModel();
+    } catch (error) {
+      return Result.error(asException(error));
+    }
   }
 
   Future<Result<void>> _unloadNow() async {
-    if (await _release() case final refused?) return refused;
-    await _unloadChatModel();
-    return const Result.ok(null);
+    try {
+      if (await _release() case final refused?) return refused;
+      await _unloadChatModel();
+      return const Result.ok(null);
+    } catch (error) {
+      return Result.error(asException(error));
+    }
   }
 
   /// Releases the chat; null once it is gone. A stopped reply that still

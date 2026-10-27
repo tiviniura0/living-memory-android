@@ -64,9 +64,9 @@ jobs:
       - name: Check auto-memory source formatting
         if: ${{ !cancelled() }}
         run: |
-          dart format lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart
-          git diff -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart > build/evidence/dart-format.patch
-          git diff --exit-code -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart
+          dart format lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
+          git diff -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart > build/evidence/dart-format.patch
+          git diff --exit-code -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
       - name: Analyze
         if: ${{ !cancelled() }}
         run: flutter analyze
@@ -115,6 +115,12 @@ jobs:
           mkdir -p build/evidence
           cp ../../../docs/living-memory/V1_2_VALIDATION.md build/evidence/validation-report.md
           cp ../../../docs/living-memory/V1_2_S22_PROTOCOL.md build/evidence/S22-protocol.md
+          python3 - <<'PYREPORT'
+          import os
+          from pathlib import Path
+          with Path('build/evidence/validation-report.md').open('a') as report:
+              report.write('\n\n## Exécution associée\nCommit : ' + os.environ['GITHUB_SHA'] + '\nRun : https://github.com/' + os.environ['GITHUB_REPOSITORY'] + '/actions/runs/' + os.environ['GITHUB_RUN_ID'] + '\nVérifier le statut final et les journaux. Tests matériels : non exécutés.\n')
+          PYREPORT
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

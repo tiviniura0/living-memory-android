@@ -186,6 +186,15 @@ final class LlmServiceClosedException implements Exception {
   String toString() => 'The LLM service was closed';
 }
 
+/// A failed native close leaves the process state unknown. No further install,
+/// load or unload may proceed until restart.
+final class ModelUnloadException implements Exception {
+  const ModelUnloadException(this.cause);
+  final Object cause;
+  @override
+  String toString() => 'Native model release failed; restart required: $cause';
+}
+
 /// Owns the chat model handle: install, load on exactly the requested
 /// backend, warm up, unload, close. Called only by `ModelRepository` (and the
 /// self-test); together they are the only place that calls
@@ -209,6 +218,8 @@ class LlmService {
   String? _modelId;
   ChatModelConfig? _loaded;
   bool _closed = false;
+  ModelUnloadException? _releaseFailure;
+  Future<void>? _unloading;
 
   /// Whether [load] succeeded and neither [unload] nor [close] ran since.
   bool get isLoaded => _model != null;
@@ -238,6 +249,9 @@ class LlmService {
     required void Function(int percent) onProgress,
   }) async {
     try {
+      if (_closed) return const Result.error(LlmServiceClosedException());
+      await unload();
+      if (_closed) return const Result.error(LlmServiceClosedException());
       if (!await File(path).exists()) {
         return Result.error(ModelFileMissingException(path));
       }
@@ -266,7 +280,13 @@ class LlmService {
     // A model still loaded is closed first: flutter_edge_ai 2.4.0 would
     // close it anyway when the spec or the arguments differ, and reuse it
     // when neither does.
-    await unload();
+    if (_closed) return const Result.error(LlmServiceClosedException());
+    try {
+      await unload();
+    } catch (error) {
+      return Result.error(asException(error));
+    }
+    if (_closed) return const Result.error(LlmServiceClosedException());
     final rssBefore = _rss();
     final watch = Stopwatch()..start();
     try {
@@ -382,12 +402,30 @@ class LlmService {
   /// flutter_edge_ai's singleton). Before switching to another file, and
   /// before the self-test loads its own. A no-op when nothing is loaded.
   Future<void> unload() async {
+    if (_releaseFailure case final failure?) throw failure;
+    if (_unloading case final pending?) {
+      await pending;
+      return;
+    }
     final model = _model;
     _model = null;
     _loaded = null;
-    if (model != null) {
+    if (model == null) return;
+    final closing = () async {
       debugPrint('[LlmService] unloading the chat model');
-      await _closeQuietly(model);
+      try {
+        await model.close();
+      } catch (error) {
+        final failure = ModelUnloadException(error);
+        _releaseFailure = failure;
+        throw failure;
+      }
+    }();
+    _unloading = closing;
+    try {
+      await closing;
+    } finally {
+      _unloading = null;
     }
   }
 

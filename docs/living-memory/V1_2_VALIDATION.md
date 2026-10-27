@@ -25,7 +25,8 @@ apk-metadata.json et les journaux joints. Ce rapport n'est pas une preuve de bui
 - Déchargement avant et après chaque tâche (chaque lot d'extraction, pas chaque
   souvenir). Verrou partagé maintenu jusqu'à la fin de l'inférence. Pas de
   chargement simultané des deux générateurs. EmbeddingGemma reste indépendant.
-- Contexte enregistré plafonné à 2048 tokens, outils désactivés, backend conservé.
+- Contexte GPU/CPU plafonné à 2048 tokens ; contexte compilé NPU conservé.
+  Outils désactivés, backend conservé.
   Modèles .litertlm seulement ; mêmes contrôles de bundle/backend existants.
 - E4B en échec récupérable : nettoyage puis un seul essai E2B s'il est enregistré.
   Annulation et refus de libération native : aucun repli. Réponse partielle
@@ -34,6 +35,16 @@ apk-metadata.json et les journaux joints. Ce rapport n'est pas une preuve de bui
   espace vectoriel 768, agents/projets, sources et migrations V1.1 conservés.
 - Ports futurs ToolRegistry/AgentRuntime/Scheduler conservés, sans exécuteur
   automatique ni service en arrière-plan.
+
+## Revue et corrections
+Revue indépendante en lecture seule : quatre points concrets ont été corrigés.
+1. Erreur native de fermeture autrefois masquée par _closeQuietly : déchargement
+   strict et blocage des chargements si l'état natif devient inconnu.
+2. Mode E4B explicite avec registre vide : erreur, jamais appel E2B silencieux.
+3. E4B dans le parcours historique : provenance dérivée du modèle actif.
+4. Bundle NPU : contexte compilé conservé au lieu de le plafonner.
+Régressions ajoutées pour ces chemins, plus un test étroit de l'adaptateur réel
+avec un handle natif simulé qui refuse de fermer. Ce test n'utilise pas un GPU.
 
 ## Tests et limites
 Les tests moteur utilisent un runtime de test, sans poids IA. Le registre teste
@@ -46,6 +57,8 @@ ou de latence. La limite de 2048 tokens est une politique conservatrice, pas
 une garantie d'absence de manque de mémoire. Les tours multimodales présents
 dans le bundle suivent encore le comportement existant de LiteRT-LM.
 Un OOM qui tue le processus ou un crash natif ne peut pas déclencher le repli Dart.
+Les modèles des autres démonstrations peuvent aussi occuper des ressources ;
+le moteur ne prétend pas libérer leurs allocations.
 Le hash complet avant chaque chargement et le déchargement après chaque tâche
 augmentent la latence ; mesurer avant de conserver un modèle résident.
 Les copies complètes demandent de l'espace disque en plus des imports. Les

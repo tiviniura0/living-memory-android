@@ -149,4 +149,16 @@ void main() {
     expect(switcher.busy.value, isFalse);
     expect(await switcher.reload(), isA<Ok<void>>(), reason: 'not wedged');
   });
+  test('engine close exceptions preserve the Result contract and release the lock', () async {
+    final strict = ChatModelSwitcher(
+      conversation: conversation,
+      reloadChatModel: () async => throw StateError('reload failed'),
+      unloadChatModel: () async => throw StateError('close failed'),
+      refuseChatModelLoads: (_) {},
+    );
+    expect(await strict.unload(), isA<Error<void>>());
+    expect(await strict.reload(), isA<Error<void>>());
+    expect(strict.busy.value, isFalse);
+  });
+
 }

@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter_edge_ai/flutter_edge_ai.dart' show PreferredBackend;
 import 'package:path/path.dart' as p;
 
 import '../../data/repositories/chat_model/custom_chat_model_codec.dart';
@@ -112,7 +113,9 @@ class ModelRegistry {
       await part.rename(file.path);
       final saved = model.copyWith(
         source: LocalModelSource(file.path),
-        maxTokens: model.maxTokens > 2048 ? 2048 : model.maxTokens,
+        maxTokens: model.backend != PreferredBackend.npu && model.maxTokens > 2048
+            ? 2048
+            : model.maxTokens,
         tools: false,
         file: CustomModelFile(
           name: name,

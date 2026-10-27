@@ -150,32 +150,63 @@ void main() {
   });
   test('E2B then E4B preserve real SQLite sources, provenance and isolation after reopen', () async {
     final dir = Directory.systemTemp.createTempSync('switch-db-');
-    var store = MemoryStore.open('${dir.path}/memory.db', profile: 'synthetic', dimension: 2);
-    addTearDown(() { store.close(); dir.deleteSync(recursive: true); });
+    var store = MemoryStore.open(
+      '${dir.path}/memory.db',
+      profile: 'synthetic',
+      dimension: 2,
+    );
+    addTearDown(() {
+      store.close();
+      dir.deleteSync(recursive: true);
+    });
     store.createAgent('aru', 'Aru');
     store.createAgent('bea', 'Bea');
     store.setAutoMemoryEnabled('aru', enabled: true);
-    const candidate = AutoMemoryCandidate(quote: 'Une note.', kind: 'observation',
-      subject: '', relation: '', value: '', uncertain: true);
+    const candidate = AutoMemoryCandidate(
+      quote: 'Une note.',
+      kind: 'observation',
+      subject: '',
+      relation: '',
+      value: '',
+      uncertain: true,
+    );
     for (final id in ['e2b', 'e4b']) {
-      final document = store.addDocument(agentId: 'aru', name: '$id.txt', digest: id,
-        chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Une note.')], vectors: [[1, 0]]);
+      final document = store.addDocument(
+        agentId: 'aru',
+        name: '$id.txt',
+        digest: id,
+        chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Une note.')],
+        vectors: [
+          [1, 0],
+        ],
+      );
       engine.mode = ModelMode.values.byName(id);
-      await engine.run(const ModelTask.extraction(), (used) => AutoMemoryEngine(
-        store: store, extract: (_) async => [candidate], embed: (_) async => [1, 0],
-        cancelled: () => false, extractorIdentity: 'Gemma 4 ${used.toUpperCase()}/extractive-v1',
-      ).process('aru', document));
+      await engine.run(
+        const ModelTask.extraction(),
+        (used) => AutoMemoryEngine(
+          store: store,
+          extract: (_) async => [candidate],
+          embed: (_) async => [1, 0],
+          cancelled: () => false,
+          extractorIdentity: 'Gemma 4 ${used.toUpperCase()}/extractive-v1',
+        ).process('aru', document),
+      );
     }
     final ids = store.memories('aru').map((m) => m.id).toSet();
     expect(ids, hasLength(2));
     store.close();
-    store = MemoryStore.open('${dir.path}/memory.db', profile: 'synthetic', dimension: 2);
+    store = MemoryStore.open(
+      '${dir.path}/memory.db',
+      profile: 'synthetic',
+      dimension: 2,
+    );
     expect(store.documents('aru'), hasLength(2));
     expect(store.memories('aru').map((m) => m.id).toSet(), ids);
-    expect(store.memories('aru').map((m) => m.extractor).toSet(),
-      {'Gemma 4 E2B/extractive-v1', 'Gemma 4 E4B/extractive-v1'});
+    expect(store.memories('aru').map((m) => m.extractor).toSet(), {
+      'Gemma 4 E2B/extractive-v1',
+      'Gemma 4 E4B/extractive-v1',
+    });
     expect(store.memories('bea'), isEmpty);
     expect(store.documents('bea'), isEmpty);
   });
-
 }

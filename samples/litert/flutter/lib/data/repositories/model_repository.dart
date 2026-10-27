@@ -663,7 +663,12 @@ class ModelRepository implements ModelStates {
     if (_closed) return;
     final running = _inFlight;
     if (running != null) await running;
-    await _llm.unload();
+    try {
+      await _llm.unload();
+    } catch (error) {
+      refuseChatModelLoads('Native model release failed; restart required: $error');
+      rethrow;
+    }
     if (_chatLoadsRefused == null) _set(ModelId.chat, const ModelPending());
   }
 

@@ -33,7 +33,11 @@ class LiteRtMemoryRuntime implements LocalModelRuntime {
 
   @override
   Future<void> unload() async {
-    if (await _ops!.unload() case Error()) throw const ModelReleaseFailure();
+    try {
+      if (await _ops!.unload() case Error()) throw const ModelReleaseFailure();
+    } catch (_) {
+      throw const ModelReleaseFailure();
+    }
   }
 
   @override

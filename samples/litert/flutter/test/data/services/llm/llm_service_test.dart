@@ -324,6 +324,43 @@ void main() {
     await expectLater(llm.unload(), throwsA(isA<Exception>()));
   });
 
+  test('load waits for an in-flight native unload', () async {
+    final gate = Completer<void>();
+    var loads = 0;
+    final llm = LlmService(loadModel: (_) async {
+      loads++;
+      return loads == 1 ? _GatedCloseModel(gate) : FakeInferenceModel();
+    });
+    await llm.load(kDefineChatModel);
+    final closing = llm.unload();
+    final loading = llm.load(kDefineChatModel);
+    await pumpEventQueue();
+    expect(loads, 1);
+    gate.complete();
+    await closing;
+    expect(await loading, isA<Ok<LlmInfo>>());
+    expect(loads, 2);
+    await llm.close();
+  });
+
+  test('install waits for the native unload barrier before inspecting a new file', () async {
+    final gate = Completer<void>();
+    final llm = LlmService(loadModel: (_) async => _GatedCloseModel(gate));
+    await llm.load(kDefineChatModel);
+    final closing = llm.unload();
+    var completed = false;
+    final installing = llm.install(path: '/missing/model.litertlm', onProgress: (_) {}).then((result) {
+      completed = true;
+      return result;
+    });
+    await pumpEventQueue();
+    expect(completed, isFalse);
+    gate.complete();
+    await closing;
+    expect(await installing, isA<Error<String>>());
+    await llm.close();
+  });
+
   group('close', () {
     test('a model that arrives after close() is closed, not kept', () async {
       final pending = Completer<InferenceModel>();
@@ -571,4 +608,11 @@ Future<void> pumpEventQueue() => Future<void>.delayed(Duration.zero);
 class _ThrowingCloseModel extends FakeInferenceModel {
   @override
   Future<void> close() async => throw StateError('engine_delete failed');
+}
+
+class _GatedCloseModel extends FakeInferenceModel {
+  _GatedCloseModel(this.gate);
+  final Completer<void> gate;
+  @override
+  Future<void> close() => gate.future;
 }

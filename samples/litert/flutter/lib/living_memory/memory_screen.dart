@@ -207,9 +207,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     );
     final engine = AutoMemoryEngine(
       store: _store!,
-      extractorIdentity: modelId == null
-          ? AutoMemoryEngine.extractorId
-          : 'Gemma 4 ${modelId.toUpperCase()}/extractive-v1',
+      extractorIdentity: '${extractor.modelIdentity}/extractive-v1',
       extract: extractor.extract,
       embed: _embedMemory,
       cancelled: () => _closed || _cancelled,
@@ -229,7 +227,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
     Future<T> Function(String?) action,
   ) async {
     final models = _models;
-    if (models == null || _registry!.models.isEmpty) return action(null);
+    if (models == null) return action(null);
+    if (_registry!.models.isEmpty && models.mode == ModelMode.auto) {
+      return action(null);
+    }
     return models.run(task, action, cancelled: () => _closed || _cancelled);
   }
 
