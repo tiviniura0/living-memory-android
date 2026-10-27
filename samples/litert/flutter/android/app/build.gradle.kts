@@ -86,6 +86,9 @@ android {
 
     buildTypes {
         release {
+            // PDFBox explicitly treats JP2 as optional. Text extraction needs
+            // no JPEG-2000 codec; silence only that absent optional class.
+            proguardFiles("proguard-rules.pro")
             signingConfig = if (hasReleaseKey) {
                 signingConfigs.getByName("release")
             } else {

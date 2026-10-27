@@ -91,3 +91,13 @@ pas une garantie d'absence de vulnérabilités dans toute l'application.
 Sources complémentaires :
 - https://www.bouncycastle.org/resources/new-release-bouncy-castle-java-1-86/
 - https://huggingface.co/google/embeddinggemma-2/blob/main/config_sentence_transformers.json
+
+## Correction R8 ciblée
+Le build 40433141661 a compilé le code puis échoué à minifyReleaseWithR8 :
+classe optionnelle `com.gemalto.jp2.JP2Decoder` absente. Le README officiel
+PDFBox Android explique que JPX est optionnel et ignoré sans ce codec ;
+Living Memory fait de l'extraction de texte, sans rendu d'images/OCR.
+Une règle `-dontwarn com.gemalto.jp2.JP2Decoder` est donc ajoutée seule.
+R8 reste actif ; aucune règle globale `-dontwarn **`, aucune dépendance
+supplémentaire au décodeur ni dépôt JCenter ancien n'est ajoutée.
+Source : https://github.com/TomRoush/PdfBox-Android/blob/master/README.md
