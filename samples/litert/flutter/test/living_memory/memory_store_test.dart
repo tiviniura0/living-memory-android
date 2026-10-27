@@ -26,7 +26,9 @@ void main() {
         agentId: agent,
         name: 'source.txt',
         digest: hash,
-        chunks: [MemoryChunk(page: 1, ordinal: 1, text: 'La clé est verte.')],
+        chunks: [
+          const MemoryChunk(page: 1, ordinal: 1, text: 'La clé est verte.'),
+        ],
         vectors: [vector],
       );
 
@@ -57,6 +59,7 @@ void main() {
     for (final vector in [
       [double.nan, 0.0],
       [double.infinity, 1.0],
+      [1e-300, 0.0],
       [0.0, 0.0],
       [1.0],
     ]) {
@@ -64,6 +67,29 @@ void main() {
       expect(store.documents('aru'), isEmpty);
     }
   });
+  test('a constraint failure rolls back every passage and the document', () {
+    expect(
+      () => store.addDocument(
+        agentId: 'aru',
+        name: 'broken.txt',
+        digest: 'broken',
+        chunks: [
+          const MemoryChunk(page: 1, ordinal: 1, text: 'first'),
+          const MemoryChunk(page: 2, ordinal: 1, text: 'duplicate ordinal'),
+        ],
+        vectors: [
+          [1, 0],
+          [1, 0],
+        ],
+      ),
+      throwsException,
+    );
+    expect(store.documents('aru'), isEmpty);
+    expect(store.search('aru', [1, 0]), isEmpty);
+    add('aru', 'valid-after-rollback', [1, 0]);
+    expect(store.documents('aru'), hasLength(1));
+  });
+
   test('document deletion cannot cross agent boundary', () {
     final id = add('aru', 'a', [1, 0]);
     store.deleteDocument('bea', id);

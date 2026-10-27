@@ -14,9 +14,8 @@
 
 import 'dart:io';
 
-import 'package:flutter/services.dart';
-
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter/services.dart';
 
 import '../../../domain/ports/model_file_picker.dart';
 

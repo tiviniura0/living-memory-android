@@ -21,7 +21,6 @@ import 'package:provider/provider.dart';
 import 'package:provider/single_child_widget.dart';
 
 import 'config/demos.dart';
-import 'living_memory/memory_screen.dart';
 import 'config/dependencies.dart';
 import 'config/model_catalog.dart';
 import 'config/voice_config.dart';
@@ -40,6 +39,7 @@ import 'domain/ports/model_states.dart';
 import 'domain/use_cases/camera_turn_responder.dart';
 import 'domain/use_cases/chat_turn_responder.dart';
 import 'domain/use_cases/voice_assistant.dart';
+import 'living_memory/memory_screen.dart';
 import 'ui/core/app_foreground.dart';
 import 'ui/core/debug_overlay.dart';
 import 'ui/features/home/view_models/home_view_model.dart';

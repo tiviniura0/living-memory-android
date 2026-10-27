@@ -15,10 +15,11 @@ List<MemoryChunk> chunkPages(List<String> pages) {
         chunks.add(
           MemoryChunk(page: page + 1, ordinal: chunks.length + 1, text: text),
         );
-        if (chunks.length > 10000)
+        if (chunks.length > 10000) {
           throw const FormatException(
             'Document trop long : maximum 10 000 passages.',
           );
+        }
       }
       buffer.clear();
       bytes = 0;
@@ -33,9 +34,10 @@ List<MemoryChunk> chunkPages(List<String> pages) {
     }
     flush();
   }
-  if (chunks.isEmpty)
+  if (chunks.isEmpty) {
     throw const FormatException(
       'Aucun texte : PDF scanné non pris en charge (pas d’OCR).',
     );
+  }
   return chunks;
 }

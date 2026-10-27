@@ -47,8 +47,9 @@ class MemoryStore {
     required String profile,
     required int dimension,
   }) {
-    if (dimension < 1 || profile.isEmpty)
+    if (dimension < 1 || profile.isEmpty) {
       throw ArgumentError('Invalid embedding profile');
+    }
     final db = sqlite3.open(path);
     try {
       db.execute('PRAGMA foreign_keys = ON');
@@ -166,8 +167,9 @@ class MemoryStore {
                 )
                 .first['n']
             as int;
-    if (total + chunks.length > 10000)
+    if (total + chunks.length > 10000) {
       throw StateError('Limite V1 : 10 000 passages par agent.');
+    }
     final id = sha256.convert(utf8.encode('$agentId\n$digest')).toString();
     _db.execute('BEGIN IMMEDIATE');
     try {
@@ -232,7 +234,8 @@ class MemoryStore {
             .map((v) => v.toDouble())
             .toList();
         _validateVector(stored);
-        var dot = 0.0, norm = 0.0;
+        var dot = 0.0;
+        var norm = 0.0;
         for (var i = 0; i < dimension; i++) {
           dot += vector[i] * stored[i];
           norm += stored[i] * stored[i];
@@ -268,10 +271,11 @@ class MemoryStore {
   );
 
   void _validateVector(List<double> vector) {
+    final normSquared = vector.fold(0.0, (s, v) => s + v * v);
     if (vector.length != dimension ||
         vector.any((v) => !v.isFinite) ||
         vector.every((v) => v == 0) ||
-        !vector.fold(0.0, (s, v) => s + v * v).isFinite) {
+        (!normSquared.isFinite || normSquared <= 0)) {
       throw ArgumentError('Vecteur incompatible, nul ou non fini');
     }
   }

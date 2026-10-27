@@ -126,8 +126,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
   }
 
   Future<void> _import() async {
-    if (!Platform.isAndroid)
+    if (!Platform.isAndroid) {
       throw UnsupportedError('Import système disponible sur Android.');
+    }
     final file = await _channel.invokeMapMethod<String, dynamic>(
       'pickDocument',
     );
@@ -180,10 +181,11 @@ class _MemoryScreenState extends State<MemoryScreen> {
     final fitting = _value(
       await widget.conversation.firstFittingPrompt(prompts),
     );
-    if (fitting == null)
+    if (fitting == null) {
       throw StateError(
         'Contexte du modèle trop petit pour un passage et la réponse.',
       );
+    }
     _hits = _hits.take(_hits.length - fitting).toList();
     if (_closed) return;
     setState(() => _status = 'Gemma répond sur cet appareil…');
@@ -273,7 +275,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     if (_active case final task?) {
       unawaited(
         task
-            .then<void>((_) {}, onError: (Object _, StackTrace __) {})
+            .then<void>((_) {}, onError: (Object _, StackTrace _) {})
             .whenComplete(() => store?.close()),
       );
     } else {
@@ -317,13 +319,14 @@ class _MemoryScreenState extends State<MemoryScreen> {
                       ],
                       onChanged: enabled
                           ? (value) {
-                              if (value != null)
+                              if (value != null) {
                                 setState(() {
                                   _agent = value;
                                   _hits = [];
                                   _answer = '';
                                   _status = 'Agent changé. Nouvelle question sans historique partagé.';
                                 });
+                              }
                             }
                           : null,
                     ),
@@ -448,12 +451,13 @@ class _MemoryScreenState extends State<MemoryScreen> {
                                 ],
                               ),
                             );
-                            if (confirmed == true && mounted && !_busy)
+                            if (confirmed == true && mounted && !_busy) {
                               setState(() {
                                 store.deleteDocument(_agent, doc.id);
                                 _hits = [];
                                 _answer = '';
                               });
+                            }
                           }
                         : null,
                   ),

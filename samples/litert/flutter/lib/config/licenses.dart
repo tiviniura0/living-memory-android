@@ -27,6 +27,12 @@ void registerModelLicenses() {
 /// Linux JPEG library.
 const modelLicenses = [
   LicenseEntryWithLineBreaks(['LiteRT Demos app'], _appNotice),
+  LicenseEntryWithLineBreaks(
+    ['PDFBox Android 2.0.27.0'],
+    'PDFBox Android, Copyright Tom Roush and contributors, a port of Apache PDFBox. '
+    'Apache License 2.0. https://github.com/TomRoush/PdfBox-Android '
+    'https://www.apache.org/licenses/LICENSE-2.0',
+  ),
   LicenseEntryWithLineBreaks(['YOLO26n detector (built in)'], _yolo26nNotice),
   LicenseEntryWithLineBreaks([
     'EmbeddingGemma 2 740m (built in)',
