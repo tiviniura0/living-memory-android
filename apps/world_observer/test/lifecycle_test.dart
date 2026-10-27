@@ -48,7 +48,7 @@ void main() {
       CheckpointStore(d, files: FullDisk()),
     );
     await t.pumpWidget(WorldApp(controller: broken));
-    await broken.save();
+    await t.runAsync(() => broken.save());
     await t.pump();
     expect(find.textContaining('Sauvegarde impossible'), findsOneWidget);
     expect(find.text('Pause'), findsOneWidget);
