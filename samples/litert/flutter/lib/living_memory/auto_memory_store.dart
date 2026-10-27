@@ -46,9 +46,21 @@ class AutoMemoryRecord {
       provenance=r['provenance'] as String, version=r['version'] as int,
       createdAt=r['created_at'] as String, updatedAt=r['updated_at'] as String,
       sourceName=r['source_name'] as String, page=r['page'] as int;
-  final String id, agentId, documentId, text, quote, kind, status, extractor,
-      provenance, createdAt, updatedAt, sourceName;
-  final int ordinal, page, version;
+  final String id;
+  final String agentId;
+  final String documentId;
+  final String text;
+  final String quote;
+  final String kind;
+  final String status;
+  final String extractor;
+  final String provenance;
+  final String createdAt;
+  final String updatedAt;
+  final String sourceName;
+  final int ordinal;
+  final int page;
+  final int version;
   final bool uncertain;
 }
 
@@ -90,6 +102,14 @@ extension AutoMemoryStorage on MemoryStore {
       JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
       WHERE m.agent_id=? ORDER BY m.created_at DESC,m.id LIMIT ? OFFSET ?''',[agentId,limit,offset]))
       AutoMemoryRecord._(r)];
+  }
+
+  AutoMemoryRecord? memoryRecord(String agentId,String id) {
+    final rows=_db.select('''SELECT m.*,d.name AS source_name,c.page
+      FROM memories m JOIN documents d ON d.id=m.document_id
+      JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
+      WHERE m.agent_id=? AND m.id=?''',[agentId,id]);
+    return rows.isEmpty?null:AutoMemoryRecord._(rows.single);
   }
 
   Row _memory(String agentId,String id) {

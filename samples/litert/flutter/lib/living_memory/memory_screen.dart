@@ -15,6 +15,9 @@ import '../domain/models/assistant_event.dart';
 import '../domain/models/knowledge_query.dart';
 import '../utils/citations.dart';
 import '../utils/result.dart';
+import 'auto_memory_engine.dart';
+import 'auto_memory_panel.dart';
+import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
 import 'memory_store.dart';
 
@@ -58,6 +61,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
   List<MemoryHit> _hits = [];
   bool _busy = false;
   bool _closed = false;
+  bool _cancelled = false;
   Future<void>? _active;
   double _threshold = 0.65;
 
@@ -82,6 +86,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
 
   Future<void> _run(Future<void> Function() action) async {
     if (_busy || _closed) return;
+    _cancelled = false;
     setState(() => _busy = true);
     final task = action();
     _active = task;
@@ -100,7 +105,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     final chunks = chunkPages(pages);
     final vectors = <List<double>>[];
     for (var i = 0; i < chunks.length; i += 8) {
-      if (_closed) return;
+      if (_closed || _cancelled) return;
       setState(
         () => _status = 'Indexation locale : $i / ${chunks.length} passages',
       );
@@ -112,9 +117,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
         ),
       );
     }
-    if (_closed) return;
+    if (_closed || _cancelled) return;
     final digest = sha256.convert(utf8.encode(jsonEncode(pages))).toString();
-    _store!.addDocument(
+    final documentId = _store!.addDocument(
       agentId: agent,
       name: name,
       digest: digest,
@@ -123,6 +128,34 @@ class _MemoryScreenState extends State<MemoryScreen> {
       kind: kind,
     );
     _status = 'Import terminé : ${chunks.length} passages. Doublons ignorés.';
+    if (_store!.autoMemoryEnabled(agent)) {
+      try {
+        await _extractMemories(documentId);
+      } catch (e) {
+        _status = 'Source importée et conservée. Extraction à reprendre : $e';
+      }
+    }
+  }
+
+  Future<List<double>> _embedMemory(String text) async =>
+      _value(await widget.embedder.embedDocuments([text])).single;
+
+  Future<void> _extractMemories(String documentId) async {
+    final extractor = GemmaMemoryExtractor(widget.conversation,
+      cancelled: () => _closed || _cancelled);
+    final engine = AutoMemoryEngine(store: _store!, extract: extractor.extract,
+      embed: _embedMemory, cancelled: () => _closed || _cancelled);
+    if (!_closed) setState(() => _status = 'Extraction locale Gemma • jusqu’à 8 passages…');
+    final result = await engine.process(_agent, documentId);
+    if (_closed || _cancelled) return;
+    _status = '${result.processed} passages traités • ${result.added} candidats examinés. '
+      'Consulte les souvenirs. Reprends la source pour les passages restants.';
+  }
+
+  Future<void> _cancel() async {
+    _cancelled = true;
+    _status = 'Arrêt demandé. Les sources déjà importées sont conservées.';
+    await widget.conversation.stop();
   }
 
   Future<void> _import() async {
@@ -153,7 +186,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     final vector = _value(
       await widget.embedder.embedQuery(KnowledgeQuery.text(question)),
     );
-    if (_closed) return;
+    if (_closed || _cancelled) return;
     _hits = _store!.search(_agent, vector, minSimilarity: _threshold);
     if (_hits.isEmpty) {
       _status = 'Aucun passage au seuil choisi. Aucun appel au générateur.';
@@ -190,7 +223,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     if (_closed) return;
     setState(() => _status = 'Gemma répond sur cet appareil…');
     await for (final event in widget.conversation.ask(prompts[fitting])) {
-      if (_closed) {
+      if (_closed || _cancelled) {
         await widget.conversation.stop();
         return;
       }
@@ -292,7 +325,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Living Memory • local')),
+        appBar: AppBar(title: const Text('Living Memory V1.1 • local')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -399,6 +432,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 padding: EdgeInsets.symmetric(vertical: 8),
                 child: LinearProgressIndicator(),
               ),
+            if (_busy) TextButton.icon(
+              onPressed: () => unawaited(_cancel()),
+              icon: const Icon(Icons.stop), label: const Text('Arrêter')),
             Semantics(liveRegion: true, child: Text(_status)),
             if (_answer.isNotEmpty)
               Padding(
@@ -421,6 +457,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 ),
               ),
             if (store != null) ...[
+              const Divider(),
+              AutoMemoryPanel(key: ValueKey('auto-$_agent'),
+                store: store, agentId: _agent, busy: _busy, run: _run,
+                embed: _embedMemory, process: _extractMemories),
               const Divider(),
               const Text('Sources de cet agent'),
               for (final doc in store.documents(_agent))
