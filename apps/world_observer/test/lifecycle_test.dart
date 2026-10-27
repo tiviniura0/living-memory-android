@@ -1,3 +1,5 @@
+import 'package:flutter/widgets.dart' show AppLifecycleState, SizedBox;
+
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
