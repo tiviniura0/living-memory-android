@@ -53,6 +53,18 @@ void main() {
     expect(manager.checkpoints(id), hasLength(1));
     expect(manager.activeTokenEstimate(id), lessThan(256));
   });
+  test('compaction after reset and changed decisions appends a fresh checkpoint', () {
+    final manager = ContextLifecycleManager(store, scope);
+    final id = manager.startSession();
+    manager.append(id, 'user', 'Décision A');
+    manager.compact(id);
+    manager.resetActiveContext(id);
+    manager.markDecision(id, 1, decision: true);
+    final revised = manager.compact(id);
+    expect(manager.checkpoints(id).last.id, revised.id);
+    expect(manager.checkpoints(id), hasLength(3));
+    expect(revised.summary, contains('décision utilisateur'));
+  });
   test('reset retains originals and permanent documents', () {
     final doc = store.addDocument(agentId: 'aru', name: 'note', digest: 'a',
       chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Permanent')], vectors: [[1, 0]]);

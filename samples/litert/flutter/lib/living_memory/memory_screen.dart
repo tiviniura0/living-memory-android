@@ -206,6 +206,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
       );
     }
     _answer = '';
+    _hits = [];
+    final vector = _value(await widget.embedder.embedQuery(KnowledgeQuery.text(question)));
+    if (_closed || _cancelled) return;
     _hits = ReliabilityEngine(_store!).retrieve(_agent, question, vector,
       minSimilarity: _threshold, projectId: _project);
     if (_hits.isEmpty) {

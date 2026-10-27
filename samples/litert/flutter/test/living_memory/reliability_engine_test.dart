@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:sqlite3/sqlite3.dart';
 import 'package:litert_edge_demos/living_memory/auto_memory_candidate.dart';
 import 'package:litert_edge_demos/living_memory/memory_store.dart';
 import 'package:litert_edge_demos/living_memory/reliability_engine.dart';
@@ -25,6 +26,33 @@ void main() {
     expect(ReliabilityEngine(store).retrieve('aru', '" OR *', [1, 0]), isEmpty);
     store.deleteDocument('aru', hits.single.documentId);
     expect(ReliabilityEngine(store).retrieve('aru', 'zirconium', [1, 0]), isEmpty);
+  });
+  test('migration from schema 2 rebuilds FTS and preserves sources', () {
+    final doc = store.addDocument(agentId: 'aru', name: 'ancien', digest: 'a',
+      chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'zirconium ancien')], vectors: [[1, 0]]);
+    store.close();
+    final db = sqlite3.open('${dir.path}/m.db');
+    for (final table in ['context_checkpoints', 'context_messages', 'context_sessions']) {
+      db.execute('DROP TABLE $table');
+    }
+    for (final trigger in ['chunks_fts_insert', 'chunks_fts_delete', 'chunks_fts_update']) {
+      db.execute('DROP TRIGGER $trigger');
+    }
+    db.execute('DROP TABLE chunk_fts');
+    db.execute('ALTER TABLE documents DROP COLUMN project_id');
+    db.execute('ALTER TABLE documents DROP COLUMN world_id');
+    db.execute('PRAGMA user_version=2');
+    db.close();
+    store = MemoryStore.open('${dir.path}/m.db', profile: 'test', dimension: 2);
+    expect(store.searchText('aru', 'zirconium').single.documentId, doc);
+    store.close();
+    store = MemoryStore.open('${dir.path}/m.db', profile: 'test', dimension: 2);
+    expect(store.documents('aru').single.id, doc);
+  });
+  test('parser separates attributed declarations and hypotheses', () {
+    for (final kind in ['declaration', 'hypothesis']) {
+      expect(AutoMemoryCandidate.parse('[{"quote":"Peut-être","kind":"$kind","subject":"","relation":"","value":"","uncertain":true}]', 'Peut-être').single.kind, kind);
+    }
   });
   test('project retrieval cannot use a document from another project', () {
     store.addDocument(agentId: 'aru', name: 'private', digest: 'p', projectId: 'p',

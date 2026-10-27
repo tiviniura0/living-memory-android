@@ -9,3 +9,7 @@ Précontrôle : ContextLifecycleManager dépend des archives MemoryStore et de M
 CI 40479866803 : arrêt au format avant tests. Ce n'est pas une preuve comportementale ; ordre de contrôles corrigé dans 386d733f. Attendre les contrats exécutés avant l'implémentation.
 
 CI rouge 40479936350 : 35 tests ciblés existants réussis ; chargement impossible des deux nouveaux modules absents (ReliabilityEngine, ContextLifecycleManager et archiveMemory). Implémentation démarrée après lecture des erreurs. Les nouveaux tests UI et projet ajoutés ensuite seront validés dans l'exécution suivante ; ils n'ont pas encore une preuve rouge individuelle.
+
+Implémentation c125f14a : migration 3, FTS5 externe et triggers, sessions et checkpoints, scopes de documents projet/monde, UI de sessions, archivage versionné et abstention structurelle. Le texte généré est tamponné avant contrôle ; l'archive garde son origine IA non vérifiée. Aucun service autonome lancé.
+
+CI c125f14a / 40480927925 : 42 tests ciblés réussis ; test d'écran non chargé, variable vector absente. Cause : remplacement du bloc de recherche trop large ayant enlevé l'appel existant à embedQuery. Appel et contrôle d'annulation restaurés. Aucun problème SQLite ni widget de sessions signalé dans cette exécution. Ajout de régressions pour compaction après reset et nouvelles catégories avant correction ; tests migration V2 et séparation projet étendus.

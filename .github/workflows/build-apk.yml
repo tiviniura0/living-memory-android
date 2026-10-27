@@ -61,11 +61,14 @@ jobs:
           set -o pipefail
           flutter test test/living_memory --reporter expanded 2>&1 | tee build/evidence/auto-memory-test.log
       - name: Check auto-memory source formatting
+        if: ${{ !cancelled() }}
         run: |
+          dart fix --apply --code=curly_braces_in_flow_control_structures,avoid_multiple_declarations_per_line,directives_ordering,prefer_const_constructors
           dart format lib/living_memory test/living_memory
           git diff -- lib/living_memory test/living_memory > build/evidence/dart-format.patch
           git diff --exit-code -- lib/living_memory test/living_memory
       - name: Analyze
+        if: ${{ !cancelled() }}
         run: flutter analyze
       - name: Unit and widget regression suite
         run: |
