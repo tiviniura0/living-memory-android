@@ -55,14 +55,16 @@ jobs:
           bash tool/fetch_models.sh --check
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
-      - name: Check auto-memory source formatting
-        run: |
-          mkdir -p build/evidence
-          dart format --output=none --set-exit-if-changed lib/living_memory test/living_memory
       - name: Auto-memory focused contracts
         run: |
+          mkdir -p build/evidence
           set -o pipefail
           flutter test test/living_memory --reporter expanded 2>&1 | tee build/evidence/auto-memory-test.log
+      - name: Check auto-memory source formatting
+        run: |
+          dart format lib/living_memory test/living_memory
+          git diff -- lib/living_memory test/living_memory > build/evidence/dart-format.patch
+          git diff --exit-code -- lib/living_memory test/living_memory
       - name: Analyze
         run: flutter analyze
       - name: Unit and widget regression suite
