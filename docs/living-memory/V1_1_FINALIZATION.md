@@ -20,6 +20,20 @@ Les résultats définitifs sont les logs et métadonnées de CE run, pas ceux du
 L'artefact contient aussi ce rapport ; sa présence seule ne prouve pas le succès :
 vérifier que toutes les étapes du run sont vertes.
 
+## Régression du nom du modèle importé
+
+La revue du chemin réel d'import montre que defaultsFor utilise le nom de fichier
+sans extension comme displayName, puis CustomChatPlan transmet ce nom à
+ChatCapabilities. L'extracteur attendait seulement « Gemma 4 E2B » et refusait donc
+« gemma-4-E2B-it ». Le test ajouté dans le run
+[40555781746](https://github.com/tiviniura0/living-memory-android/actions/runs/40555781746)
+échoue précisément avec « Sélectionne Gemma 4 E2B » ; les 59 autres tests ciblés
+passent. Le correctif accepte le nom standard, le nom de fichier générique et son
+stem. Ce contrôle de libellé n'authentifie pas les poids ; un nom personnalisé
+différent doit être remis à « Gemma 4 E2B » dans la carte du modèle.
+Aucun format de modèle ni moteur natif n'est remplacé. Le test de conversation
+reste simulé ; les vrais poids et l'appareil restent à valider.
+
 ## Couverture opérationnelle et limites
 
 | Composant | Ce que vérifient le code et les tests automatisés | Limite matérielle / sémantique |

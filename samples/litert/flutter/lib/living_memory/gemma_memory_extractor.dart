@@ -39,7 +39,13 @@ class GemmaMemoryExtractor {
     if (utf8.encode(passage).length > 700) {
       throw const FormatException('Passage trop long.');
     }
-    if (conversation.capabilities.modelName != 'Gemma 4 E2B') {
+    // Imported files use their filename stem as the default display name.
+    // This is a compatibility label check, not authentication of model weights.
+    if (!const {
+      'Gemma 4 E2B',
+      'gemma-4-E2B-it',
+      kRetiredGemmaFile,
+    }.contains(conversation.capabilities.modelName)) {
       throw StateError(
         'Sélectionne Gemma 4 E2B pour la mémorisation automatique.',
       );
