@@ -48,7 +48,11 @@ void _migrateSessionRetrieval(Database db) {
 extension SessionRetrieval on MemoryStore {
   /// Only explicit user decisions are RAG evidence. Ordinary questions and
   /// generated assistant messages stay in the archive, outside retrieval.
-  List<MemoryHit> searchDecisions(String scopeKey, String agentId, String query) {
+  List<MemoryHit> searchDecisions(
+    String scopeKey,
+    String agentId,
+    String query,
+  ) {
     if (utf8.encode(query).length > 2000) {
       throw ArgumentError('Recherche invalide');
     }
@@ -70,10 +74,12 @@ extension SessionRetrieval on MemoryStore {
         MemoryHit(
           agentId: agentId,
           documentId: 'session:${r['id']}',
-          name: 'Décision utilisateur • session ${r['id'].toString().substring(0, 8)}',
+          name:
+              'Décision utilisateur • session ${r['id'].toString().substring(0, 8)}',
           page: 1,
           ordinal: r['ordinal'] as int,
-          text: 'Déclaration de l’utilisateur, sans vérification externe : ${r['content']}',
+          text:
+              'Déclaration de l’utilisateur, sans vérification externe : ${r['content']}',
           similarity: 0,
         ),
     ];

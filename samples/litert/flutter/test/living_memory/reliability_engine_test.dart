@@ -132,16 +132,29 @@ void main() {
       hasLength(1),
     );
   });
-  test('same digest is independent across projects and idempotent within each', () {
-    String add(String project) => store.addDocument(agentId: 'aru', name: 'same', digest: 'same', projectId: project,
-      chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Source commune')], vectors: [[1, 0]]);
-    final general = add('');
-    final scoped = add('p');
-    expect(scoped, isNot(general));
-    expect(add('p'), scoped);
-    expect(store.documents('aru', projectId: 'p').single.id, scoped);
-    expect(store.documents('aru').single.id, general);
-  });
+  test(
+    'same digest is independent across projects and idempotent within each',
+    () {
+      String add(String project) => store.addDocument(
+        agentId: 'aru',
+        name: 'same',
+        digest: 'same',
+        projectId: project,
+        chunks: [
+          const MemoryChunk(page: 1, ordinal: 1, text: 'Source commune'),
+        ],
+        vectors: [
+          [1, 0],
+        ],
+      );
+      final general = add('');
+      final scoped = add('p');
+      expect(scoped, isNot(general));
+      expect(add('p'), scoped);
+      expect(store.documents('aru', projectId: 'p').single.id, scoped);
+      expect(store.documents('aru').single.id, general);
+    },
+  );
   test('empty evidence, uncited output and out-of-range citations abstain', () {
     final engine = ReliabilityEngine(store);
     final hit = const MemoryHit(

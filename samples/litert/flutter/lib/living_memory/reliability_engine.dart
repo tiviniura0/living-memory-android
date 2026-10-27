@@ -44,7 +44,11 @@ class ReliabilityEngine {
         worldId: worldId,
       ),
       store.searchDecisions(
-        MemoryScope(agentId: agentId, projectId: projectId, worldId: worldId).key,
+        MemoryScope(
+          agentId: agentId,
+          projectId: projectId,
+          worldId: worldId,
+        ).key,
         agentId,
         question,
       ),

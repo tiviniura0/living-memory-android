@@ -179,7 +179,7 @@ class MemoryStore {
               .toString();
     final existing = _db.select(
       'SELECT id FROM documents WHERE agent_id=? AND digest=?',
-      [agentId, digest],
+      [agentId, scopedDigest],
     );
     if (existing.isNotEmpty) return existing.first['id'] as String;
     final total =
