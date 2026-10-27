@@ -37,8 +37,8 @@ jobs:
         run: |
           set -euo pipefail
           flutter pub get
-          flutter analyze
           flutter test --reporter expanded 2>&1 | tee ../../evidence/flutter.log
+          flutter analyze
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
