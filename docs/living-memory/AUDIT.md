@@ -19,6 +19,7 @@ est `samples/litert/flutter`. Les packages Flutter sont communautaires.
 | flutter_litert | 3.9.3, copie locale patchée via tool/flutter_litert/vendor.sh |
 | flutter_edge_ai_rag / sqlite | 1.1.2 / 2.1.1 |
 | sqlite3 | 3.7.1 déjà transitif, rendu direct pour la base privée |
+| Bouncy Castle transitif | 1.72 demandé par PDFBox ; contraintes vers 1.86 (modules bcprov, bcpkix, bcutil) |
 | PDFBox Android ajouté | com.tom-roush:pdfbox-android:2.0.27.0, Apache-2.0 |
 | Android | API 30 minimum, arm64-v8a, Java 17 |
 
@@ -48,7 +49,12 @@ est `samples/litert/flutter`. Les packages Flutter sont communautaires.
 - 768 dimensions et limite de 1024 tokens contrôlées par EmbedderService.
   Les documents et requêtes passent respectivement par TaskType.retrievalDocument
   et TaskType.retrievalQuery. Le profil conserve les préfixes réels du package
-  verrouillé ; il ne doit pas être réutilisé si modèle ou préfixes changent.
+  verrouillé : requête `task: search result | query: ` et document
+  `title: none | text: `. Ces chaînes correspondent à la configuration
+  SentenceTransformers publiée par Google pour EmbeddingGemma 2. La page
+  LiteRT-LM donne d'autres chaînes : cette divergence documentaire est
+  signalée, pas résolue par un changement arbitraire d'espace vectoriel.
+  Le profil ne doit pas être réutilisé si modèle ou préfixes changent.
 - Aucune extraction des fichiers privés de Gallery n'est tentée. Le fichier
   de génération doit être téléchargé ou choisi explicitement dans Android.
 
@@ -77,3 +83,11 @@ est `samples/litert/flutter`. Les packages Flutter sont communautaires.
 - https://github.com/TomRoush/PdfBox-Android
 - https://pub.dev/packages/sqlite3/versions/3.7.1
 - Le code, lock, hook/build.dart et tool/models.lock réellement inspectés.
+
+PDFBox demande Bouncy Castle 1.72 dans son POM. Les trois modules sont contraints
+à 1.86, version de durcissement officielle vérifiée sur Maven Central. Le rapport
+Gradle de l'artefact doit confirmer la résolution réelle ; cela ne constitue
+pas une garantie d'absence de vulnérabilités dans toute l'application.
+Sources complémentaires :
+- https://www.bouncycastle.org/resources/new-release-bouncy-castle-java-1-86/
+- https://huggingface.co/google/embeddinggemma-2/blob/main/config_sentence_transformers.json

@@ -67,6 +67,7 @@ jobs:
           flutter build apk --release --target-platform android-arm64
           mkdir -p build/evidence
           sha256sum build/app/outputs/flutter-apk/app-release.apk > build/evidence/APK-SHA256.txt
+          (cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath) > build/evidence/android-dependencies.txt
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

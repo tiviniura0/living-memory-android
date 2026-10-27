@@ -120,5 +120,12 @@ flutter {
 dependencies {
     // Apache-2.0, text extraction on device, no cloud/OCR.
     implementation("com.tom-roush:pdfbox-android:2.0.27.0")
+    // PDFBox's POM asks for 1.72. Use the maintained hardening release
+    // (upstream 1.86, Maven coordinates verified), consistently for all three.
+    constraints {
+        implementation("org.bouncycastle:bcprov-jdk15to18:1.86")
+        implementation("org.bouncycastle:bcpkix-jdk15to18:1.86")
+        implementation("org.bouncycastle:bcutil-jdk15to18:1.86")
+    }
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.5")
 }
