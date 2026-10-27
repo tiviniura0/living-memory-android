@@ -31,3 +31,6 @@ Pas de test matériel S22 dans ce runner : qualité des modèles réels, install
 - Branche GitHub créée exactement depuis 0f95b7eb. Écriture distante via connecteur GitHub (push CLI sans identité d’authentification).
 - Ruling : les limites d’extraction s’appliquent par action, avec point de reprise SQLite ; les documents V1 peuvent être retraités à la demande. Aucun échec d’extraction ne doit annuler un import V1 terminé.
 - Actions 40475389810 : contrôle rouge, API nouvelle absente (analyse). Actions 40475869427 : 29 tests ciblés réussis ; échec de chargement de l’UI attendue, pas encore livrée. Moteur testé avec SQLite réel et vecteurs synthétiques ; aucun résultat d’inférence réelle revendiqué.
+
+- Ruling : recherche des souvenirs confirmés explicitement dans le RAG, avec attribution et mention de l’absence de vérification externe. Les corrections réindexées seraient sinon ignorées par le parcours V1. Les candidats non confirmés n’entrent pas dans cette recherche.
+- Régressions Actions 40476641376 : absence de searchMemories/callback d’annulation, et deux tests widget reproduisent une génération après Arrêter (ouverture et vérification de contexte).

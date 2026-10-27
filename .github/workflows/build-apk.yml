@@ -61,7 +61,9 @@ jobs:
           dart format lib/living_memory test/living_memory
           git diff -- lib/living_memory test/living_memory > build/evidence/dart-format.patch
       - name: Auto-memory focused contracts
-        run: flutter test test/living_memory --reporter expanded
+        run: |
+          set -o pipefail
+          flutter test test/living_memory --reporter expanded 2>&1 | tee build/evidence/auto-memory-test.log
       - name: Analyze
         run: flutter analyze
       - name: Unit and widget regression suite
@@ -75,6 +77,29 @@ jobs:
           mkdir -p build/evidence
           sha256sum build/app/outputs/flutter-apk/app-release.apk > build/evidence/APK-SHA256.txt
           (cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath) > build/evidence/android-dependencies.txt
+      - name: Verify built APK signature and contents
+        run: |
+          tools_version=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools_version/apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk | tee build/evidence/apk-signature.txt
+          "$tools_version/aapt" dump badging build/app/outputs/flutter-apk/app-release.apk > build/evidence/apk-badging.txt
+          python3 - <<'PYAPK'
+          import hashlib, json, re, zipfile
+          from pathlib import Path
+          apk=Path('build/app/outputs/flutter-apk/app-release.apk')
+          with zipfile.ZipFile(apk) as z:
+              abis=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')})
+              assert abis==['arm64-v8a'], abis
+              size=z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm').file_size
+              assert size==484622336, size
+          signature=Path('build/evidence/apk-signature.txt').read_text()
+          cert=re.search(r'Signer #1 certificate SHA-256 digest: ([a-fA-F0-9]+)',signature)
+          assert cert, 'Missing signer digest'
+          previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
+          metadata={'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
+                    'certificate_sha256':cert.group(1).lower(),'v1_certificate_matches':cert.group(1).lower()==previous}
+          Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
+          print(json.dumps(metadata,indent=2))
+          PYAPK
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

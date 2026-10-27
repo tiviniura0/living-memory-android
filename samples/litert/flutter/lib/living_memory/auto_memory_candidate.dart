@@ -18,11 +18,14 @@ class AutoMemoryCandidate {
   final bool uncertain;
 
   void validate(String passage) {
-    if (quote.trim().isEmpty || utf8.encode(quote).length > 700 ||
+    if (quote.trim().isEmpty ||
+        utf8.encode(quote).length > 700 ||
         !passage.contains(quote) ||
         !const ['observation', 'inference'].contains(kind) ||
         [subject, relation, value].any((s) => s.length > 100)) {
-      throw const FormatException('Candidat non conforme ou citation absente de la source.');
+      throw const FormatException(
+        'Candidat non conforme ou citation absente de la source.',
+      );
     }
   }
 
@@ -40,16 +43,31 @@ class AutoMemoryCandidate {
         // Key validation below rejects unknown fields, including a proposed status.
         throw const FormatException('Objet candidat attendu.');
       }
-      if (!item.keys.every(const ['quote','kind','subject','relation','value','uncertain'].contains) ||
-          item['quote'] is! String || item['kind'] is! String ||
-          item['subject'] is! String || item['relation'] is! String ||
-          item['value'] is! String || item['uncertain'] is! bool) {
+      if (!item.keys.every(
+            const [
+              'quote',
+              'kind',
+              'subject',
+              'relation',
+              'value',
+              'uncertain',
+            ].contains,
+          ) ||
+          item['quote'] is! String ||
+          item['kind'] is! String ||
+          item['subject'] is! String ||
+          item['relation'] is! String ||
+          item['value'] is! String ||
+          item['uncertain'] is! bool) {
         throw const FormatException('Champs candidats invalides.');
       }
       final c = AutoMemoryCandidate(
-        quote: item['quote'] as String, kind: item['kind'] as String,
-        subject: item['subject'] as String, relation: item['relation'] as String,
-        value: item['value'] as String, uncertain: item['uncertain'] as bool,
+        quote: item['quote'] as String,
+        kind: item['kind'] as String,
+        subject: item['subject'] as String,
+        relation: item['relation'] as String,
+        value: item['value'] as String,
+        uncertain: item['uncertain'] as bool,
       );
       c.validate(passage);
       candidates.add(c);

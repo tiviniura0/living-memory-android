@@ -9,41 +9,72 @@ void main() {
   late FakeConversationRepository chat;
   late GemmaMemoryExtractor extractor;
   setUp(() {
-    chat=FakeConversationRepository()..capabilities=const ChatCapabilities(modelName:'Gemma 4 E2B',images:false,tools:false);
-    extractor=GemmaMemoryExtractor(chat,cancelled:()=>false);
+    chat = FakeConversationRepository()
+      ..capabilities = const ChatCapabilities(
+        modelName: 'Gemma 4 E2B',
+        images: false,
+        tools: false,
+      );
+    extractor = GemmaMemoryExtractor(chat, cancelled: () => false);
   });
-  tearDown(() async {await chat.close();});
+  tearDown(() async {
+    await chat.close();
+  });
   Future<void> started() async {
-    for(var i=0;i<20 && !chat.isGenerating.value;i++) {await Future<void>.delayed(Duration.zero);}
-    expect(chat.isGenerating.value,isTrue);
+    for (var i = 0; i < 20 && !chat.isGenerating.value; i++) {
+      await Future<void>.delayed(Duration.zero);
+    }
+    expect(chat.isGenerating.value, isTrue);
   }
-  test('fresh tool-free local chat returns only grounded candidates',() async {
-    final result=extractor.extract('Note durable.'); await started();
-    chat.emit('[{"quote":"Note durable.","kind":"observation","subject":"","relation":"","value":"","uncertain":true}]');
-    await chat.finish();
-    expect((await result).single.quote,'Note durable.');
-    expect(chat.hasSkills,isFalse); expect(chat.profile!.name,'auto-memory-extractive-v1');
-    expect(chat.prompts.single,contains('Note durable.'));
-  });
-  test('stopped model output is rejected even when valid JSON',() async {
-    final result=extractor.extract('Note durable.');
-    final check=expectLater(result,throwsStateError);
-    await started();chat.emit('[]');await chat.finish(stopped:true);await check;
-  });
-  test('invented quote is never accepted',() async {
-    final result=extractor.extract('Note durable.');
-    final check=expectLater(result,throwsFormatException);
+
+  test('fresh tool-free local chat returns only grounded candidates', () async {
+    final result = extractor.extract('Note durable.');
     await started();
-    chat.emit('[{"quote":"inventé","kind":"observation","subject":"","relation":"","value":"","uncertain":false}]');
-    await chat.finish();await check;
+    chat.emit(
+      '[{"quote":"Note durable.","kind":"observation","subject":"","relation":"","value":"","uncertain":true}]',
+    );
+    await chat.finish();
+    expect((await result).single.quote, 'Note durable.');
+    expect(chat.hasSkills, isFalse);
+    expect(chat.profile!.name, 'auto-memory-extractive-v1');
+    expect(chat.prompts.single, contains('Note durable.'));
   });
-  test('wrong model or insufficient context makes no generation call',() async {
-    chat.capabilities=const ChatCapabilities(modelName:'Other',images:false,tools:false);
-    await expectLater(extractor.extract('Note'),throwsStateError);
-    expect(chat.prompts,isEmpty);
-    chat.capabilities=const ChatCapabilities(modelName:'Gemma 4 E2B',images:false,tools:false);
-    chat.promptFit=(_)=>const Result.ok(null);
-    await expectLater(extractor.extract('Note'),throwsStateError);
-    expect(chat.prompts,isEmpty);
+  test('stopped model output is rejected even when valid JSON', () async {
+    final result = extractor.extract('Note durable.');
+    final check = expectLater(result, throwsStateError);
+    await started();
+    chat.emit('[]');
+    await chat.finish(stopped: true);
+    await check;
   });
+  test('invented quote is never accepted', () async {
+    final result = extractor.extract('Note durable.');
+    final check = expectLater(result, throwsFormatException);
+    await started();
+    chat.emit(
+      '[{"quote":"inventé","kind":"observation","subject":"","relation":"","value":"","uncertain":false}]',
+    );
+    await chat.finish();
+    await check;
+  });
+  test(
+    'wrong model or insufficient context makes no generation call',
+    () async {
+      chat.capabilities = const ChatCapabilities(
+        modelName: 'Other',
+        images: false,
+        tools: false,
+      );
+      await expectLater(extractor.extract('Note'), throwsStateError);
+      expect(chat.prompts, isEmpty);
+      chat.capabilities = const ChatCapabilities(
+        modelName: 'Gemma 4 E2B',
+        images: false,
+        tools: false,
+      );
+      chat.promptFit = (_) => const Result.ok(null);
+      await expectLater(extractor.extract('Note'), throwsStateError);
+      expect(chat.prompts, isEmpty);
+    },
+  );
 }
