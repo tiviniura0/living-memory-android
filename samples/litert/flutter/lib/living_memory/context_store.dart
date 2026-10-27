@@ -208,12 +208,32 @@ extension ContextStorage on MemoryStore {
       throw ArgumentError('Checkpoint invalide');
     }
     final previous = sessionCheckpoints(scopeKey, id).lastOrNull;
-    if (previous != null && previous.throughOrdinal == throughOrdinal &&
-        previous.summary == summary && previous.kind == kind) return previous;
-    final key = sha256.convert(utf8.encode(jsonEncode([id, throughOrdinal, kind, summary, previous?.id]))).toString();
-    _db.execute('INSERT INTO context_checkpoint_events VALUES(?,?,?,?,?,?)',
-      [key,id,throughOrdinal,summary,kind,DateTime.now().toUtc().toIso8601String()]);
-    return ContextCheckpoint._(_db.select('SELECT * FROM context_checkpoint_events WHERE id=?',[key]).single);
+    if (previous != null &&
+        previous.throughOrdinal == throughOrdinal &&
+        previous.summary == summary &&
+        previous.kind == kind) {
+      return previous;
+    }
+    final key = sha256
+        .convert(
+          utf8.encode(
+            jsonEncode([id, throughOrdinal, kind, summary, previous?.id]),
+          ),
+        )
+        .toString();
+    _db.execute('INSERT INTO context_checkpoint_events VALUES(?,?,?,?,?,?)', [
+      key,
+      id,
+      throughOrdinal,
+      summary,
+      kind,
+      DateTime.now().toUtc().toIso8601String(),
+    ]);
+    return ContextCheckpoint._(
+      _db.select('SELECT * FROM context_checkpoint_events WHERE id=?', [
+        key,
+      ]).single,
+    );
   }
 
   void markSessionDecision(

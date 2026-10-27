@@ -69,7 +69,13 @@ void main() {
     );
     store.close();
     final db = sqlite3.open('${dir.path}/m.db');
-    for (final trigger in ['session_fts_insert', 'session_fts_delete', 'session_fts_update']) { db.execute('DROP TRIGGER $trigger'); }
+    for (final trigger in [
+      'session_fts_insert',
+      'session_fts_delete',
+      'session_fts_update',
+    ]) {
+      db.execute('DROP TRIGGER $trigger');
+    }
     db.execute('DROP TABLE session_fts');
     for (final table in [
       'context_checkpoint_events',
@@ -125,6 +131,16 @@ void main() {
       engine.retrieve('aru', 'zirconium', [1, 0], projectId: 'p'),
       hasLength(1),
     );
+  });
+  test('same digest is independent across projects and idempotent within each', () {
+    String add(String project) => store.addDocument(agentId: 'aru', name: 'same', digest: 'same', projectId: project,
+      chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Source commune')], vectors: [[1, 0]]);
+    final general = add('');
+    final scoped = add('p');
+    expect(scoped, isNot(general));
+    expect(add('p'), scoped);
+    expect(store.documents('aru', projectId: 'p').single.id, scoped);
+    expect(store.documents('aru').single.id, general);
   });
   test('empty evidence, uncited output and out-of-range citations abstain', () {
     final engine = ReliabilityEngine(store);

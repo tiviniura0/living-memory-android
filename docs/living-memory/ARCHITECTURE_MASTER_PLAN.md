@@ -35,7 +35,7 @@ Contrats futurs dans `lib/living_memory/module_contracts.dart` : scope explicite
 
 ## Migration
 
-Schéma 2 -> 3 : index FTS5 des passages, synchronisation par triggers, tables de sessions/messages/checkpoints, associations projet/monde aux documents. Transaction unique, reprise sans réindexation des vecteurs. Version future refusée avant écriture. Sauvegarde/restauration externe et chiffrement restent des travaux futurs ; ne pas désinstaller une V1 pour contourner une incompatibilité de certificat.
+Schémas 2 -> 3 -> 4 : index FTS5 des passages, synchronisation par triggers, tables de sessions/messages/checkpoints, associations projet/monde aux documents et index séparé des archives. Une transaction par étape de migration, reprise sans réindexation des vecteurs. Version future refusée avant écriture. Sauvegarde/restauration externe et chiffrement restent des travaux futurs ; ne pas désinstaller une V1 pour contourner une incompatibilité de certificat.
 
 ## Livraisons
 
@@ -57,3 +57,20 @@ Points de revue : source supprimée pendant recherche ; JSON/document hostile ; 
 - Android long-running workers : https://developer.android.com/develop/background-work/background-tasks/persistent/how-to/long-running — WorkManager et Foreground Service sont soumis aux restrictions système, pas une garantie de fonctionnement permanent.
 
 Décision d'implémentation : le budget estimé compte conservativement les octets UTF-8 + surcoût par message (ce n'est pas une mesure du tokenizer). Le runtime conserve son contrôle exact `firstFittingPrompt` avant inférence. Les checkpoints n'ajoutent pas de modèle résident. L'historique est consultable, mais seules la question courante et les sources RAG entrent dans les réponses V1.1 : ne pas réinjecter implicitement une ancienne réponse IA dans le prompt.
+
+## Contrats concrets et futurs
+
+| Module | Contrat | État |
+|---|---|---|
+| Memory Engine | MemoryStore.open, addDocument, search, searchMemories, correctMemory, archiveMemory, deleteMemory | Implémenté, SQLite privé ; projet/monde par document |
+| Model Runtime | ConversationRepository et EmbedderService existants ; futur ModelRuntime.withExclusiveModel/release | Adaptateurs V1 réutilisés ; arbitrage de résidence futur |
+| Context Lifecycle | ContextLifecycleManager.append/compact/resetActiveContext/messages/checkpoints | Implémenté ; budget UTF-8 conservateur et archive persistante |
+| Reliability | ReliabilityEngine.retrieve/validateAnswer | Implémenté ; classement hybride et contrôle structurel, pas d'oracle de vérité |
+| Agent Runtime | AgentRuntime.resume(AgentMission, cancelled) | Contrat uniquement |
+| Tool Registry | approvedToolIds et invoke(ToolInvocation, PermissionGrant) -> ToolResult | Contrat uniquement ; résultat d'adaptateur distinct du texte IA |
+| Skills Manager | approvedSkillIds et loadApprovedInstructions(skillId, scope) | Contrat uniquement ; aucun chargement de code tiers |
+| Scheduler | persist(mission, earliestRun) et cancel(id, scope) | Contrat uniquement ; pas de timer/service Android ajouté |
+| Security Manager | requestPermission(invocation) et authorize(invocation, grant) | Contrat uniquement ; aucun accès externe actif |
+| Application API | submit(mission, credential) -> id | Contrat uniquement ; pas de serveur exposé |
+
+L'authentification multiutilisateur, la validation des PermissionGrant et la sérialisation authentifiée de ToolResult devront être implémentées avant d'ouvrir les futurs ports à une autre application. Les classes de contrat ne fournissent pas ces protections à elles seules.

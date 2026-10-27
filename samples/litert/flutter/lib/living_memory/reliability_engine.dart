@@ -1,4 +1,5 @@
 import 'memory_store.dart';
+import 'module_contracts.dart';
 
 class AnswerValidation {
   const AnswerValidation({required this.accepted, required this.text});
@@ -41,6 +42,11 @@ class ReliabilityEngine {
         question,
         projectId: projectId,
         worldId: worldId,
+      ),
+      store.searchDecisions(
+        MemoryScope(agentId: agentId, projectId: projectId, worldId: worldId).key,
+        agentId,
+        question,
       ),
     ];
     final hits = <String, MemoryHit>{};

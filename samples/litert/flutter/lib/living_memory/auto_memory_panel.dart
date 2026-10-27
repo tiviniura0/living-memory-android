@@ -125,14 +125,12 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
             child: ExpansionTile(
               title: Text(m.text),
               subtitle: Text(
-                '${m.provenance == 'user_correction'
-                    ? 'Correction de l’utilisateur'
-                    : switch (m.kind) {
-                      'inference' => 'Déduction citée',
-                      'declaration' => 'Déclaration citée',
-                      'hypothesis' => 'Hypothèse citée',
-                      _ => 'Observation citée',
-                    }} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
+                '${m.provenance == 'user_correction' ? 'Correction de l’utilisateur' : switch (m.kind) {
+                        'inference' => 'Déduction citée',
+                        'declaration' => 'Déclaration citée',
+                        'hypothesis' => 'Hypothèse citée',
+                        _ => 'Observation citée',
+                      }} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
               ),
               children: [
                 Padding(

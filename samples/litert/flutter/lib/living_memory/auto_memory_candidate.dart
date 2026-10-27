@@ -21,7 +21,12 @@ class AutoMemoryCandidate {
     if (quote.trim().isEmpty ||
         utf8.encode(quote).length > 700 ||
         !passage.contains(quote) ||
-        !const ['observation', 'declaration', 'hypothesis', 'inference'].contains(kind) ||
+        !const [
+          'observation',
+          'declaration',
+          'hypothesis',
+          'inference',
+        ].contains(kind) ||
         [subject, relation, value].any((s) => s.length > 100)) {
       throw const FormatException(
         'Candidat non conforme ou citation absente de la source.',
