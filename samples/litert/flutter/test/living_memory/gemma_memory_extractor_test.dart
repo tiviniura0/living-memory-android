@@ -52,6 +52,18 @@ void main() {
     expect(await result, isEmpty);
     expect(chat.prompts, hasLength(1));
   });
+  test('E4B imported filename can extract grounded candidates', () async {
+    chat.capabilities = const ChatCapabilities(
+      modelName: 'gemma-4-E4B-it',
+      images: false,
+      tools: false,
+    );
+    final result = extractor.extract('Note durable.');
+    await started();
+    chat.emit('[]');
+    await chat.finish();
+    expect(await result, isEmpty);
+  });
   test('stopped model output is rejected even when valid JSON', () async {
     final result = extractor.extract('Note durable.');
     final check = expectLater(result, throwsStateError);
