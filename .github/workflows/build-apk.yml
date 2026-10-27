@@ -64,9 +64,9 @@ jobs:
       - name: Check auto-memory source formatting
         if: ${{ !cancelled() }}
         run: |
-          dart format lib/living_memory test/living_memory
-          git diff -- lib/living_memory test/living_memory > build/evidence/dart-format.patch
-          git diff --exit-code -- lib/living_memory test/living_memory
+          dart format lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart
+          git diff -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart > build/evidence/dart-format.patch
+          git diff --exit-code -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart
       - name: Analyze
         if: ${{ !cancelled() }}
         run: flutter analyze
@@ -113,7 +113,8 @@ jobs:
         if: always()
         run: |
           mkdir -p build/evidence
-          cp ../../../docs/living-memory/V1_1_FINALIZATION.md build/evidence/validation-report.md
+          cp ../../../docs/living-memory/V1_2_VALIDATION.md build/evidence/validation-report.md
+          cp ../../../docs/living-memory/V1_2_S22_PROTOCOL.md build/evidence/S22-protocol.md
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -128,7 +129,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: living-memory-v1.1-validation-${{ github.sha }}
+          name: living-memory-v1.2-validation-${{ github.sha }}
           path: samples/litert/flutter/build/evidence/
           if-no-files-found: warn
           retention-days: 30

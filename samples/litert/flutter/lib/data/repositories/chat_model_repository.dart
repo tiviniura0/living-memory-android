@@ -462,8 +462,19 @@ class ChatModelRepository implements ChatModelPlanner {
     return const Result.ok(null);
   }
 
+  ChatModelPlan? _runtimePlan;
+
+  /// Process-local plan for a caller already holding ChatModelSwitcher.exclusive.
+  /// Never saves model settings or prunes files. Cleared even when loading fails.
+  Future<T> withRuntimePlan<T>(CustomChatPlan plan, Future<T> Function() load) async {
+    if (_runtimePlan != null) throw StateError('Runtime plan already in use.');
+    _runtimePlan = plan;
+    try { return await load(); } finally { _runtimePlan = null; }
+  }
+
   @override
   ChatModelPlan get plan {
+    if (_runtimePlan case final transient?) return transient;
     final s = _state.value;
     // Before load() the saved choice is unknown: loading anything now could
     // be the wrong model.

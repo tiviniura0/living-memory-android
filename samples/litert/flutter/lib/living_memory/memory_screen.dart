@@ -8,6 +8,13 @@ import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 
 import '../config/knowledge_config.dart';
+import '../data/repositories/chat_model_repository.dart';
+import '../domain/models/chat_model.dart';
+import '../domain/use_cases/chat_model_switcher.dart';
+import 'multimodel/litert_memory_runtime.dart';
+import 'multimodel/model_registry.dart';
+import 'multimodel/model_panel.dart';
+import 'multimodel/multi_model_engine.dart';
 import '../config/model_catalog.dart';
 import '../data/repositories/conversation_repository.dart';
 import '../data/services/knowledge/embedder_service.dart';
@@ -51,7 +58,13 @@ class MemoryScreen extends StatefulWidget {
     super.key,
     required this.embedder,
     required this.conversation,
+    this.chatModels,
+    this.modelSwitcher,
+    this.openModels,
   });
+  final ChatModelRepository? chatModels;
+  final ChatModelSwitcher? modelSwitcher;
+  final VoidCallback? openModels;
   final EmbedderService embedder;
   final ConversationRepository conversation;
   @override
@@ -62,6 +75,8 @@ class _MemoryScreenState extends State<MemoryScreen> {
   static const _channel = MethodChannel('living_memory/documents');
   final _question = TextEditingController();
   MemoryStore? _store;
+  ModelRegistry? _registry;
+  MultiModelEngine? _models;
   String _agent = 'personal';
   String _project = '';
   ContextLifecycleManager get _lifecycle => ContextLifecycleManager(
@@ -94,6 +109,21 @@ class _MemoryScreenState extends State<MemoryScreen> {
     if (_store!.agents().isEmpty) _store!.createAgent('personal', 'Ma mémoire');
     _agent = _store!.agents().first.id;
     _status = 'Prêt. Importe un TXT/PDF ou ajoute une note.';
+    try {
+    if (widget.chatModels != null && widget.modelSwitcher != null) {
+      final registry = ModelRegistry(Directory('${dir.path}/living-memory-models-v1'));
+      await registry.load();
+      if (_closed) return;
+      _registry = registry;
+      _models = MultiModelEngine(
+        LiteRtMemoryRuntime(registry, widget.chatModels!, widget.modelSwitcher!),
+        available: () => registry.models.keys.toSet(),
+      )..mode = registry.mode
+       ..onChanged = () { if (!_closed && mounted) setState(() {}); };
+    }
+    } catch (error) {
+      _status = 'Registre multi-modèle indisponible : $error. Mémoire V1.1 conservée et accessible.';
+    }
   }
 
   Future<void> _run(Future<void> Function() action) async {
@@ -153,13 +183,20 @@ class _MemoryScreenState extends State<MemoryScreen> {
   Future<List<double>> _embedMemory(String text) async =>
       _value(await widget.embedder.embedDocuments([text])).single;
 
-  Future<void> _extractMemories(String documentId) async {
+  Future<void> _extractMemories(String documentId) => _withModel(
+    const ModelTask.extraction(),
+    (id) => _extractWithModel(documentId, id),
+  );
+
+  Future<void> _extractWithModel(String documentId, String? modelId) async {
     final extractor = GemmaMemoryExtractor(
       widget.conversation,
+      registeredModelId: modelId,
       cancelled: () => _closed || _cancelled,
     );
     final engine = AutoMemoryEngine(
       store: _store!,
+      extractorIdentity: modelId == null ? AutoMemoryEngine.extractorId : 'Gemma 4 ${modelId.toUpperCase()}/extractive-v1',
       extract: extractor.extract,
       embed: _embedMemory,
       cancelled: () => _closed || _cancelled,
@@ -172,6 +209,22 @@ class _MemoryScreenState extends State<MemoryScreen> {
     _status =
         '${result.processed} passages traités • ${result.added} candidats examinés. '
         'Consulte les souvenirs. Reprends la source pour les passages restants.';
+  }
+
+  Future<T> _withModel<T>(ModelTask task, Future<T> Function(String?) action) async {
+    final models = _models;
+    if (models == null || _registry!.models.isEmpty) return action(null);
+    return models.run(task, action, cancelled: () => _closed || _cancelled);
+  }
+
+  Future<void> _registerModel(String id) async {
+    await widget.modelSwitcher!.exclusive((_) async {
+      final plan = widget.chatModels!.plan;
+      if (plan is! CustomChatPlan) throw StateError('Choisis et applique un modèle dans Modèles.');
+      await _registry!.register(id, plan.path, plan.model);
+      if (_closed) return;
+      _status = '${id.toUpperCase()} enregistré. Copie privée et empreinte conservées.';
+    });
   }
 
   Future<void> _cancel() async {
@@ -229,9 +282,17 @@ class _MemoryScreenState extends State<MemoryScreen> {
         '${_hits.length} passages retrouvés. Scores non calibrés sur tes documents.';
     if (!generate) return;
     final manager = _lifecycle;
+    final session = manager.sessions().firstOrNull?.id ?? manager.startSession();
+    manager.append(session, 'user', question);
+    final originalHits = List<MemoryHit>.of(_hits);
+    await _withModel(ModelTask.question(question, sourceCount: _hits.length),
+      (_) async { _hits = List<MemoryHit>.of(originalHits); _answer = ''; await _generateAnswer(question); });
+  }
+
+  Future<void> _generateAnswer(String question) async {
+    final manager = _lifecycle;
     final session =
         manager.sessions().firstOrNull?.id ?? manager.startSession();
-    manager.append(session, 'user', question);
     if (manager.needsCompaction(session)) manager.compact(session);
     // Fresh chat for every question: no context retained from any other agent.
     _value(await widget.conversation.open(_profile));
@@ -283,7 +344,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
           final validation = ReliabilityEngine(_store!)
               .validateAnswer(raw, _hits);
           _answer = validation.text;
-          if (raw.trim().isNotEmpty) manager.append(session, 'assistant', raw);
+          if (validation.accepted && raw.trim().isNotEmpty) manager.append(session, 'assistant', raw);
           if (manager.needsCompaction(session)) manager.compact(session);
           completed = true;
           _status = validation.accepted
@@ -360,12 +421,20 @@ class _MemoryScreenState extends State<MemoryScreen> {
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Living Memory V1.1 • local')),
+        appBar: AppBar(title: const Text('Living Memory V1.2 • local')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             const Text(
               'Documents et réponses restent sur cet appareil.\nTXT UTF-8 et PDF texte • pas d’OCR',
+            ),
+            if (_registry != null && _models != null) ModelPanel(
+              registry: _registry!, engine: _models!, busy: _busy,
+              register: (id) => _run(() => _registerModel(id)),
+              selectMode: (mode) => _run(() async {
+                await _registry!.setMode(mode); _models!.mode = mode;
+              }),
+              openModels: widget.openModels ?? () {},
             ),
             if (store != null) ...[
               const SizedBox(height: 16),

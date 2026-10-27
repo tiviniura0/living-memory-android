@@ -172,6 +172,25 @@ void main() {
   LiteRtLmBundleInfo candidateBundle(ChatModelRepository repo) =>
       repo.state.value.candidate!.bundle.info!;
 
+  test('runtime plan never changes saved settings and clears after failure', () async {
+    final repo = newRepo();
+    await repo.load();
+    final path = pick();
+    await repo.useLocalFile(path);
+    final candidate = repo.state.value.candidate!;
+    final transient = CustomChatPlan(path: path, model: candidate.model, bundle: candidate.bundle);
+    final before = Map.of(prefs.values);
+    final savedPlan = repo.plan;
+    await expectLater(repo.withRuntimePlan(transient, () async {
+      expect(repo.plan, same(transient));
+      expect(prefs.values, before);
+      throw StateError('native load failed');
+    }), throwsStateError);
+    expect(repo.plan.runtimeType, savedPlan.runtimeType);
+    expect(prefs.values, before);
+    expect(File(path).existsSync(), isTrue);
+  });
+
   group('a .litertlm used in place (the models folder)', () {
     File inPlace(String name, FakeBundle kind) =>
         writeFakeLitertlm('${picked.path}/$name', kind);

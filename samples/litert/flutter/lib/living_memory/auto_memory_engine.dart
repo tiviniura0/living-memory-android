@@ -8,12 +8,14 @@ class AutoMemoryEngine {
     required this.extract,
     required this.embed,
     required this.cancelled,
+    this.extractorIdentity = extractorId,
   });
   final MemoryStore store;
   final Future<List<AutoMemoryCandidate>> Function(String) extract;
   final Future<List<double>> Function(String) embed;
   final bool Function() cancelled;
   bool _running = false;
+  final String extractorIdentity;
   static const extractorId = 'Gemma 4 E2B/extractive-v1';
 
   Future<({int processed, int added})> process(
@@ -50,7 +52,7 @@ class AutoMemoryEngine {
             ordinal: passage.ordinal,
             candidate: c,
             vector: vector,
-            extractor: extractorId,
+            extractor: extractorIdentity,
           );
           added++;
         }
@@ -58,7 +60,7 @@ class AutoMemoryEngine {
           agentId,
           documentId,
           passage.ordinal,
-          extractorId,
+          extractorIdentity,
         );
         processed++;
       }
