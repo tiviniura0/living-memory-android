@@ -311,6 +311,19 @@ void main() {
     });
   });
 
+  test('native unload failure propagates and prevents a second model load', () async {
+    var loads = 0;
+    final llm = LlmService(loadModel: (_) async {
+      loads++;
+      return _ThrowingCloseModel();
+    });
+    await llm.load(kDefineChatModel);
+    await expectLater(llm.unload(), throwsA(isA<Exception>()));
+    expect(await llm.load(kDefineChatModel), isA<Error<LlmInfo>>());
+    expect(loads, 1);
+    await expectLater(llm.unload(), throwsA(isA<Exception>()));
+  });
+
   group('close', () {
     test('a model that arrives after close() is closed, not kept', () async {
       final pending = Completer<InferenceModel>();
