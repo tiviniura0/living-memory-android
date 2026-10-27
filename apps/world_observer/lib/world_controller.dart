@@ -1,4 +1,7 @@
 import 'package:flutter/foundation.dart';
+
+import 'runtime/world_loop.dart';
+
 import 'package:agent_runtime/agent_runtime.dart';
 import 'package:world_persistence/world_persistence.dart';
 
@@ -7,6 +10,8 @@ class WorldController extends ChangeNotifier {
   LocalAgentRunner runner;
   final CheckpointStore store;
   late final ValueNotifier<WorldView> view;
+  late WorldLoop _loop;
+  int _lastAutosaveTick = 0;
   bool paused = false;
   int speed = 1;
   double effectiveSpeed = 0;
@@ -15,6 +20,7 @@ class WorldController extends ChangeNotifier {
   Future<void> _writes = Future.value();
   WorldController(this.core, this.runner, this.store) {
     view = ValueNotifier(WorldView(core.snapshot()));
+    _loop = WorldLoop(SimulationRunner(core, runner));
   }
   void publish() {
     view.value = WorldView(
@@ -33,7 +39,7 @@ class WorldController extends ChangeNotifier {
 
   void setPaused(bool value) {
     paused = value;
-    core.setPaused(value);
+    _loop.setPaused(value);
     publish();
   }
 
@@ -47,6 +53,20 @@ class WorldController extends ChangeNotifier {
     final r = core.setPopulationMax(value);
     if (r.status == ActionStatus.rejected) saveStatus = 'Plafond invalide';
     publish();
+  }
+
+  void advance(Duration elapsed) {
+    _loop.setSpeed(speed);
+    final count = _loop.advance(elapsed);
+    effectiveSpeed = _loop.effectiveSpeed;
+    if (count > 0) {
+      publish();
+      final tick = core.snapshot().state.tick;
+      if (tick - _lastAutosaveTick >= 200) {
+        _lastAutosaveTick = tick;
+        save();
+      }
+    }
   }
 
   Future<void> save() {
@@ -71,6 +91,8 @@ class WorldController extends ChangeNotifier {
     if (r.snapshot != null) {
       core = WorldCore(r.snapshot!.state)..setPaused(true);
       runner = LocalAgentRunner(core);
+      _loop = WorldLoop(SimulationRunner(core, runner))..setPaused(true);
+      _lastAutosaveTick = core.snapshot().state.tick;
       selectedAgentId = null;
       saveStatus = r.recovered
           ? 'Sauvegarde précédente restaurée'

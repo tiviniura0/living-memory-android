@@ -136,6 +136,17 @@ class WorldCodec {
         a['currentAction'] == null || commands.contains(a['currentAction']),
       );
     }
+    for(final r in resources){
+      if(r['reservationAgentId']!=null){
+        check(pending.any((p)=>p['kind']=='gather'&&p['actorId']==r['reservationAgentId']&&p['reservedResourceId']==r['id']&&p['dueTick']==r['reservationUntilTick']));
+      }
+    }
+    for(final p in pending){
+      if(p['kind']=='gather'){
+        final r=resources.firstWhere((r)=>r['id']==p['reservedResourceId']);
+        check(r['reservationAgentId']==p['actorId']&&r['food']>0);
+      }
+    }
     final applied = s['appliedCommandIds'] as List;
     check(
       applied.length <= 1024 &&

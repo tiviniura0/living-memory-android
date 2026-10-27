@@ -1,5 +1,9 @@
 import 'dart:io';
 
+import 'package:flutter/scheduler.dart';
+
+import 'runtime/world_lifecycle.dart';
+
 import 'package:flutter/material.dart';
 import 'package:agent_runtime/agent_runtime.dart';
 import 'package:world_persistence/world_persistence.dart';
@@ -17,7 +21,10 @@ class WorldApp extends StatefulWidget {
   State<WorldApp> createState() => _WorldAppState();
 }
 
-class _WorldAppState extends State<WorldApp> {
+class _WorldAppState extends State<WorldApp>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  late final Ticker _ticker;
+  Duration? _lastElapsed;
   late final WorldController controller;
   final camera = CameraController();
   @override
@@ -32,6 +39,30 @@ class _WorldAppState extends State<WorldApp> {
           CheckpointStore(Directory('world-preview')),
         );
     controller.addListener(_update);
+    WidgetsBinding.instance.addObserver(this);
+    _ticker = createTicker((elapsed) {
+      final last = _lastElapsed;
+      if (last == null) {
+        _lastElapsed = elapsed;
+        return;
+      }
+      final delta = elapsed - last;
+      if (delta.inMicroseconds >= 33333) {
+        _lastElapsed = elapsed;
+        controller.advance(delta);
+      }
+    })..start();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    _lastElapsed = null;
+    if (state == AppLifecycleState.resumed) {
+      if (!_ticker.isActive) _ticker.start();
+    } else {
+      _ticker.stop();
+    }
+    WorldLifecycle(controller).onState(state);
   }
 
   void _update() {
@@ -46,6 +77,8 @@ class _WorldAppState extends State<WorldApp> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _ticker.dispose();
     controller.removeListener(_update);
     if (widget.controller == null) controller.dispose();
     camera.dispose();

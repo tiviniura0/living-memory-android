@@ -26,7 +26,7 @@ String canonicalJson(Object? v) => jsonEncode(canonical(v));
 class JsonValue {
   final Map<String, dynamic> data;
   JsonValue(Map<String, dynamic> value)
-    : data = Map<String, dynamic>.unmodifiable(freeze(value) as Map);
+    : data = freeze(value) as Map<String, dynamic>;
   Map<String, dynamic> toJson() =>
       jsonDecode(jsonEncode(data)) as Map<String, dynamic>;
   @override

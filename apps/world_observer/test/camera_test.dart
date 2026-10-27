@@ -30,7 +30,7 @@ void main() {
   });
   testWidgets('large_text_french_controls', (t) async {
     await t.pumpWidget(const WorldApp());
-    await t.pumpAndSettle();
+    await t.pump();
     expect(find.text('Règles locales'), findsOneWidget);
     expect(find.text('Pause'), findsOneWidget);
   });

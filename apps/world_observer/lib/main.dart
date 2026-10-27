@@ -18,6 +18,7 @@ Future<void> main() async {
       loaded.snapshot?.state ?? WorldFactory.create('world1', WorldConfig(), 5),
     );
     final controller = WorldController(c, LocalAgentRunner(c), store);
+    if (loaded.snapshot != null) controller.setPaused(true);
     if (loaded.warnings.isNotEmpty) {
       controller.saveStatus = loaded.warnings.join(' ');
       controller.setPaused(true);

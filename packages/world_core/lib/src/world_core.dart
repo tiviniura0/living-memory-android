@@ -325,9 +325,15 @@ class WorldCore {
     Map<String, dynamic> payload, [
     String? command,
   ]) {
-    final index = (_s['eventLog'] as List)
-        .where((e) => e['revision'] == _s['revision'])
-        .length;
+    final logEntries = _s['eventLog'] as List;
+    var index = 0;
+    for (
+      var i = logEntries.length - 1;
+      i >= 0 && logEntries[i]['revision'] == _s['revision'];
+      i--
+    ) {
+      index++;
+    }
     final event = {
       'schemaVersion': 1,
       'eventId': sha256
