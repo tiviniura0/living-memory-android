@@ -74,3 +74,16 @@ Décision d'implémentation : le budget estimé compte conservativement les octe
 | Application API | submit(mission, credential) -> id | Contrat uniquement ; pas de serveur exposé |
 
 L'authentification multiutilisateur, la validation des PermissionGrant et la sérialisation authentifiée de ToolResult devront être implémentées avant d'ouvrir les futurs ports à une autre application. Les classes de contrat ne fournissent pas ces protections à elles seules.
+
+## Inspiration OpenClaw — correspondances et écarts
+
+Sources officielles consultées :
+- https://github.com/openclaw/openclaw/blob/main/docs/concepts/memory-architecture.md
+- https://docs.openclaw.ai/concepts/compaction
+- https://docs.openclaw.ai/tools/skills
+
+La documentation OpenClaw sépare les archives épisodiques de la mémoire durable, conserve la provenance et encadre la promotion par des règles de code. Living Memory adopte cette séparation : candidat sourcé, revue explicite et aucun réapprentissage automatique des réponses ou extraits rappelés. Les données originales restent inspectables.
+
+Pour la compaction, le principe repris est de conserver le transcript original et de réduire seulement le contexte actif. V1.1 utilise des extraits déterministes et des décisions marquées, sans appel de résumé supplémentaire. Elle ne reproduit pas les mécanismes complets de consolidation planifiée d'OpenClaw.
+
+Les Skills et outils restent des contrats futurs, avec catalogue approuvé et permissions. Aucun runtime OpenClaw, marketplace de Skills ou processus de fond OpenClaw n'est embarqué dans l'APK. Une future intégration devra conserver ensemble les appels d'outils et leurs résultats dans les archives et appliquer les permissions hors du modèle.
