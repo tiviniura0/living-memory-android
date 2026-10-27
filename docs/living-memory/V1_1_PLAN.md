@@ -24,3 +24,9 @@ Citation exacte mais affirmation fausse ; prompt injection dans source ; ambigu�
 
 ## Limites attendues
 Pas de test matériel S22 dans ce runner : qualité des modèles réels, installation, mémoire maximale, latence, batterie, chauffe, mode avion à vérifier sur téléphone. Pas de validation universelle des faits ni de fusion de paraphrases prétendument certaine.
+
+## Journal
+- Audit structurel Graphify local : 3 fichiers V1, 86 nœuds / 89 relations, sans service LLM externe. Lecture manuelle du stockage, écran, import natif, contrats de conversation/embeddings, configuration modèles, workflows et tests V1.
+- Environnement local sans Flutter/Dart. Tentatives de récupération du SDK par URL officielle : 404 ; validation exécutable confiée à Actions, pas à une imitation Python.
+- Branche GitHub créée exactement depuis 0f95b7eb. Écriture distante via connecteur GitHub (push CLI sans identité d’authentification).
+- Ruling : les limites d’extraction s’appliquent par action, avec point de reprise SQLite ; les documents V1 peuvent être retraités à la demande. Aucun échec d’extraction ne doit annuler un import V1 terminé.

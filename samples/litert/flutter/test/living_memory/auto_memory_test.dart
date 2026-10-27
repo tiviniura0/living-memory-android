@@ -109,7 +109,7 @@ void main() {
     expect(AutoMemoryCandidate.parse('[]', quote), isEmpty);
     final valid = '[{"quote":"$quote","kind":"observation","subject":"Aru","relation":"habite","value":"Mahina","uncertain":false}]';
     expect(AutoMemoryCandidate.parse(valid,quote).single.quote,quote);
-    for (final bad in ['```json\n$valid\n```', '{}', '[{"quote":"inventé"}]', valid.replaceAll('observation','verified'), valid.replaceAll('false','0'), valid.replaceAll('"uncertain":false','"uncertain":false,"verified":true'), '[' + List.filled(4,valid.substring(1,valid.length-1)).join(',') + ']']) {
+    for (final bad in ['```json\n$valid\n```', '{}', '[{"quote":"inventé"}]', valid.replaceAll('observation','verified'), valid.replaceAll('false','0'), valid.replaceAll('"uncertain":false','"uncertain":false,"verified":true'), '[${List.filled(4,valid.substring(1,valid.length-1)).join(',')}]']) {
       expect(() => AutoMemoryCandidate.parse(bad,quote),throwsFormatException, reason:bad);
     }
   });

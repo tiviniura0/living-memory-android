@@ -55,6 +55,8 @@ jobs:
           bash tool/fetch_models.sh --check
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
+      - name: Auto-memory focused contracts
+        run: flutter test test/living_memory --reporter expanded
       - name: Analyze
         run: flutter analyze
       - name: Unit and widget regression suite

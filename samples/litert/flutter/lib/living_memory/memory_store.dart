@@ -4,6 +4,10 @@ import 'dart:math' as math;
 import 'package:crypto/crypto.dart';
 import 'package:sqlite3/sqlite3.dart';
 
+import 'auto_memory_candidate.dart';
+
+part 'auto_memory_store.dart';
+
 class MemoryChunk {
   const MemoryChunk({
     required this.page,
@@ -52,6 +56,9 @@ class MemoryStore {
     }
     final db = sqlite3.open(path);
     try {
+      if ((db.select('PRAGMA user_version').first.values.first as int) > 2) {
+        throw StateError('Version SQLite future : aucune migration autorisée.');
+      }
       db.execute('PRAGMA foreign_keys = ON');
       db.execute('PRAGMA secure_delete = ON');
       db.execute(
@@ -85,6 +92,7 @@ class MemoryStore {
       db.execute(
         'CREATE INDEX IF NOT EXISTS documents_agent ON documents(agent_id)',
       );
+      _migrateAutoMemory(db);
       return MemoryStore._(db, dimension);
     } catch (_) {
       db.close();
