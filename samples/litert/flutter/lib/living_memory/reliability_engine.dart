@@ -1,3 +1,4 @@
+import '../utils/citations.dart';
 import 'memory_store.dart';
 import 'module_contracts.dart';
 
@@ -74,14 +75,12 @@ class ReliabilityEngine {
 
   /// Structural check only: does not prove entailment of each sentence.
   AnswerValidation validateAnswer(String answer, List<MemoryHit> evidence) {
-    final citations = RegExp(r'\[(\d+)\]').allMatches(answer).toList();
+    final citations = findCitations(answer, count: evidence.length).toList();
+    final numericMarkers = RegExp(r'\[(\d+(?:\s*[,–-]\s*\d+)*)\]').allMatches(answer).toList();
     if (answer.trim().isEmpty ||
         evidence.isEmpty ||
         citations.isEmpty ||
-        citations.any((m) {
-          final n = int.tryParse(m.group(1)!);
-          return n == null || n < 1 || n > evidence.length;
-        })) {
+        numericMarkers.any((m) => !citations.any((c) => c.start == m.start && c.end == m.end))) {
       return const AnswerValidation(accepted: false, text: abstention);
     }
     return AnswerValidation(accepted: true, text: answer);
