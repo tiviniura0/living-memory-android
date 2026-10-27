@@ -105,6 +105,28 @@ void main() {
     expect(store.memories('aru'), isEmpty);
     expect(store.memoryHistory('aru',id), isEmpty);
   });
+  test('explicit grouping preserves both sources and never confirms facts', () {
+    final a=add();
+    final b=add(const AutoMemoryCandidate(quote:other,kind:'inference',subject:'',relation:'',value:'',uncertain:true));
+    store.groupMemories('aru',a,b);
+    expect(store.memories('aru'),hasLength(2));
+    expect(store.memoryLinks('aru',a).map((l)=>l.kind),contains('user_grouped'));
+    expect(()=>store.groupMemories('bea',a,b),throwsStateError);
+    expect(store.memories('aru').any((m)=>m.status=='user_confirmed'),isFalse);
+  });
+  test('only explicitly confirmed memories enter retrieval with corrected text', () {
+    final id=add();
+    expect(store.searchMemories('aru',[1,0]),isEmpty);
+    store.confirmMemory('aru',id);
+    expect(store.searchMemories('bea',[1,0]),isEmpty);
+    expect(store.searchMemories('aru',[1,0]).single.text,contains(quote));
+    store.correctMemory('aru',id,'Correction',[0,1]);
+    expect(store.searchMemories('aru',[0,1]),isEmpty);
+    store.confirmMemory('aru',id);
+    expect(store.searchMemories('aru',[0,1]).single.text,contains('Correction'));
+    expect(store.searchMemories('aru',[1,0],minSimilarity:0.8),isEmpty);
+    expect(()=>store.searchMemories('aru',[0,0]),throwsArgumentError);
+  });
   test('strict parser rejects unsupported, malformed, oversized and ungrounded output', () {
     expect(AutoMemoryCandidate.parse('[]', quote), isEmpty);
     final valid = '[{"quote":"$quote","kind":"observation","subject":"Aru","relation":"habite","value":"Mahina","uncertain":false}]';
