@@ -109,6 +109,11 @@ jobs:
           Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
           print(json.dumps(metadata,indent=2))
           PYAPK
+      - name: Include validation report
+        if: always()
+        run: |
+          mkdir -p build/evidence
+          cp ../../../docs/living-memory/V1_1_FINALIZATION.md build/evidence/validation-report.md
       - name: Upload APK and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
