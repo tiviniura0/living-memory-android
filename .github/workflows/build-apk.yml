@@ -3,7 +3,7 @@ name: Living Memory Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'work/living-memory-local-rag']
+    branches: [main, 'work/living-memory-local-rag', 'work/living-memory-v1.1-auto-memory']
     paths:
       - 'samples/litert/flutter/**'
       - '.github/workflows/build-apk.yml'
