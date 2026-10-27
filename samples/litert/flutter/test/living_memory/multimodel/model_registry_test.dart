@@ -72,12 +72,19 @@ void main() {
     );
     expect(r.models.keys, ['e2b']);
   });
-  test('fixed NPU context is preserved instead of applying GPU context cap', () async {
-    final source = File('${dir.path}/npu.litertlm')..writeAsStringSync('data');
-    final registry = ModelRegistry(Directory('${dir.path}/registry'));
-    await registry.register('e4b', source.path,
-      model(source.path).copyWith(backend: PreferredBackend.npu, maxTokens: 4096));
-    expect(registry.models['e4b']!.maxTokens, 4096);
-  });
-
+  test(
+    'fixed NPU context is preserved instead of applying GPU context cap',
+    () async {
+      final source = File('${dir.path}/npu.litertlm')
+        ..writeAsStringSync('data');
+      final registry = ModelRegistry(Directory('${dir.path}/registry'));
+      await registry.register(
+        'e4b',
+        source.path,
+        model(source.path)
+            .copyWith(backend: PreferredBackend.npu, maxTokens: 4096),
+      );
+      expect(registry.models['e4b']!.maxTokens, 4096);
+    },
+  );
 }

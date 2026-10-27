@@ -113,7 +113,8 @@ class ModelRegistry {
       await part.rename(file.path);
       final saved = model.copyWith(
         source: LocalModelSource(file.path),
-        maxTokens: model.backend != PreferredBackend.npu && model.maxTokens > 2048
+        maxTokens:
+            model.backend != PreferredBackend.npu && model.maxTokens > 2048
             ? 2048
             : model.maxTokens,
         tools: false,

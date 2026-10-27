@@ -38,9 +38,14 @@ class GemmaMemoryExtractor {
   final String? registeredModelId;
   String get modelIdentity {
     if (registeredModelId == 'e2b') return 'Gemma 4 E2B';
-    if (registeredModelId == 'e4b' || const {
-      'Gemma 4 E4B', 'gemma-4-E4B-it', 'gemma-4-E4B-it.litertlm',
-    }.contains(conversation.capabilities.modelName)) return 'Gemma 4 E4B';
+    if (registeredModelId == 'e4b' ||
+        const {
+          'Gemma 4 E4B',
+          'gemma-4-E4B-it',
+          'gemma-4-E4B-it.litertlm',
+        }.contains(conversation.capabilities.modelName)) {
+      return 'Gemma 4 E4B';
+    }
     return 'Gemma 4 E2B';
   }
 

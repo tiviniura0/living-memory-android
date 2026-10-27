@@ -311,26 +311,33 @@ void main() {
     });
   });
 
-  test('native unload failure propagates and prevents a second model load', () async {
-    var loads = 0;
-    final llm = LlmService(loadModel: (_) async {
-      loads++;
-      return _ThrowingCloseModel();
-    });
-    await llm.load(kDefineChatModel);
-    await expectLater(llm.unload(), throwsA(isA<Exception>()));
-    expect(await llm.load(kDefineChatModel), isA<Error<LlmInfo>>());
-    expect(loads, 1);
-    await expectLater(llm.unload(), throwsA(isA<Exception>()));
-  });
+  test(
+    'native unload failure propagates and prevents a second model load',
+    () async {
+      var loads = 0;
+      final llm = LlmService(
+        loadModel: (_) async {
+          loads++;
+          return _ThrowingCloseModel();
+        },
+      );
+      await llm.load(kDefineChatModel);
+      await expectLater(llm.unload(), throwsA(isA<Exception>()));
+      expect(await llm.load(kDefineChatModel), isA<Error<LlmInfo>>());
+      expect(loads, 1);
+      await expectLater(llm.unload(), throwsA(isA<Exception>()));
+    },
+  );
 
   test('load waits for an in-flight native unload', () async {
     final gate = Completer<void>();
     var loads = 0;
-    final llm = LlmService(loadModel: (_) async {
-      loads++;
-      return loads == 1 ? _GatedCloseModel(gate) : FakeInferenceModel();
-    });
+    final llm = LlmService(
+      loadModel: (_) async {
+        loads++;
+        return loads == 1 ? _GatedCloseModel(gate) : FakeInferenceModel();
+      },
+    );
     await llm.load(kDefineChatModel);
     final closing = llm.unload();
     final loading = llm.load(kDefineChatModel);
@@ -343,31 +350,41 @@ void main() {
     await llm.close();
   });
 
-  test('install waits for the native unload barrier before inspecting a new file', () async {
-    final gate = Completer<void>();
-    final llm = LlmService(loadModel: (_) async => _GatedCloseModel(gate));
-    await llm.load(kDefineChatModel);
-    final closing = llm.unload();
-    var completed = false;
-    final installing = llm.install(path: '/missing/model.litertlm', onProgress: (_) {}).then((result) {
-      completed = true;
-      return result;
-    });
-    await pumpEventQueue();
-    expect(completed, isFalse);
-    gate.complete();
-    await closing;
-    expect(await installing, isA<Error<String>>());
-    await llm.close();
-  });
+  test(
+    'install waits for the native unload barrier before inspecting a new file',
+    () async {
+      final gate = Completer<void>();
+      final llm = LlmService(loadModel: (_) async => _GatedCloseModel(gate));
+      await llm.load(kDefineChatModel);
+      final closing = llm.unload();
+      var completed = false;
+      final installing = llm
+          .install(path: '/missing/model.litertlm', onProgress: (_) {})
+          .then((result) {
+            completed = true;
+            return result;
+          });
+      await pumpEventQueue();
+      expect(completed, isFalse);
+      gate.complete();
+      await closing;
+      expect(await installing, isA<Error<String>>());
+      await llm.close();
+    },
+  );
 
   group('close', () {
     test('a model that arrives after close() is closed, not kept', () async {
       final pending = Completer<InferenceModel>();
       final lateModel = FakeInferenceModel();
-      final llm = LlmService(loadModel: (_) => pending.future);
+      final started = Completer<void>();
+      final llm = LlmService(loadModel: (_) {
+        started.complete();
+        return pending.future;
+      });
 
       final loading = llm.load(kDefineChatModel); // first GPU compile in flight
+      await started.future;
       await llm.close(); // Cmd-Q
       pending.complete(lateModel);
       final result = await loading;

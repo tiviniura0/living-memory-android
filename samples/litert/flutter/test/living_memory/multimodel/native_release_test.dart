@@ -24,23 +24,43 @@ class _Models implements ChatModelRepository {
 }
 
 void main() {
-  test('real lifecycle adapter refuses fallback after model close fails', () async {
-    final dir = Directory.systemTemp.createTempSync('native-release-');
-    addTearDown(() => dir.deleteSync(recursive: true));
-    final chat = FakeConversationRepository();
-    addTearDown(chat.close);
-    var loads = 0;
-    final llm = LlmService(loadModel: (_) async { loads++; return _FailingClose(); });
-    await llm.load(kDefineChatModel);
-    final switcher = ChatModelSwitcher(conversation: chat,
-      reloadChatModel: () async => const Result.ok(null),
-      unloadChatModel: llm.unload, refuseChatModelLoads: (_) {});
-    final runtime = LiteRtMemoryRuntime(ModelRegistry(dir), _Models(), switcher);
-    final engine = MultiModelEngine(runtime, available: () => {'e2b', 'e4b'});
-    await expectLater(engine.run(const ModelTask.question('Compare'), (_) async => 'unreachable'),
-      throwsA(isA<ModelReleaseFailure>()));
-    expect(engine.fallbackReason, isNull);
-    expect(loads, 1);
-    expect(switcher.busy.value, isFalse);
-  });
+  test(
+    'real lifecycle adapter refuses fallback after model close fails',
+    () async {
+      final dir = Directory.systemTemp.createTempSync('native-release-');
+      addTearDown(() => dir.deleteSync(recursive: true));
+      final chat = FakeConversationRepository();
+      addTearDown(chat.close);
+      var loads = 0;
+      final llm = LlmService(
+        loadModel: (_) async {
+          loads++;
+          return _FailingClose();
+        },
+      );
+      await llm.load(kDefineChatModel);
+      final switcher = ChatModelSwitcher(
+        conversation: chat,
+        reloadChatModel: () async => const Result.ok(null),
+        unloadChatModel: llm.unload,
+        refuseChatModelLoads: (_) {},
+      );
+      final runtime = LiteRtMemoryRuntime(
+        ModelRegistry(dir),
+        _Models(),
+        switcher,
+      );
+      final engine = MultiModelEngine(runtime, available: () => {'e2b', 'e4b'});
+      await expectLater(
+        engine.run(
+          const ModelTask.question('Compare'),
+          (_) async => 'unreachable',
+        ),
+        throwsA(isA<ModelReleaseFailure>()),
+      );
+      expect(engine.fallbackReason, isNull);
+      expect(loads, 1);
+      expect(switcher.busy.value, isFalse);
+    },
+  );
 }

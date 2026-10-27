@@ -666,7 +666,9 @@ class ModelRepository implements ModelStates {
     try {
       await _llm.unload();
     } catch (error) {
-      refuseChatModelLoads('Native model release failed; restart required: $error');
+      refuseChatModelLoads(
+        'Native model release failed; restart required: $error',
+      );
       rethrow;
     }
     if (_chatLoadsRefused == null) _set(ModelId.chat, const ModelPending());
