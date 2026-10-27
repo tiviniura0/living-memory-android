@@ -3,6 +3,8 @@
 Extension locale du projet existant `samples/litert/flutter`, pour Android
 arm64 API 30+ et un premier essai sur Galaxy S22 Ultra 12 Go.
 
+- [Rapport de non-régression](docs/living-memory/NON_REGRESSION.md)
+- [Télécharger l'archive APK](https://github.com/tiviniura0/living-memory-android/actions/runs/40434835372/artifacts/12704446999)
 - [Installation depuis le téléphone](docs/living-memory/INSTALL_S22.md)
 - [Audit des modèles et dépendances](docs/living-memory/AUDIT.md)
 - [Architecture de mémoire par agent](docs/living-memory/LIVING_WORLD_ARCHITECTURE.md)

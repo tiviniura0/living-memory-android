@@ -1,19 +1,25 @@
-# État Living Memory
+# État Living Memory — version d'essai compilée
 
-Branche de travail : work/living-memory-local-rag.
-Original préservé : 659a03c49af38e45d235c1c7fdeb504b82fbb4ea.
+Source initiale préservée : 659a03c49af38e45d235c1c7fdeb504b82fbb4ea.
+Version APK : 2ebcad7ae79805019ed242555c0170d90484b8b2.
 
-Confirmé : workflow vide remplacé, module Flutter de mémoire individuelle,
-SQLite privé, import SAF TXT/PDF et modèle en flux, Gemma 4 / EmbeddingGemma 2
-conservés. Analyse Flutter sans problème et 2943 tests réussis / 15 ignorés
-sur 7a55565d59c90a15c7e9439220a46145a435b3cd (Actions 40432584772).
-Son build Android a été annulé par la nouvelle exécution avec dépendances
-PDF durcies ; ne pas le présenter comme une compilation réussie.
+Confirmé : analyse Flutter sans problème ; 2943 tests réussis / 15 ignorés ;
+APK arm64 897782148 octets compilé dans Actions 40434835372.
+Contrôle indépendant 40437013088 : hash conforme, signature Android v2 valide
+(certificat Android Debug), ABI arm64-v8a, EmbeddingGemma intégré, Bouncy Castle
+1.86 réellement résolu. Voir NON_REGRESSION.md pour les liens et empreintes.
 
-En cours : compilation et vérification du commit
-451da92569c83443b9a1480deb9c194f45d5f450 (Actions 40433141661).
+La dernière mise à jour documentaire et le workflow de contrôle ne changent
+pas le code de l'application compilée. La branche de travail est conservée.
 
-Non testé : installation S22, vraies inférences et qualité sémantique,
-import Android depuis le sélecteur réel, mode avion sur appareil, RAM/latence.
-L'architecture future est décrite dans LIVING_WORLD_ARCHITECTURE.md.
-Les sources techniques et limites sont dans AUDIT.md ; installation INSTALL_S22.md.
+Implémenté : SQLite privé distinct de kb.db, agents séparés, import TXT/PDF texte,
+notes, recherche cosinus et passages citables, conversations neuves sans outils,
+import Android des modèles en flux. Gemma 4 est à importer/configurer ;
+EmbeddingGemma 2 740M est inclus dans l'APK.
+
+Non testé : installation et sélecteur réel S22, vraies inférences, qualité
+sémantique, mode avion, RAM/latence/chauffe. Pas d'OCR, chiffrement applicatif,
+export/restauration ou monde autonome. La signature debug n'est pas pérenne.
+
+Prochaine étape : essai téléphone décrit dans INSTALL_S22.md. Ne pas
+assimiler une compilation et des tests synthétiques à une validation sur S22.

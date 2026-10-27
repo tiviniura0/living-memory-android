@@ -1,6 +1,6 @@
 # Installation depuis le Samsung S22 Ultra uniquement
 
-1. Télécharger l'artefact APK indiqué dans le rapport de non-régression.
+1. [Télécharger l'archive APK](https://github.com/tiviniura0/living-memory-android/actions/runs/40434835372/artifacts/12704446999) (661 Mo environ).
    Dans GitHub sur le téléphone : Actions → Living Memory Android APK →
    exécution réussie → Artifacts. Extraire le ZIP puis ouvrir app-release.apk.
 2. Autoriser Android à installer depuis l'application qui ouvre l'APK.

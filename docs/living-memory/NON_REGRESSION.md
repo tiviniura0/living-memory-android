@@ -5,7 +5,7 @@ Original : 659a03c49af38e45d235c1c7fdeb504b82fbb4ea.
 Dépôt : https://github.com/tiviniura0/living-memory-android
 Branche de travail : work/living-memory-local-rag.
 
-## Preuves déjà obtenues
+## Résultat final vérifié
 
 | Exécution Actions | Révision | Résultat constaté |
 |---|---|---|
@@ -14,8 +14,12 @@ Branche de travail : work/living-memory-local-rag.
 | 40432164417 | 2159578 | Analyse arrêtée sur 13 règles de style ; tests/build non exécutés |
 | 40432584772 | 7a55565 | Analyse sans problème ; 2943 tests réussis, 15 ignorés ; build annulé par la nouvelle révision |
 | 40433141661 | 451da92 | Analyse OK, 2943 réussis / 15 ignorés ; échec R8 sur JP2Decoder optionnel absent |
+| 40434835372 | 2ebcad7 | Succès : analyse sans problème, 2943 réussis / 15 ignorés, APK compilé et artefact publié |
+| 40437013088 | b0e6d0c | Succès : hash APK conforme, ABI arm64, modèle embarqué, signature v2 et dépendances vérifiés |
 
-Les liens sont `https://github.com/tiviniura0/living-memory-android/actions/runs/ID`.
+Preuves principales :
+- https://github.com/tiviniura0/living-memory-android/actions/runs/40434835372
+- https://github.com/tiviniura0/living-memory-android/actions/runs/40437013088
 La ligne exacte de preuve pour 7a55565 est :
 `2026-10-27T01:31:37.3261812Z 02:20 +2943 ~15: All tests passed!`.
 Un build annulé n'est pas présenté comme une compilation réussie.
@@ -50,7 +54,9 @@ explicites pour tester les algorithmes, pas des embeddings prétendument génér
 Le workflow, les ajouts natifs et l'écran de mémoire étendent le projet existant.
 Les démos, modèles livrés, corpus technique kb.db, scripts et tests existants
 ne sont pas supprimés. Le nouveau stockage `living-memory-v1.db` est distinct.
-Deux tests existants ont été corrigés comme expliqué ci-dessus.
+Les 4269 fichiers suivis à l'origine restent présents : vérification git ls-tree
+et diff --diff-filter=D sans suppression. Deux tests existants ont été corrigés
+comme expliqué ci-dessus.
 Aucune migration ou destruction automatique d'une ancienne base privée.
 
 ## Tests non exécutés et limites matérielles
@@ -79,8 +85,30 @@ GitHub Actions. Formatage Dart et vérification syntaxique des XML effectués
 localement ; ce ne sont pas des preuves d'inférence ni de compilation Android.
 
 ## Livraison
-À compléter après la fin du build final : artefact, taille, SHA-256 et statut
-réel. Ne pas considérer cette section provisoire comme une livraison d'APK.
+Version compilée : 2ebcad7ae79805019ed242555c0170d90484b8b2.
+La dernière mise à jour ajoute seulement le workflow de contrôle et la
+documentation ; elle ne modifie pas le code de l'application compilée.
+
+- APK : app/outputs/flutter-apk/app-release.apk, dans l'archive.
+- Taille exacte APK : 897782148 octets (897,8 Mo décimaux).
+- SHA-256 APK : `947056320e43a88ab4f988f9d23cae462be9aefb103f27d707acf2386dc8b7e3`.
+- ABI : arm64-v8a uniquement, vérifiée dans l'APK.
+- Signature : apksigner vérifie le schéma v2 ; certificat Android Debug,
+  RSA 2048 bits. Il s'agit d'un APK d'essai, sans clé de production permanente.
+- SHA-256 certificat : `cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487`.
+- EmbeddingGemma 2 intégré : 484622336 octets, présence/taille contrôlées.
+- Bouncy Castle bcprov/bcpkix/bcutil : résolution effective 1.86 vérifiée.
+- ZIP : 660675153 octets ; SHA-256
+  `6b20e80ad2f2c194f34d85806475cccf8994b6013a28fca94ac4866790bd2ab5`.
+- [Archive APK](https://github.com/tiviniura0/living-memory-android/actions/runs/40434835372/artifacts/12704446999).
+  Expiration annoncée par GitHub : 2026-11-10T02:05:12Z.
+- [Preuves légères : logs tests, dépendances, manifest et signature](https://github.com/tiviniura0/living-memory-android/actions/runs/40437013088/artifacts/12704915701).
+
+L'outil de transfert de fichiers de cette session refuse les artefacts
+supérieurs à 536870912 octets. L'archive complète dépasse cette limite :
+livraison par téléchargement GitHub, sans ordinateur personnel.
+L'environnement local est ensuite devenu indisponible ; la vérification
+finale de l'artefact a été réalisée dans Actions, avec succès.
 
 ## Cause du premier échec Android réel
 Le compilateur Dart/Kotlin et les dépendances natives ont franchi leurs étapes.
@@ -88,4 +116,21 @@ R8 a refusé la classe optionnelle com.gemalto.jp2.JP2Decoder référencée par
 PDFBox. Correction ciblée : proguard-rules.pro ne supprime que cet avertissement,
 car l'application extrait du texte sans décoder d'image JPX ; le contrôle de
 présence de classe est prévu par le code officiel de PDFBox. R8 reste activé.
-Une nouvelle compilation doit confirmer cette correction.
+La compilation 40434835372 a confirmé cette correction ; R8 est resté actif.
+
+## Couverture de la mission
+
+| Demande | Livraison / limite |
+|---|---|
+| Dépôt existant préservé | Historique conservé, aucun fichier original supprimé |
+| Audit Flutter et dépendances | AUDIT.md, lock et versions natives inspectés ; pas de certification exhaustive de sécurité |
+| Workflow défaillant | Fichier vide remplacé, chaîne de compilation prouvée par Actions |
+| Gemma 4 / EmbeddingGemma 2 | Moteurs existants conservés et réutilisés ; formats .litertlm vérifiés ; pas d'inférence réelle sur S22 |
+| RAG local TXT/PDF | Import local, SQLite distinct, passages et pages citables ; PDF texte sans OCR |
+| Mémoire individuelle | Filtrage obligatoire par agent, notes persistantes ; architecture future documentée |
+| APK Android via Actions | APK arm64 produit, hash/signature/structure vérifiés |
+| Tests et non-régression | 2943 réussis, 15 ignorés, limites matérielles explicites |
+
+Aucun fournisseur IA payant ajouté ni document privé inclus dans les builds.
+Les réponses ne sont pas ajoutées automatiquement à la mémoire. L'utilisateur
+reste responsable de vérifier les passages cités lors de l'essai sur téléphone.

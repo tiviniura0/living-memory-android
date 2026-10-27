@@ -85,8 +85,8 @@ est `samples/litert/flutter`. Les packages Flutter sont communautaires.
 - Le code, lock, hook/build.dart et tool/models.lock réellement inspectés.
 
 PDFBox demande Bouncy Castle 1.72 dans son POM. Les trois modules sont contraints
-à 1.86, version de durcissement officielle vérifiée sur Maven Central. Le rapport
-Gradle de l'artefact doit confirmer la résolution réelle ; cela ne constitue
+à 1.86, version de durcissement officielle vérifiée sur Maven Central. Le contrôle
+40437013088 a confirmé la résolution effective 1.86 dans le rapport Gradle ; cela ne constitue
 pas une garantie d'absence de vulnérabilités dans toute l'application.
 Sources complémentaires :
 - https://www.bouncycastle.org/resources/new-release-bouncy-castle-java-1-86/
@@ -101,3 +101,16 @@ Une règle `-dontwarn com.gemalto.jp2.JP2Decoder` est donc ajoutée seule.
 R8 reste actif ; aucune règle globale `-dontwarn **`, aucune dépendance
 supplémentaire au décodeur ni dépôt JCenter ancien n'est ajoutée.
 Source : https://github.com/TomRoush/PdfBox-Android/blob/master/README.md
+
+
+## Contrôle final
+Actions 40434835372 a compilé l'APK ; 40437013088 a vérifié son hash, sa signature
+Android v2, son ABI arm64-v8a, le bundle d'embedding et les versions PDF résolues.
+Aucune installation ni inférence sur téléphone n'est déduite de ces contrôles.
+
+La page de sécurité Apache consultée indique que CVE-2026-33929 et
+CVE-2026-23907 concernent l'exemple ExtractEmbeddedFiles, pas le cœur ; cette
+application n'utilise pas cet exemple ni l'extraction de pièces jointes.
+Cela ne certifie pas le fork Android : pas de fuzzing ou d'isolation mémoire
+du parseur. Les plafonds de fichier/pages ne garantissent pas un temps maximal.
+Source : https://pdfbox.apache.org/security.html
