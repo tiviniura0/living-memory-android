@@ -84,7 +84,12 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
     final store = widget.store;
     final agent = widget.agentId;
     final enabled = store.autoMemoryEnabled(agent);
-    final memories = store.memories(agent, limit: 20, offset: _offset, projectId: widget.projectId);
+    final memories = store.memories(
+      agent,
+      limit: 20,
+      offset: _offset,
+      projectId: widget.projectId,
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -122,9 +127,12 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
               subtitle: Text(
                 '${m.provenance == 'user_correction'
                     ? 'Correction de l’utilisateur'
-                    : m.kind == 'inference'
-                    ? 'Déduction citée'
-                    : 'Observation citée'} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
+                    : switch (m.kind) {
+                      'inference' => 'Déduction citée',
+                      'declaration' => 'Déclaration citée',
+                      'hypothesis' => 'Hypothèse citée',
+                      _ => 'Observation citée',
+                    }} • ${_status(m.status)}${m.uncertain ? ' • incertitude signalée' : ''}',
               ),
               children: [
                 Padding(
@@ -168,9 +176,13 @@ class _AutoMemoryPanelState extends State<AutoMemoryPanel> {
                             child: const Text('Corriger'),
                           ),
                           OutlinedButton(
-                            onPressed: widget.busy || m.status == 'archived' ? null : () => unawaited(_perform(() async {
-                              store.archiveMemory(agent, m.id);
-                            })),
+                            onPressed: widget.busy || m.status == 'archived'
+                                ? null
+                                : () => unawaited(
+                                    _perform(() async {
+                                      store.archiveMemory(agent, m.id);
+                                    }),
+                                  ),
                             child: const Text('Archiver'),
                           ),
                           TextButton(

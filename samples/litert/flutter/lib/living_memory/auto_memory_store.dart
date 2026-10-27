@@ -1,7 +1,9 @@
 part of 'memory_store.dart';
 
 void _migrateAutoMemory(Database db) {
-  if ((db.select('PRAGMA user_version').single.values.first as int) >= 2) return;
+  if ((db.select('PRAGMA user_version').single.values.first as int) >= 2) {
+    return;
+  }
   db.execute('BEGIN IMMEDIATE');
   try {
     db.execute(
@@ -141,7 +143,8 @@ extension AutoMemoryStorage on MemoryStore {
     String agentId, {
     int limit = 100,
     int offset = 0,
-    String projectId = '', String worldId = '',
+    String projectId = '',
+    String worldId = '',
   }) {
     if (limit < 1 || limit > 100 || offset < 0) {
       throw ArgumentError('Pagination invalide');
@@ -176,7 +179,8 @@ extension AutoMemoryStorage on MemoryStore {
     List<double> vector, {
     int topK = 3,
     double minSimilarity = 0.65,
-    String projectId = '', String worldId = '',
+    String projectId = '',
+    String worldId = '',
   }) {
     _validateVector(vector);
     if (topK < 1 ||
@@ -188,10 +192,12 @@ extension AutoMemoryStorage on MemoryStore {
     }
     final hits = <MemoryHit>[];
     final qnorm = math.sqrt(vector.fold(0.0, (s, v) => s + v * v));
-    final query = _db.prepare('''SELECT m.*,d.name,c.page FROM memories m
+    final query = _db.prepare(
+      '''SELECT m.*,d.name,c.page FROM memories m
       JOIN documents d ON d.id=m.document_id
       JOIN chunks c ON c.document_id=m.document_id AND c.ordinal=m.ordinal
-      WHERE m.agent_id=? AND m.status='user_confirmed' AND d.project_id=? AND d.world_id=? ORDER BY m.id''');
+      WHERE m.agent_id=? AND m.status='user_confirmed' AND d.project_id=? AND d.world_id=? ORDER BY m.id''',
+    );
     try {
       final cursor = query.selectCursor([agentId, projectId, worldId]);
       while (cursor.moveNext()) {
@@ -210,9 +216,12 @@ extension AutoMemoryStorage on MemoryStore {
         final score = (dot / (qnorm * math.sqrt(norm))).clamp(-1.0, 1.0);
         if (score < minSimilarity) continue;
         final correction = r['provenance'] == 'user_correction';
-        final nature = r['kind'] == 'inference'
-            ? 'déduction citée'
-            : 'observation citée';
+        final nature = switch (r['kind']) {
+          'inference' => 'déduction citée',
+          'declaration' => 'déclaration citée',
+          'hypothesis' => 'hypothèse citée',
+          _ => 'observation citée',
+        };
         hits.add(
           MemoryHit(
             agentId: agentId,
@@ -466,9 +475,11 @@ extension AutoMemoryStorage on MemoryStore {
   void archiveMemory(String agentId, String id) {
     _memory(agentId, id);
     _transaction(() {
-      _db.execute("UPDATE memories SET status='archived',version=version+1,updated_at=? WHERE agent_id=? AND id=?",
-        [DateTime.now().toUtc().toIso8601String(),agentId,id]);
-      _snapshot(agentId,id);
+      _db.execute(
+        "UPDATE memories SET status='archived',version=version+1,updated_at=? WHERE agent_id=? AND id=?",
+        [DateTime.now().toUtc().toIso8601String(), agentId, id],
+      );
+      _snapshot(agentId, id);
     });
   }
 

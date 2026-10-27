@@ -15,15 +15,15 @@ import '../domain/models/assistant_event.dart';
 import '../domain/models/knowledge_query.dart';
 import '../utils/result.dart';
 import 'auto_memory_engine.dart';
+import 'auto_memory_panel.dart';
 import 'context_lifecycle_manager.dart';
 import 'context_panel.dart';
-import 'module_contracts.dart';
-import 'reliability_engine.dart';
-import 'auto_memory_panel.dart';
 import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
 import 'memory_store.dart';
 import 'memory_text_dialog.dart';
+import 'module_contracts.dart';
+import 'reliability_engine.dart';
 
 const _profile = ConversationProfile(
   name: 'living-memory',
@@ -64,7 +64,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
   MemoryStore? _store;
   String _agent = 'personal';
   String _project = '';
-  ContextLifecycleManager get _lifecycle => ContextLifecycleManager(_store!, MemoryScope(agentId: _agent, projectId: _project));
+  ContextLifecycleManager get _lifecycle => ContextLifecycleManager(
+    _store!,
+    MemoryScope(agentId: _agent, projectId: _project),
+  );
   String _status = 'Ouverture de la mémoire locale…';
   String _answer = '';
   List<MemoryHit> _hits = [];
@@ -207,10 +210,17 @@ class _MemoryScreenState extends State<MemoryScreen> {
     }
     _answer = '';
     _hits = [];
-    final vector = _value(await widget.embedder.embedQuery(KnowledgeQuery.text(question)));
+    final vector = _value(
+      await widget.embedder.embedQuery(KnowledgeQuery.text(question)),
+    );
     if (_closed || _cancelled) return;
-    _hits = ReliabilityEngine(_store!).retrieve(_agent, question, vector,
-      minSimilarity: _threshold, projectId: _project);
+    _hits = ReliabilityEngine(_store!).retrieve(
+      _agent,
+      question,
+      vector,
+      minSimilarity: _threshold,
+      projectId: _project,
+    );
     if (_hits.isEmpty) {
       _status = 'Aucun passage au seuil choisi. Aucun appel au générateur.';
       return;
@@ -219,7 +229,8 @@ class _MemoryScreenState extends State<MemoryScreen> {
         '${_hits.length} passages retrouvés. Scores non calibrés sur tes documents.';
     if (!generate) return;
     final manager = _lifecycle;
-    final session = manager.sessions().firstOrNull?.id ?? manager.startSession();
+    final session =
+        manager.sessions().firstOrNull?.id ?? manager.startSession();
     manager.append(session, 'user', question);
     if (manager.needsCompaction(session)) manager.compact(session);
     // Fresh chat for every question: no context retained from any other agent.
@@ -269,7 +280,8 @@ class _MemoryScreenState extends State<MemoryScreen> {
             return;
           }
           final raw = generated.toString();
-          final validation = ReliabilityEngine(_store!).validateAnswer(raw, _hits);
+          final validation = ReliabilityEngine(_store!)
+              .validateAnswer(raw, _hits);
           _answer = validation.text;
           if (raw.trim().isNotEmpty) manager.append(session, 'assistant', raw);
           if (manager.needsCompaction(session)) manager.compact(session);
@@ -396,17 +408,25 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 ],
               ),
             ],
-            if (store != null) TextButton.icon(
-              icon: const Icon(Icons.folder_outlined),
-              label: Text('Projet : ${_project.isEmpty ? 'Général' : _project}'),
-              onPressed: enabled ? () => _run(() async {
-                final project = await _textDialog('Ouvrir un projet', hint: 'Nom du projet ; vide = Général');
-                if (project == null || _closed || _cancelled) return;
-                _project = project.trim();
-                _hits = [];
-                _answer = '';
-              }) : null,
-            ),
+            if (store != null)
+              TextButton.icon(
+                icon: const Icon(Icons.folder_outlined),
+                label: Text(
+                  'Projet : ${_project.isEmpty ? 'Général' : _project}',
+                ),
+                onPressed: enabled
+                    ? () => _run(() async {
+                        final project = await _textDialog(
+                          'Ouvrir un projet',
+                          hint: 'Nom du projet ; vide = Général',
+                        );
+                        if (project == null || _closed || _cancelled) return;
+                        _project = project.trim();
+                        _hits = [];
+                        _answer = '';
+                      })
+                    : null,
+              ),
             const SizedBox(height: 12),
             Wrap(
               spacing: 8,
@@ -508,7 +528,11 @@ class _MemoryScreenState extends State<MemoryScreen> {
                 cancelled: () => _closed || _cancelled,
               ),
               const Divider(),
-              ContextPanel(key: ValueKey('context-$_agent-$_project'),manager: _lifecycle,busy: _busy),
+              ContextPanel(
+                key: ValueKey('context-$_agent-$_project'),
+                manager: _lifecycle,
+                busy: _busy,
+              ),
               const Text('Sources de cet agent et de ce projet'),
               for (final doc in store.documents(_agent, projectId: _project))
                 ListTile(

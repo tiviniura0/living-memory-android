@@ -8,6 +8,7 @@ import 'auto_memory_candidate.dart';
 
 part 'auto_memory_store.dart';
 part 'context_store.dart';
+part 'session_retrieval_store.dart';
 
 class MemoryChunk {
   const MemoryChunk({
@@ -57,7 +58,7 @@ class MemoryStore {
     }
     final db = sqlite3.open(path);
     try {
-      if ((db.select('PRAGMA user_version').first.values.first as int) > 3) {
+      if ((db.select('PRAGMA user_version').first.values.first as int) > 4) {
         throw StateError('Version SQLite future : aucune migration autorisée.');
       }
       db.execute('PRAGMA foreign_keys = ON');
@@ -95,6 +96,7 @@ class MemoryStore {
       );
       _migrateAutoMemory(db);
       _migrateLifecycle(db);
+      _migrateSessionRetrieval(db);
       return MemoryStore._(db, dimension);
     } catch (_) {
       db.close();
@@ -122,8 +124,10 @@ class MemoryStore {
   ];
 
   List<({String id, String name, String kind, int chunks})> documents(
-    String agentId, {String projectId = '', String worldId = ''}
-  ) => [
+    String agentId, {
+    String projectId = '',
+    String worldId = '',
+  }) => [
     for (final row in _db.select(
       '''SELECT d.id, d.name, d.kind, COUNT(c.ordinal) AS chunks
       FROM documents d LEFT JOIN chunks c ON c.document_id=d.id
@@ -165,8 +169,14 @@ class MemoryStore {
     )) {
       throw ArgumentError('Invalid passage');
     }
-    if (projectId.length > 100 || worldId.length > 100) throw ArgumentError('Portée invalide');
-    final scopedDigest = projectId.isEmpty && worldId.isEmpty ? digest : sha256.convert(utf8.encode(jsonEncode([projectId, worldId, digest]))).toString();
+    if (projectId.length > 100 || worldId.length > 100) {
+      throw ArgumentError('Portée invalide');
+    }
+    final scopedDigest = projectId.isEmpty && worldId.isEmpty
+        ? digest
+        : sha256
+              .convert(utf8.encode(jsonEncode([projectId, worldId, digest])))
+              .toString();
     final existing = _db.select(
       'SELECT id FROM documents WHERE agent_id=? AND digest=?',
       [agentId, digest],
@@ -184,18 +194,24 @@ class MemoryStore {
     if (total + chunks.length > 10000) {
       throw StateError('Limite V1 : 10 000 passages par agent.');
     }
-    final id = sha256.convert(utf8.encode('$agentId\n$scopedDigest')).toString();
+    final id = sha256
+        .convert(utf8.encode('$agentId\n$scopedDigest'))
+        .toString();
     _db.execute('BEGIN IMMEDIATE');
     try {
-      _db.execute('INSERT INTO documents(id,agent_id,name,digest,kind,created_at,project_id,world_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)', [
-        id,
-        agentId,
-        name,
-        scopedDigest,
-        kind,
-        DateTime.now().toUtc().toIso8601String(),
-        projectId, worldId,
-      ]);
+      _db.execute(
+        'INSERT INTO documents(id,agent_id,name,digest,kind,created_at,project_id,world_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+        [
+          id,
+          agentId,
+          name,
+          scopedDigest,
+          kind,
+          DateTime.now().toUtc().toIso8601String(),
+          projectId,
+          worldId,
+        ],
+      );
       final insert = _db.prepare('INSERT INTO chunks VALUES (?, ?, ?, ?, ?)');
       try {
         for (var i = 0; i < chunks.length; i++) {
@@ -224,7 +240,8 @@ class MemoryStore {
     List<double> vector, {
     int topK = 3,
     double minSimilarity = 0.65,
-    String projectId = '', String worldId = '',
+    String projectId = '',
+    String worldId = '',
   }) {
     _validateVector(vector);
     if (topK < 1 ||

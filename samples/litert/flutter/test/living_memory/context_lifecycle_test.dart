@@ -14,11 +14,19 @@ void main() {
     store = MemoryStore.open('${dir.path}/m.db', profile: 'test', dimension: 2);
     store.createAgent('aru', 'Aru');
   });
-  tearDown(() { store.close(); dir.deleteSync(recursive: true); });
+  tearDown(() {
+    store.close();
+    dir.deleteSync(recursive: true);
+  });
   test('compaction preserves originals and decisions across reopen', () {
     final manager = ContextLifecycleManager(store, scope, tokenBudget: 256);
     final id = manager.startSession();
-    manager.append(id, 'user', 'Décision : conserver les données.', decision: true);
+    manager.append(
+      id,
+      'user',
+      'Décision : conserver les données.',
+      decision: true,
+    );
     manager.append(id, 'assistant', 'Affirmation générée non vérifiée.');
     manager.append(id, 'user', 'suite ' * 80);
     expect(manager.needsCompaction(id), isTrue);
@@ -36,11 +44,17 @@ void main() {
   test('scope mismatch cannot restore or write a session', () {
     final a = ContextLifecycleManager(store, scope);
     final id = a.startSession();
-    final b = ContextLifecycleManager(store, const MemoryScope(agentId: 'aru', projectId: 'other'));
+    final b = ContextLifecycleManager(
+      store,
+      const MemoryScope(agentId: 'aru', projectId: 'other'),
+    );
     expect(b.sessions(), isEmpty);
     expect(() => b.messages(id), throwsStateError);
     expect(() => b.append(id, 'user', 'injection'), throwsStateError);
-    expect(() => a.append(id, 'tool', 'model claims tool ran'), throwsArgumentError);
+    expect(
+      () => a.append(id, 'tool', 'model claims tool ran'),
+      throwsArgumentError,
+    );
   });
   test('oversized input is refused and repeated compaction is idempotent', () {
     final manager = ContextLifecycleManager(store, scope, tokenBudget: 256);
@@ -53,21 +67,31 @@ void main() {
     expect(manager.checkpoints(id), hasLength(1));
     expect(manager.activeTokenEstimate(id), lessThan(256));
   });
-  test('compaction after reset and changed decisions appends a fresh checkpoint', () {
-    final manager = ContextLifecycleManager(store, scope);
-    final id = manager.startSession();
-    manager.append(id, 'user', 'Décision A');
-    manager.compact(id);
-    manager.resetActiveContext(id);
-    manager.markDecision(id, 1, decision: true);
-    final revised = manager.compact(id);
-    expect(manager.checkpoints(id).last.id, revised.id);
-    expect(manager.checkpoints(id), hasLength(3));
-    expect(revised.summary, contains('décision utilisateur'));
-  });
+  test(
+    'compaction after reset and changed decisions appends a fresh checkpoint',
+    () {
+      final manager = ContextLifecycleManager(store, scope);
+      final id = manager.startSession();
+      manager.append(id, 'user', 'Décision A');
+      manager.compact(id);
+      manager.resetActiveContext(id);
+      manager.markDecision(id, 1, decision: true);
+      final revised = manager.compact(id);
+      expect(manager.checkpoints(id).last.id, revised.id);
+      expect(manager.checkpoints(id), hasLength(3));
+      expect(revised.summary, contains('décision utilisateur'));
+    },
+  );
   test('reset retains originals and permanent documents', () {
-    final doc = store.addDocument(agentId: 'aru', name: 'note', digest: 'a',
-      chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Permanent')], vectors: [[1, 0]]);
+    final doc = store.addDocument(
+      agentId: 'aru',
+      name: 'note',
+      digest: 'a',
+      chunks: [const MemoryChunk(page: 1, ordinal: 1, text: 'Permanent')],
+      vectors: [
+        [1, 0],
+      ],
+    );
     final manager = ContextLifecycleManager(store, scope);
     final id = manager.startSession();
     manager.append(id, 'user', 'Décision', decision: true);
