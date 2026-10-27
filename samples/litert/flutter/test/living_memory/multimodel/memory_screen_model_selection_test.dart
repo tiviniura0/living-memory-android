@@ -101,6 +101,7 @@ void main() {
       await tester.scrollUntilVisible(
         find.textContaining('e4b non enregistré'),
         100,
+        scrollable: find.byType(Scrollable).first,
       );
       expect(find.textContaining('e4b non enregistré'), findsOneWidget);
       await tester.pumpWidget(const SizedBox());
