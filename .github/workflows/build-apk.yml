@@ -109,3 +109,11 @@ jobs:
             samples/litert/flutter/build/evidence/
           if-no-files-found: warn
           retention-days: 14
+      - name: Upload light validation evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: living-memory-v1.1-validation-${{ github.sha }}
+          path: samples/litert/flutter/build/evidence/
+          if-no-files-found: warn
+          retention-days: 30

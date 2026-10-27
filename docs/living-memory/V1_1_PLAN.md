@@ -39,3 +39,5 @@ Pas de test matériel S22 dans ce runner : qualité des modèles réels, install
 - Revue de suivi : annulations et recherche confirmée validées par inspection ; étiquette des corrections clarifiée.
 
 - Actions 40477380809 : les 35 tests ciblés passent ; analyse bloquée uniquement par un import typed_data redondant dans le nouveau test d’annulation. Import retiré, format Dart appliqué depuis la preuve CI. La CI contrôle désormais le format sans réécrire le code testé.
+
+- Actions 40477834391 : format et analyse sans problème ; suite complète 2965 réussis / 15 ignorés / 1 échec, test existant config/build_info_test.dart. Cause : version pubspec passée à 1.1.0+2 mais constante kAppVersion restée à 1.0.0+1. Constante alignée sans modifier le test. Preuves légères séparées de l’archive APK pour permettre leur inspection sans télécharger 900 Mo.
