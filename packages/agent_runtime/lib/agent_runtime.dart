@@ -28,7 +28,7 @@ class Perception {
         events = s.state.eventLog
             .where((e) => e.observedBy.contains(id))
             .toList();
-    final data = s.state.toJson();
+    final data = Map<String, dynamic>.from(s.state.data);
     data['agents'] = agents.map((a) => a.toJson()).toList();
     data['resources'] = resources.map((r) => r.toJson()).toList();
     data['eventLog'] = events.map((e) => e.toJson()).toList();

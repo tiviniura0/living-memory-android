@@ -325,7 +325,9 @@ class WorldCore {
     Map<String, dynamic> payload, [
     String? command,
   ]) {
-    final index = (_s['eventLog'] as List).length;
+    final index = (_s['eventLog'] as List)
+        .where((e) => e['revision'] == _s['revision'])
+        .length;
     final event = {
       'schemaVersion': 1,
       'eventId': sha256
@@ -351,7 +353,7 @@ class WorldCore {
       ];
     }
     final log = _s['eventLog'] as List;
-    log.add(event);
+    log.add(freeze(event));
     if (log.length > 10000) log.removeAt(0);
     return WorldEvent.fromJson(event);
   }

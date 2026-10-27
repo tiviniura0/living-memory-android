@@ -1,14 +1,18 @@
 import 'dart:convert';
+import 'dart:collection';
 
 import 'package:collection/collection.dart';
 
-Object? freeze(Object? v) => v is Map
-    ? Map<String, Object?>.unmodifiable(
-        v.map((k, v) => MapEntry(k as String, freeze(v))),
-      )
-    : v is List
-    ? List<Object?>.unmodifiable(v.map(freeze))
-    : v;
+Object? freeze(Object? v) {
+  if (v is UnmodifiableMapView || v is UnmodifiableListView) return v;
+  if (v is Map)
+    return UnmodifiableMapView<String, Object?>(
+      v.map((k, v) => MapEntry(k as String, freeze(v))),
+    );
+  if (v is List) return UnmodifiableListView<Object?>(v.map(freeze).toList());
+  return v;
+}
+
 Object? canonical(Object? v) => v is Map
     ? {
         for (final k in (v.keys.cast<String>().toList()..sort()))

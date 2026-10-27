@@ -1,0 +1,5 @@
+# Protocole de mesure L1
+Aucune mesure S22 n'est encore disponible. Flutter reste un choix provisoire.
+Sur le même appareil chargé, sans autre app active : profils 5, 10 puis 20 habitants, 30 minutes chacun, carte 64×64, graine 1, vitesse 1×, sans IA. Relever version APK/SHA, température, niveau batterie initial/final, PSS médiane/pic, CPU, temps de frame p50/p95 et jank, latence tick, taille sauvegarde. Conserver les sources brutes ; aucune conversion arbitraire en watts.
+Si les contrôles deviennent inutilisables, si la vitesse réelle reste sous 80 % de la vitesse demandée pendant 2 minutes ou si la cible de 30 FPS est durablement manquée, profiler puis réévaluer Flutter face à un prototype Godot équivalent. Ce seuil est un critère de décision proposé, pas une mesure.
+La CLI vérifie le déterminisme et la séparation du rendu. Son temps sur serveur ne prédit pas la consommation Android.
