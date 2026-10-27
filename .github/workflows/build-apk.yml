@@ -1,1 +1,79 @@
+name: Living Memory Android APK
 
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'work/living-memory-local-rag']
+    paths:
+      - 'samples/litert/flutter/**'
+      - '.github/workflows/build-apk.yml'
+  pull_request:
+    paths:
+      - 'samples/litert/flutter/**'
+      - '.github/workflows/build-apk.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: living-memory-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    defaults:
+      run:
+        working-directory: samples/litert/flutter
+        shell: bash
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: SDK versions
+        run: |
+          flutter --version
+          java -version
+          python --version
+      - name: Prepare pinned plugin and bundled public models
+        run: |
+          bash tool/flutter_litert/vendor.sh
+          bash tool/fetch_models.sh
+          bash tool/fetch_models.sh --check
+      - name: Resolve locked dependencies
+        run: flutter pub get --enforce-lockfile
+      - name: Analyze
+        run: flutter analyze
+      - name: Unit and widget regression suite
+        run: |
+          mkdir -p build/evidence
+          set -o pipefail
+          flutter test --reporter expanded 2>&1 | tee build/evidence/flutter-test.log
+      - name: Build installable arm64 APK
+        run: |
+          flutter build apk --release --target-platform android-arm64
+          mkdir -p build/evidence
+          sha256sum build/app/outputs/flutter-apk/app-release.apk > build/evidence/APK-SHA256.txt
+      - name: Upload APK and evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: living-memory-android-${{ github.sha }}
+          path: |
+            samples/litert/flutter/build/app/outputs/flutter-apk/app-release.apk
+            samples/litert/flutter/build/evidence/
+          if-no-files-found: warn
+          retention-days: 14
