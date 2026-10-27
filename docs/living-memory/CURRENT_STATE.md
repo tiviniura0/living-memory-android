@@ -1,25 +1,26 @@
-# État Living Memory — version d'essai compilée
+# État Living Memory V1.2 — expérimental
 
-Source initiale préservée : 659a03c49af38e45d235c1c7fdeb504b82fbb4ea.
-Version APK : 2ebcad7ae79805019ed242555c0170d90484b8b2.
+Branche : work/living-memory-v1.2-multimodel.
+Source V1.1 préservée : fe9c0af4acc9a2fc28fcef0c38ee5638425c778d.
+Version applicative : 1.2.0+3 ; applicationId et base SQLite schéma 4 conservés.
+Aucune fusion dans main.
 
-Confirmé : analyse Flutter sans problème ; 2943 tests réussis / 15 ignorés ;
-APK arm64 897782148 octets compilé dans Actions 40434835372.
-Contrôle indépendant 40437013088 : hash conforme, signature Android v2 valide
-(certificat Android Debug), ABI arm64-v8a, EmbeddingGemma intégré, Bouncy Castle
-1.86 réellement résolu. Voir NON_REGRESSION.md pour les liens et empreintes.
+Implémenté : registre privé de modèles, abstraction LocalModelRuntime,
+adaptateur LiteRT-LM réel, modes Auto/E2B/E4B, déchargement séquentiel avant et
+après tâche, repli E4B vers E2B sur erreur récupérable, arrêt des chargements
+si fermeture native en échec, provenance du modèle, préférences V1.1 préservées.
+EmbeddingGemma 2 et l'espace vectoriel 768 restent inchangés.
 
-La dernière mise à jour documentaire et le workflow de contrôle ne changent
-pas le code de l'application compilée. La branche de travail est conservée.
+Les preuves du build sont dans l'artefact Actions associé au commit exact :
+apk-metadata.json, APK-SHA256.txt, signature, logs ciblés et suite complète.
+Le rapport de l'artefact contient le lien exact du run qui l'a produit.
+Une archive de preuves peut exister même si le run échoue : vérifier le statut
+final ET la présence de app-release.apk avant de parler d'APK validé.
 
-Implémenté : SQLite privé distinct de kb.db, agents séparés, import TXT/PDF texte,
-notes, recherche cosinus et passages citables, conversations neuves sans outils,
-import Android des modèles en flux. Gemma 4 est à importer/configurer ;
-EmbeddingGemma 2 740M est inclus dans l'APK.
+Tests matériels : NON EXÉCUTÉS. Ni E4B réel, ni RAM, ni chauffe, ni débit
+sur Galaxy S22 Ultra n'ont été validés dans cet environnement.
+Voir V1_2_VALIDATION.md et V1_2_S22_PROTOCOL.md.
 
-Non testé : installation et sélecteur réel S22, vraies inférences, qualité
-sémantique, mode avion, RAM/latence/chauffe. Pas d'OCR, chiffrement applicatif,
-export/restauration ou monde autonome. La signature debug n'est pas pérenne.
-
-Prochaine étape : essai téléphone décrit dans INSTALL_S22.md. Ne pas
-assimiler une compilation et des tests synthétiques à une validation sur S22.
+Attention signature : certificat debug Actions non pérenne. Ne pas désinstaller
+une application contenant des données pour forcer une mise à jour incompatible.
+Aucun export/restauration n'est actuellement disponible.

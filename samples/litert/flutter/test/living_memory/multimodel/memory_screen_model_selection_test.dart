@@ -10,6 +10,7 @@ import 'package:litert_edge_demos/domain/models/knowledge_query.dart';
 import 'package:litert_edge_demos/domain/use_cases/chat_model_switcher.dart';
 import 'package:litert_edge_demos/living_memory/memory_screen.dart';
 import 'package:litert_edge_demos/living_memory/memory_store.dart';
+import 'package:litert_edge_demos/living_memory/multimodel/model_panel.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/model_registry.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/multi_model_engine.dart';
 import 'package:litert_edge_demos/utils/result.dart';
@@ -40,7 +41,7 @@ void main() {
       vectors: [[1, ...List.filled(kKbEmbeddingDimension - 1, 0.0)]]);
     seed.close();
     final registry = ModelRegistry(Directory('${dir.path}/living-memory-models-v1'));
-    await registry.setMode(ModelMode.e4b);
+    await tester.runAsync(() => registry.setMode(ModelMode.e4b));
     const channel = MethodChannel('plugins.flutter.io/path_provider');
     tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(channel, (call) async => dir.path);
     final chat = FakeConversationRepository();
@@ -48,8 +49,16 @@ void main() {
     final switcher = ChatModelSwitcher(conversation: chat,
       reloadChatModel: () async { loads++; return const Result.ok(null); },
       unloadChatModel: () async {}, refuseChatModelLoads: (_) {});
+    await tester.runAsync(() async {
     await tester.pumpWidget(MaterialApp(home: MemoryScreen(
       embedder: _Embedder(), conversation: chat, chatModels: _Models(), modelSwitcher: switcher)));
+      final deadline = DateTime.now().add(const Duration(seconds: 3));
+      while (find.byType(ModelPanel).evaluate().isEmpty && DateTime.now().isBefore(deadline)) {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        await tester.pump();
+      }
+      expect(find.byType(ModelPanel), findsOneWidget);
+    });
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Question');
     await tester.ensureVisible(find.text('Répondre avec Gemma'));
