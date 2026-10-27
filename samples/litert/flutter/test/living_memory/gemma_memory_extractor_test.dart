@@ -39,6 +39,19 @@ void main() {
     expect(chat.profile!.name, 'auto-memory-extractive-v1');
     expect(chat.prompts.single, contains('Note durable.'));
   });
+  test('imported Gemma file default display name can extract', () async {
+    chat.capabilities = const ChatCapabilities(
+      modelName: 'gemma-4-E2B-it',
+      images: false,
+      tools: false,
+    );
+    final result = extractor.extract('Note durable.');
+    await started();
+    chat.emit('[]');
+    await chat.finish();
+    expect(await result, isEmpty);
+    expect(chat.prompts, hasLength(1));
+  });
   test('stopped model output is rejected even when valid JSON', () async {
     final result = extractor.extract('Note durable.');
     final check = expectLater(result, throwsStateError);
