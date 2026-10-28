@@ -489,13 +489,6 @@ extension AutoMemoryStorage on MemoryStore {
   );
 
   void _transaction(void Function() action) {
-    _db.execute('BEGIN IMMEDIATE');
-    try {
-      action();
-      _db.execute('COMMIT');
-    } catch (_) {
-      _db.execute('ROLLBACK');
-      rethrow;
-    }
+    extensionTransaction<void>(action);
   }
 }

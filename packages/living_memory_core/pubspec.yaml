@@ -1,0 +1,8 @@
+name: living_memory_core
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  crypto: ^3.0.7
+  sqlite3: 3.7.1
