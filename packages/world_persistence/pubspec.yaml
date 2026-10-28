@@ -6,7 +6,7 @@ environment:
 dependencies:
   world_contracts:
     path: ../world_contracts
-  crypto: 3.0.6
+  crypto: ^3.0.6
 dev_dependencies:
   test: 1.26.3
   agent_runtime:
