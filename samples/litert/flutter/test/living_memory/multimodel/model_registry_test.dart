@@ -117,4 +117,46 @@ void main() {
     await expectLater(registry.remove('e2b'), throwsFormatException);
     expect(await source.exists(), isTrue);
   });
+  test(
+    'low space and cancelled registration preserve prior manifest and source',
+    () async {
+      final source = File('${dir.path}/source.litertlm')
+        ..writeAsStringSync('data');
+      final registry = ModelRegistry(
+        Directory('${dir.path}/registry'),
+        freeBytes: () async => 1,
+      );
+      await expectLater(
+        registry.register('e2b', source.path, model(source.path)),
+        throwsA(isA<FileSystemException>()),
+      );
+      expect(registry.models, isEmpty);
+      expect(await source.exists(), isTrue);
+      final other = ModelRegistry(Directory('${dir.path}/other'));
+      await expectLater(
+        other.register(
+          'e2b',
+          source.path,
+          model(source.path),
+          cancelled: () => true,
+        ),
+        throwsA(isA<ModelCancelled>()),
+      );
+      expect(other.models, isEmpty);
+    },
+  );
+  test(
+    'replacement commits new copy before removing superseded private copy',
+    () async {
+      final source = File('${dir.path}/source.litertlm')
+        ..writeAsStringSync('data');
+      final registry = ModelRegistry(Directory('${dir.path}/registry'));
+      await registry.register('e2b', source.path, model(source.path));
+      final before = (registry.models['e2b']!.source as LocalModelSource).path;
+      await registry.register('e2b', source.path, model(source.path));
+      expect(await File(before).exists(), isFalse);
+      expect(await registry.verify('e2b'), isTrue);
+      expect(await source.exists(), isTrue);
+    },
+  );
 }
