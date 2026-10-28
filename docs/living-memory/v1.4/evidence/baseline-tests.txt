@@ -1,0 +1,27 @@
+test_actual_v2_output (test_apk_signer.SignerTest.test_actual_v2_output) ... ok
+test_legacy_output (test_apk_signer.SignerTest.test_legacy_output) ... ok
+test_missing_short_or_oversized_digest (test_apk_signer.SignerTest.test_missing_short_or_oversized_digest) ... ok
+test_multiple_distinct_signers_are_rejected (test_apk_signer.SignerTest.test_multiple_distinct_signers_are_rejected) ... ok
+test_public_key_is_not_a_certificate (test_apk_signer.SignerTest.test_public_key_is_not_a_certificate) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.001s
+
+OK
+test_affected_guava_and_okhttp_are_rejected (test_native_dependency_security.NativeDependencies.test_affected_guava_and_okhttp_are_rejected) ... ok
+test_missing_security_relevant_dependency_fails_closed (test_native_dependency_security.NativeDependencies.test_missing_security_relevant_dependency_fails_closed) ... ok
+test_resolved_version_replaces_requested_version (test_native_dependency_security.NativeDependencies.test_resolved_version_replaces_requested_version) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.000s
+
+OK
+test_cleartext_explicitly_disabled (test_android_security.AndroidSecurity.test_cleartext_explicitly_disabled) ... ok
+test_exported_components_are_system_protected_and_no_broad_storage (test_android_security.AndroidSecurity.test_exported_components_are_system_protected_and_no_broad_storage) ... ok
+test_private_data_excluded_from_backup (test_android_security.AndroidSecurity.test_private_data_excluded_from_backup) ... ok
+test_release_not_debuggable (test_android_security.AndroidSecurity.test_release_not_debuggable) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.001s
+
+OK

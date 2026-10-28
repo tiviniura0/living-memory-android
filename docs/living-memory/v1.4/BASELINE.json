@@ -1,0 +1,28 @@
+{
+  "source_branch": "work/living-memory-v1.3.1-security",
+  "source_sha": "32dfa547bf3ff63eec6fa5025c7641db45fc858e",
+  "target_branch": "work/living-memory-v1.4-extensions",
+  "verified_historical_run": {
+    "id": 40654444799,
+    "head_sha": "f73a8e13c72173362630648513ffe81020b0e727",
+    "status": "completed",
+    "conclusion": "success"
+  },
+  "fresh_local_tests": {
+    "apk_signer": 5,
+    "native_dependency_security": 3,
+    "android_source_security": 4,
+    "failures": 0
+  },
+  "historical_flutter_tests": {
+    "passed": 3060,
+    "skipped": 15,
+    "source": "../v1.3.1/REPORT.md",
+    "rerun_in_this_phase": false
+  },
+  "v14_implementation": false,
+  "v14_apk_built": false,
+  "hardware_tested": false,
+  "external_living_world_repo_identified": false,
+  "paid_resources_provisioned": false
+}
