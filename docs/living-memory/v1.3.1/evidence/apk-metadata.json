@@ -1,0 +1,16 @@
+{
+  "commit_sha": "f73a8e13c72173362630648513ffe81020b0e727",
+  "embedding_model_sha256": "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+  "hardware_tested": false,
+  "signing_mode": "experimental-debug-not-stable",
+  "sqlcipher_libraries_sha256": {
+    "lib/arm64-v8a/libsqlcipher.so": "8b11e8c4dc411e3cc1a42b8597ed0f1d2bfecac802f500b464133f9918ca50fe"
+  },
+  "apk_bytes": 901387062,
+  "abis": [
+    "arm64-v8a"
+  ],
+  "embedding_model_bytes": 484622336,
+  "certificate_sha256": "c3f798c5aae7bf31e6cab687b93e583978feb5dc342295edf008a736fc7498d7",
+  "v1_certificate_matches": false
+}

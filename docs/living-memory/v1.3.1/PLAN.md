@@ -14,12 +14,12 @@ Base: b77ba4663e8bdd5d6fe54c8a939a99e456d66080. No stable branch writes.
 - Signing mismatch must block upgrade instructions, never recommend uninstall.
 
 ## Tasks
-- [ ] Storage: test real SQLCipher migration, reopen, wrong key, integrity, FTS and failure preservation. Add encrypted_database.dart and Android Keystore channel; wire MemoryScreen; preserve schema 4. Verify full Flutter suite and build.
-- [ ] Privacy: remove content-bearing logs, sanitize uncaught errors, audit native output. Tests use synthetic sentinels; report limits of third-party logging.
-- [ ] Deletion: implement scoped deleteSession and transactional deleteAgent with full child deletion and FTS optimization; expose confirmation UI; tests with two agents and sessions.
-- [ ] Models: validate HTTPS at transport boundary, credentials/fragments/redirects, bounds and checksum syntax; preserve optional trusted hashes and explicit unverified provenance; test malformed inputs and rollback.
-- [ ] Android/signing: retain privacy manifest gates; explicit experimental signing opt-in, external stable signing procedure and certificate check. No production secret generation.
-- [ ] Validation: CI full regression, analyze/format, ARM64 APK/signature/content/hash, native resolved dependencies and source audit. Independent branch review. Report every unexecuted hardware test and residual risk.
+- [x] Storage: test real SQLCipher migration, reopen, wrong key, integrity, FTS and failure preservation. Add encrypted_database.dart and Android Keystore channel; wire MemoryScreen; preserve schema 4. Verify full Flutter suite and build.
+- [x] Privacy: remove content-bearing logs, sanitize uncaught errors, audit native output. Tests use synthetic sentinels; report limits of third-party logging.
+- [x] Deletion: implement scoped deleteSession and transactional deleteAgent with full child deletion and FTS optimization; expose confirmation UI; tests with two agents and sessions.
+- [x] Models: validate HTTPS at transport boundary, credentials/fragments/redirects, bounds and checksum syntax; preserve optional trusted hashes and explicit unverified provenance; test malformed inputs and rollback.
+- [x] Android/signing: retain privacy manifest gates; explicit experimental signing opt-in, external stable signing procedure and certificate check. No production secret generation.
+- [x] Validation: CI full regression, analyze/format, ARM64 APK/signature/content/hash, native resolved dependencies and source audit. Independent branch review. Report every unexecuted hardware test and residual risk.
 
 ## Ledger
 Baseline local: 7 Python Android/native dependency security tests pass. Flutter SDK absent initially; pinned 3.47.3 being prepared. No device connected. No APK or hardware success claimed.
@@ -30,3 +30,5 @@ Ruling: SQLCipher is mandatory for Android private-memory disk opens; desktop ke
 Ruling: stable signing is prepared by a documented external-key procedure; no production key is generated, and experimental CI signing remains nonpersistent. Cost: incompatible installed certificate cannot be upgraded by this artifact.
 Ruling: callback-on-failed-deletion reclassified as an Important privacy/UI error; corrected after a red test.
 Deferred review strengthening: explicit hidden-rowid comparison during migration (not a demonstrated defect; indexed-table transfer and the historical-deletion FTS fixture verified instead). Actual Keystore corruption/reboot, power-loss and native Logcat checks remain hardware work, not simulated pass claims.
+
+Final: run 40654444799 success / runtime f73a8e13. Full suite 3060 passed, 15 skipped; focused memory/LLM 147 passed; analyze/format, ARM64 APK, merged manifest, resolved native graph and signature/content gates passed. Light evidence ZIP digest verified and final manifest/graph checks rerun locally. Hardware remains unexecuted. Stable branch references checked unchanged. No merge; isolated branch/worktree retained as requested.

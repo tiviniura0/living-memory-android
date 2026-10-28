@@ -1,0 +1,515 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright 2026 The Google AI Edge Authors. All Rights Reserved.
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.google.ai.edge.examples.litert_edge_demos"
+    android:versionCode="5"
+    android:versionName="1.3.1" >
+
+    <uses-sdk
+        android:minSdkVersion="30"
+        android:targetSdkVersion="36" />
+    <!-- Model downloads (debug/profile manifests only add it for the Flutter tool). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!--
+         Required to query activities that can process text, see:
+         https://developer.android.com/training/package-visibility and
+         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+
+         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin.
+    -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.PROCESS_TEXT" />
+
+            <data android:mimeType="text/plain" />
+        </intent>
+        <!--
+             flutter_edge_ai_agent's built-in send_email and send_text open the mail and SMS
+             composers through url_launcher, after canLaunchUrl, which sees only the apps declared
+             here (url_launcher's README, Android 11+): an ACTION_VIEW of a mailto: or sms: URI.
+        -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+
+            <data android:scheme="mailto" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+
+            <data android:scheme="sms" />
+        </intent>
+        <!--
+             Its built-in create_calendar_event opens the calendar's event editor through
+             add_2_calendar, whose ACTION_INSERT of CalendarContract.Events.CONTENT_URI starts only
+             if resolveActivity finds a calendar: add_2_calendar's README declares the item type;
+             the dir type is the type of that URI.
+        -->
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+
+            <data android:mimeType="vnd.android.cursor.item/event" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+
+            <data android:mimeType="vnd.android.cursor.dir/event" />
+        </intent>
+        <intent>
+            <action android:name="android.support.customtabs.action.CustomTabsService" />
+        </intent>
+    </queries>
+
+    <uses-feature android:name="android.hardware.camera.any" />
+
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+
+    <permission
+        android:name="com.google.ai.edge.examples.litert_edge_demos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+        android:protectionLevel="signature" />
+
+    <uses-permission android:name="com.google.ai.edge.examples.litert_edge_demos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+
+    <application
+        android:name="android.app.Application"
+        android:allowBackup="false"
+        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
+        android:dataExtractionRules="@xml/memory_data_extraction_rules"
+        android:extractNativeLibs="false"
+        android:fullBackupContent="false"
+        android:icon="@mipmap/ic_launcher"
+        android:label="Living Memory"
+        android:usesCleartextTraffic="false" >
+        <activity
+            android:name="com.google.ai.edge.examples.litert_edge_demos.MainActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:exported="true"
+            android:hardwareAccelerated="true"
+            android:launchMode="singleTop"
+            android:taskAffinity=""
+            android:theme="@style/LaunchTheme"
+            android:windowSoftInputMode="adjustResize" >
+
+            <!--
+                 Specifies an Android theme to apply to this Activity as soon as
+                 the Android process has started. This theme is visible to the user
+                 while the Flutter UI initializes. After that, this theme continues
+                 to determine the Window background behind the Flutter UI.
+            -->
+            <meta-data
+                android:name="io.flutter.embedding.android.NormalTheme"
+                android:resource="@style/NormalTheme" />
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <!--
+             Don't delete the meta-data below.
+             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java
+        -->
+        <meta-data
+            android:name="flutterEmbedding"
+            android:value="2" />
+        <!--
+             LAYERING NOTE: the <uses-native-library> declarations below serve the
+             opt-in `flutter_edge_ai_litertlm` engine (its GPU/NPU native backends),
+             NOT the engine-agnostic core. They live here because that engine ships
+             as a Native-Assets FFI package with no Android library module of its
+             own, so it cannot contribute an AndroidManifest to the merge — the
+             core plugin is the only manifest in the graph that can declare them.
+             All are required="false": pure namespace declarations (not loads), so
+             they are inert for apps that never use the GPU/NPU path (the libs are
+             never dlopen'd) and never block install on devices that lack them.
+        -->
+        <!--
+             Required for Qualcomm HTP (NPU) dispatch: lets Bionic resolve
+             libcdsprpc.so from the vendor partition when
+             libLiteRtDispatch_Qualcomm.so is loaded.
+        -->
+        <uses-native-library
+            android:name="libcdsprpc.so"
+            android:required="false" />
+        <!--
+             Google Tensor dispatch late-binds the Pixel system runtime. Optional
+             so non-Tensor devices install normally.
+        -->
+        <uses-native-library
+            android:name="libedgetpu_litert.so"
+            android:required="false" />
+        <!--
+             Declared because Google's litert-npu-runtime-google-tensor AAR and
+             LiteRT's own Kotlin manifest declare it too. Not measured as needed:
+             a Tensor G6 run worked without it.
+        -->
+        <uses-native-library
+            android:name="libedgetpu_util.so"
+            android:required="false" />
+        <!--
+             MediaTek NPU (flutter_edge_ai_litertlm with mediatek_npu): the
+             dispatch opens the device's NeuroPilot adapters and runtime. The
+             list is what Google's litert-npu-runtime-mediatek AAR declares,
+             plus libneuronusdk_adapter.10.mtk.so, which the dispatch asks for
+             on NeuroPilot 10 devices and the AAR does not declare. The two
+             generic adapter names the dispatch also tries are left out: it
+             keeps the last adapter that opens, so declaring them could replace
+             the device's own adapter with an older generic one.
+        -->
+        <uses-native-library
+            android:name="libneuron_adapter_mgvi.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libneuronusdk_adapter.10.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libneuronusdk_adapter.9.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libneuronusdk_adapter.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libneuron_sys_util.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libapuwareutils_v2.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libapuwareutils.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libapuwareapusys_v2.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpuop_mtk_nn.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpuop_mtk_cv.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_runtime_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_engine_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_pattern_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpuop25_mtk_nn.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpuop25_mtk_cv.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_runtime_25_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_engine_25_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_pattern_25_pub.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_config.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpup30_mtk_nn.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpup30_mtk_cv.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_runtime_30.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_engine_30.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpu_pattern_30.mtk.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libmvpuop30_mtk_nn.mtk.so"
+            android:required="false" />
+        <!--
+             Required for the GPU backend on Android 12+: the LiteRT-LM OpenCL
+             loader (v0.13.x) uses libvndksupport.so's android_load_sphal_library()
+             to dlopen the vendor OpenCL ICD from the app's linker namespace.
+             Without it OpenCL fails to load, and OpenCL is the only Android GPU
+             path: no WebGPU library ships for Android since native-v0.18.0
+             (native-v0.13.x and earlier fell back to WebGPU, which hard-froze
+             some Mali drivers on the vision encoder, #324). Merged into every
+             consumer app via manifest merger
+             so the GPU path works without each app re-declaring it.
+        -->
+        <uses-native-library
+            android:name="libvndksupport.so"
+            android:required="false" />
+        <!--
+             libvndksupport.so only opens the door to the SP-HAL namespace; the
+             OpenCL ICD itself must ALSO be declared or the second hop
+             (android_load_sphal_library("libOpenCL.so")) is denied and OpenCL
+             still fails to load (#324). Declare
+             the base loader name plus the two vendor-specific ICD names some
+             devices use. All required="false" — pure namespace declarations,
+             inert on devices that lack them, never block install.
+        -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-car.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-pixel.so"
+            android:required="false" />
+
+        <receiver
+            android:name="com.bbflight.background_downloader.NotificationReceiver"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.bbflight.background_downloader.cancelActive" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.bbflight.background_downloader.pause" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="com.bbflight.background_downloader.resume" />
+            </intent-filter>
+        </receiver>
+
+        <provider
+            android:name="com.bbflight.background_downloader.OpenFileProvider"
+            android:authorities="com.google.ai.edge.examples.litert_edge_demos.com.bbflight.background_downloader.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/bgd_file_paths" />
+        </provider>
+
+        <service
+            android:name="com.bbflight.background_downloader.UIDTJobService"
+            android:exported="true"
+            android:foregroundServiceType="dataSync"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.in_app_browser.InAppBrowserActivity"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density"
+            android:exported="false"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.ChromeCustomTabsActivity"
+            android:exported="false"
+            android:theme="@style/ThemeTransparent" />
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.TrustedWebActivity"
+            android:exported="false"
+            android:theme="@style/ThemeTransparent" />
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.ChromeCustomTabsActivitySingleInstance"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:theme="@style/ThemeTransparent" />
+        <activity
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.TrustedWebActivitySingleInstance"
+            android:exported="false"
+            android:launchMode="singleInstance"
+            android:theme="@style/ThemeTransparent" />
+
+        <receiver
+            android:name="com.pichillilorenzo.flutter_inappwebview_android.chrome_custom_tabs.ActionBroadcastReceiver"
+            android:enabled="true"
+            android:exported="false" />
+
+        <meta-data
+            android:name="io.flutter.embedded_views_preview"
+            android:value="true" />
+        <!--
+             Apps targeting Android 12+ (SDK 31+) may only load vendor-provided
+             native libraries that are declared here. The LiteRT Next AAR
+             declares these in its own manifest, but this plugin extracts only
+             the .so files from that AAR (see android/build.gradle.kts), so the
+             declarations must be made here for them to reach consuming apps.
+             They are also independent of the deprecated classic litert-gpu
+             dependency, whose manifest currently supplies the libOpenCL
+             entries but is slated for removal in 4.0.0. All declarations are
+             optional: an unavailable vendor library makes the corresponding
+             accelerator probe fail without making the app uninstallable.
+        -->
+        <!-- Qualcomm NPU -->
+        <uses-native-library
+            android:name="libcdsprpc.so"
+            android:required="false" /> <!-- GPU -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-car.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-pixel.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libvndksupport.so"
+            android:required="false" />
+
+        <provider
+            android:name="io.flutter.plugins.imagepicker.ImagePickerFileProvider"
+            android:authorities="com.google.ai.edge.examples.litert_edge_demos.flutter.image_provider"
+            android:exported="false"
+            android:grantUriPermissions="true" >
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/flutter_image_picker_file_paths" />
+        </provider> <!-- Trigger Google Play services to install the backported photo picker module. -->
+        <service
+            android:name="com.google.android.gms.metadata.ModuleDependencies"
+            android:enabled="false"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="com.google.android.gms.metadata.MODULE_DEPENDENCIES" />
+            </intent-filter>
+
+            <meta-data
+                android:name="photopicker_activity:0:required"
+                android:value="" />
+        </service>
+
+        <activity
+            android:name="io.flutter.plugins.urllauncher.WebViewActivity"
+            android:exported="false"
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen" />
+
+        <service
+            android:name="androidx.camera.core.impl.MetadataHolderService"
+            android:enabled="false"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.camera.core.impl.MetadataHolderService.DEFAULT_CONFIG_PROVIDER"
+                android:value="androidx.camera.camera2.Camera2Config$DefaultProvider" />
+        </service>
+
+        <provider
+            android:name="androidx.startup.InitializationProvider"
+            android:authorities="com.google.ai.edge.examples.litert_edge_demos.androidx-startup"
+            android:exported="false" >
+            <meta-data
+                android:name="androidx.work.WorkManagerInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.emoji2.text.EmojiCompatInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.lifecycle.ProcessLifecycleInitializer"
+                android:value="androidx.startup" />
+            <meta-data
+                android:name="androidx.profileinstaller.ProfileInstallerInitializer"
+                android:value="androidx.startup" />
+        </provider>
+
+        <service
+            android:name="androidx.work.impl.background.systemjob.SystemJobService"
+            android:directBootAware="false"
+            android:enabled="@bool/enable_system_job_service_default"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+        <service
+            android:name="androidx.work.impl.foreground.SystemForegroundService"
+            android:directBootAware="false"
+            android:enabled="@bool/enable_system_foreground_service_default"
+            android:exported="false" />
+
+        <receiver
+            android:name="androidx.work.impl.utils.ForceStopRunnable$BroadcastReceiver"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
+            android:name="androidx.work.impl.background.systemalarm.RescheduleReceiver"
+            android:directBootAware="false"
+            android:enabled="false"
+            android:exported="false" >
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+        <receiver
+            android:name="androidx.work.impl.diagnostics.DiagnosticsReceiver"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP" >
+            <intent-filter>
+                <action android:name="androidx.work.diagnostics.REQUEST_DIAGNOSTICS" />
+            </intent-filter>
+        </receiver>
+
+        <uses-library
+            android:name="androidx.window.extensions"
+            android:required="false" />
+        <uses-library
+            android:name="androidx.window.sidecar"
+            android:required="false" />
+
+        <receiver
+            android:name="androidx.profileinstaller.ProfileInstallReceiver"
+            android:directBootAware="false"
+            android:enabled="true"
+            android:exported="true"
+            android:permission="android.permission.DUMP" >
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.INSTALL_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SKIP_FILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.SAVE_PROFILE" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="androidx.profileinstaller.action.BENCHMARK_OPERATION" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name="androidx.room.MultiInstanceInvalidationService"
+            android:directBootAware="true"
+            android:exported="false" />
+        <!--
+ Applications that target Android S+ require explicit declaration of
+             any referenced vendor-provided libraries.
+        -->
+        <uses-native-library
+            android:name="libOpenCL.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-car.so"
+            android:required="false" />
+        <uses-native-library
+            android:name="libOpenCL-pixel.so"
+            android:required="false" />
+    </application>
+
+</manifest>

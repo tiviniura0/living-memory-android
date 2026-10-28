@@ -13,7 +13,7 @@ Aucune mutation ni exécution Flutter locale par le reviewer.
 - Callback de suppression appelé même après erreur : reclassé à corriger,
   pour ne pas nettoyer la vue comme si l'effacement avait réussi. Test d'erreur
   simulée observé rouge (callback appelé à tort), puis callback déplacé dans
-  le bloc de succès. La validation finale doit confirmer les corrections.
+  le bloc de succès. La suite finale et les tests ciblés confirment les corrections.
 - Couverture étendue : empreinte malformée et credentials/fragments de
   redirection ; Keystore réel/interruption matérielle restent non exécutés.
 
@@ -26,3 +26,5 @@ sont pas validés par des tests Linux ou des doubles.
 La revue ne constitue ni une certification de sécurité ni une autorisation de
 fusion stable. Le verdict exige la correction de la borne locale et une CI/APK
 entièrement réussie. REPORT.md consigne l'état final et les risques résiduels.
+
+État final : run 40654444799 réussi, 3060 tests réussis / 15 ignorés, 147 ciblés ; contrôles APK/manifeste/graphe/signature réussis. Les deux constats corrigés ont été observés rouges avant correction puis verts. Aucune fusion stable.

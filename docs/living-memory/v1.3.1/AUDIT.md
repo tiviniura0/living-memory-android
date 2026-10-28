@@ -88,3 +88,7 @@ coûteuse et crash/panne d'alimentation non testés, copies flash non effaçable
 façon garantie, données en RAM native et logs tiers non certifiés, modèles
 personnalisés non authentifiés sans hash fiable, copie SAF initiale non annulable.
 Aucune mesure de RAM, chauffe, batterie, latence ou qualité d'inférence S22.
+
+## Résultat final
+
+Run 40654444799 : succès ; 3060 tests réussis et 15 ignorés, 147 ciblés, analyse/formatage et APK ARM64 vérifiés. Preuves légères téléchargées, digest ZIP vérifié, manifeste fusionné et graphe des 147 coordonnées Maven revérifiés ici. Certificat debug différent de V1.3 : pas de mise à jour normale compatible de cet artefact. Voir REPORT.md et BUILD.json. Aucun essai matériel.

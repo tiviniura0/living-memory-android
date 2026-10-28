@@ -1,0 +1,87 @@
+{
+  "commit_sha": "f73a8e13c72173362630648513ffe81020b0e727",
+  "embedding_model_sha256": "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+  "hardware_tested": false,
+  "signing_mode": "experimental-debug-not-stable",
+  "sqlcipher_libraries_sha256": {
+    "lib/arm64-v8a/libsqlcipher.so": "8b11e8c4dc411e3cc1a42b8597ed0f1d2bfecac802f500b464133f9918ca50fe"
+  },
+  "apk_bytes": 901387062,
+  "abis": [
+    "arm64-v8a"
+  ],
+  "embedding_model_bytes": 484622336,
+  "certificate_sha256": "c3f798c5aae7bf31e6cab687b93e583978feb5dc342295edf008a736fc7498d7",
+  "v1_certificate_matches": false,
+  "version_name": "1.3.1",
+  "version_code": 5,
+  "application_id": "com.google.ai.edge.examples.litert_edge_demos",
+  "base_commit": "b77ba4663e8bdd5d6fe54c8a939a99e456d66080",
+  "run_id": 40654444799,
+  "job_id": 122701970588,
+  "run_conclusion": "success",
+  "run_url": "https://github.com/tiviniura0/living-memory-android/actions/runs/40654444799",
+  "apk_sha256": "91b5d4f7671f2ef831294f07da8f3cdd1d4e8c7d46e1288410cc54e64009edcb",
+  "apk_artifact_id": 12801572866,
+  "apk_artifact_url": "https://github.com/tiviniura0/living-memory-android/actions/runs/40654444799/artifacts/12801572866",
+  "apk_artifact_zip_bytes": 662010693,
+  "apk_artifact_zip_digest_from_github": "451ac7b0883acf2279b63990331b51aecd982cec97c5a160937edc5a4218c658",
+  "apk_artifact_expires_utc": "2026-11-11T08:21:34Z",
+  "apk_artifact_expires_tahiti": "2026-11-10T22:21:34-10:00",
+  "evidence_artifact_id": 12801847492,
+  "evidence_artifact_url": "https://github.com/tiviniura0/living-memory-android/actions/runs/40654444799/artifacts/12801847492",
+  "evidence_zip_sha256_download_verified": "744ecd1a26beb4147fa748a38ef3162957339d891af727322ade398751c12d47",
+  "flutter_tests_passed": 3060,
+  "flutter_tests_skipped": 15,
+  "targeted_tests_passed": 147,
+  "apk_inspected_by": "GitHub Actions apksigner/aapt/zipfile gates",
+  "full_apk_redownloaded_locally": false,
+  "evidence_redownloaded_and_digest_verified": true,
+  "final_native_graph_equals_osv_scanned_graph": true,
+  "resolved_maven_coordinates": 147,
+  "packaged_permissions": [
+    "android.permission.INTERNET",
+    "android.permission.CAMERA",
+    "android.permission.RECORD_AUDIO",
+    "android.permission.ACCESS_NETWORK_STATE",
+    "android.permission.VIBRATE",
+    "android.permission.WAKE_LOCK",
+    "android.permission.RECEIVE_BOOT_COMPLETED",
+    "android.permission.FOREGROUND_SERVICE",
+    "com.google.ai.edge.examples.litert_edge_demos.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION"
+  ],
+  "exported_components": [
+    {
+      "type": "activity",
+      "name": "com.google.ai.edge.examples.litert_edge_demos.MainActivity",
+      "permission": null
+    },
+    {
+      "type": "service",
+      "name": "com.bbflight.background_downloader.UIDTJobService",
+      "permission": "android.permission.BIND_JOB_SERVICE"
+    },
+    {
+      "type": "service",
+      "name": "androidx.work.impl.background.systemjob.SystemJobService",
+      "permission": "android.permission.BIND_JOB_SERVICE"
+    },
+    {
+      "type": "receiver",
+      "name": "androidx.work.impl.diagnostics.DiagnosticsReceiver",
+      "permission": "android.permission.DUMP"
+    },
+    {
+      "type": "receiver",
+      "name": "androidx.profileinstaller.ProfileInstallReceiver",
+      "permission": "android.permission.DUMP"
+    }
+  ],
+  "v1_3_documented_certificate_sha256": "2793f7eebc12659fa12fa44c4f0521bdcfdc74915235023b1591df57dd816972",
+  "v1_3_documented_certificate_matches": false,
+  "stable_refs_unchanged": {
+    "main": "0f95b7eb0db759ed4a0071756c231c94e36f6c04",
+    "work/living-memory-v1.2-multimodel": "376ccf33353ec101b1c424b6121eb69ecfc55f62",
+    "work/living-memory-v1.3-google-integration": "b77ba4663e8bdd5d6fe54c8a939a99e456d66080"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "sqlite3_package_version": "3.7.1",
+  "archive_sha256": "144132790ec1947fad9f3ddceffd0af2ab80a1f0d1e81a4d094ee6707ec3df0b",
+  "archive_sha256_matches_lock": true,
+  "sqlcipher_arm64_android_sha256_in_pinned_hook": "8308570993f1e7dd0742c1cbc82b587951ca724830bf18d5e4948ed34574db40",
+  "sqlcipher_version_from_package_changelog": "4.19.0",
+  "openssl_version_from_package_changelog": "4.0.3",
+  "source": "https://pub.dev/api/archives/sqlite3-3.7.1.tar.gz",
+  "note": "Downloaded archive checked against pubspec.lock. Actual packaged ELF hash in BUILD.json; runtime Android behavior untested."
+}
