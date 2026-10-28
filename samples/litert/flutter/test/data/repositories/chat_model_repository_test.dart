@@ -137,7 +137,10 @@ void main() {
     // A Qualcomm phone, as the NPU fakes describe it.
     String abi = 'android_arm64',
   }) {
-    final store = ModelStore(root: () async => root);
+    final store = ModelStore(
+      allowInsecureLoopback: true,
+      root: () async => root,
+    );
     stores.add(store);
     final repo = ChatModelRepository(
       settings: TypedSettings(store: prefs),
@@ -984,7 +987,10 @@ void main() {
         'settings: the old ones are never saved back', () async {
       final hashing = _GatedHashOps(Completer<void>());
       final writes = _HeldWrites(prefs);
-      final store = ModelStore(root: () async => root);
+      final store = ModelStore(
+        allowInsecureLoopback: true,
+        root: () async => root,
+      );
       stores.add(store);
       final repo = ChatModelRepository(
         settings: TypedSettings(store: writes),
@@ -1040,7 +1046,10 @@ void main() {
     test('a SHA-256 of a file replaced while it was hashed (another size '
         'now) is never saved', () async {
       final hashing = _GatedHashOps(Completer<void>());
-      final store = ModelStore(root: () async => root);
+      final store = ModelStore(
+        allowInsecureLoopback: true,
+        root: () async => root,
+      );
       stores.add(store);
       final repo = ChatModelRepository(
         settings: TypedSettings(store: prefs),
@@ -1078,7 +1087,10 @@ void main() {
     test('the app quitting in the middle of a pick: no background SHA-256 '
         'starts on the disposed repository', () async {
       final hashing = _GatedHashOps(Completer<void>());
-      final store = ModelStore(root: () async => root);
+      final store = ModelStore(
+        allowInsecureLoopback: true,
+        root: () async => root,
+      );
       stores.add(store);
       final repo = ChatModelRepository(
         settings: TypedSettings(store: prefs),
@@ -1180,7 +1192,7 @@ void main() {
       final denied = ChatModelRepository(
         settings: TypedSettings(store: prefs),
         readBundle: fakeReadBundle,
-        store: ModelStore(root: () async => root),
+        store: ModelStore(allowInsecureLoopback: true, root: () async => root),
         npu: () => const NpuAvailable(),
         folders: [folder],
         length: (path) => throw FileSystemException(
@@ -1219,7 +1231,10 @@ void main() {
 
     test('the folders in order, the app\'s own created; one that cannot be '
         'resolved has only its error', () async {
-      final store = ModelStore(root: () async => root);
+      final store = ModelStore(
+        allowInsecureLoopback: true,
+        root: () async => root,
+      );
       stores.add(store);
       final repo = ChatModelRepository(
         settings: TypedSettings(store: prefs),
@@ -1362,7 +1377,10 @@ void main() {
     }
 
     ChatModelRepository repoWith({bool persist = true}) {
-      final store = ModelStore(root: () async => root);
+      final store = ModelStore(
+        allowInsecureLoopback: true,
+        root: () async => root,
+      );
       stores.add(store);
       final repo = ChatModelRepository(
         settings: TypedSettings(store: prefs),
@@ -1779,7 +1797,10 @@ void main() {
       'reads it', () async {
     final answered = Completer<NpuAvailability?>();
     NpuAvailability npu = const NpuPending();
-    final store = ModelStore(root: () async => root);
+    final store = ModelStore(
+      allowInsecureLoopback: true,
+      root: () async => root,
+    );
     stores.add(store);
     final repo = ChatModelRepository(
       settings: TypedSettings(store: prefs),

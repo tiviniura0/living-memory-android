@@ -1,9 +1,9 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:litert_edge_demos/utils/private_logging.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/domain/audio/transcript_corrections.dart';
+import 'package:litert_edge_demos/utils/private_logging.dart';
 
 void main() {
   test(

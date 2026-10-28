@@ -83,7 +83,7 @@ void main() {
     bool autoApplyTheOnlyFile = true,
     Future<void> Function(TypedSettings settings)? seed,
   }) async {
-    store = ModelStore(root: () async => root);
+    store = ModelStore(allowInsecureLoopback: true, root: () async => root);
     final settings = TypedSettings(store: InMemorySettingsStore());
     await seed?.call(settings);
     chatModels = ChatModelRepository(

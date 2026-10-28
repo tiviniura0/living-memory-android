@@ -667,8 +667,9 @@ class _MemoryScreenState extends State<MemoryScreen>
     if (confirmed != true || !mounted || _busy || id != _agent) return;
     await _run(() async {
       _store!.deleteAgent(id);
-      if (_store!.agents().isEmpty)
+      if (_store!.agents().isEmpty) {
         _store!.createAgent('personal', 'Ma mémoire');
+      }
       _agent = _store!.agents().first.id;
       _project = '';
       _clearPrivateView();

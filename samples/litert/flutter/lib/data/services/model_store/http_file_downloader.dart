@@ -148,7 +148,7 @@ final class const RemoteFile({
 final class HttpFileDownloader {
   HttpFileDownloader({
     HttpClient Function()? httpClient,
-    @visibleForTesting this.allowInsecureLoopback = false,
+    this.allowInsecureLoopback = false,
     this._stallTimeout = defaultStallTimeout,
     this._maxAttempts = defaultMaxAttempts,
     this._retryDelay = defaultRetryDelay,
@@ -175,17 +175,19 @@ final class HttpFileDownloader {
               const ['localhost', '127.0.0.1', '::1'].contains(uri.host)));
 
   void _validateUrl(Uri uri) {
-    if (!_safeUrl(uri))
+    if (!_safeUrl(uri)) {
       throw const FormatException(
         'Modèle : URL HTTPS sans identifiants ni fragment requise.',
       );
+    }
   }
 
   static void validateSize(int size) {
-    if (size <= 0 || size > maxModelBytes)
+    if (size <= 0 || size > maxModelBytes) {
       throw const FormatException(
         'Modèle : taille de 1 octet à 8 Gio requise.',
       );
+    }
   }
 
   final Duration _stallTimeout;
@@ -586,8 +588,9 @@ final class HttpFileDownloader {
   /// Throws [UnsafeRedirectException] unless [to] is HTTP(S) and keeps
   /// HTTPS when [from] had it.
   void _checkRedirect(String name, Uri from, Uri to) {
-    if (_safeUrl(to) && !(from.isScheme('https') && to.isScheme('http')))
+    if (_safeUrl(to) && !(from.isScheme('https') && to.isScheme('http'))) {
       return;
+    }
     debugPrint(
       '[ModelStore] $name: refused the redirect from ${from.scheme}://'
       '${from.host} to ${to.scheme}://${to.host}',

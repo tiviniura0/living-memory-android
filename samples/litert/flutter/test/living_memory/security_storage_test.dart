@@ -125,4 +125,51 @@ void main() {
       db.close();
     },
   );
+  test('failed export preserves plaintext data and can be retried', () {
+    final db = open();
+    seed(db, 'a');
+    db.close();
+    final blocker = Directory('$path.encrypted-pending')..createSync();
+    expect(() => open(encryptionKey: key), throwsStateError);
+    final original = open();
+    expect(original.searchText('a', 'SECRET_LAGON42'), hasLength(1));
+    original.close();
+    blocker.deleteSync();
+    final migrated = open(encryptionKey: key);
+    expect(migrated.documents('a'), hasLength(1));
+    migrated.close();
+  });
+  test('tampered encrypted pages never trigger reset', () {
+    final db = open(encryptionKey: key);
+    seed(db, 'a');
+    db.close();
+    final file = File(path);
+    final bytes = file.readAsBytesSync();
+    bytes[100] ^= 255;
+    file.writeAsBytesSync(bytes, flush: true);
+    expect(() => open(encryptionKey: key), throwsStateError);
+    expect(file.readAsBytesSync(), bytes);
+  });
+  test('both FTS indexes discard deleted sensitive text', () {
+    final db = open();
+    seed(db, 'a');
+    final scope = const MemoryScope(agentId: 'a').key;
+    final session = db.createSession(scope, 'a');
+    db.appendSessionMessage(
+      scope,
+      session,
+      'user',
+      'SECRET_LAGON42',
+      decision: true,
+    );
+    db.deleteDocument('a', db.documents('a').single.id);
+    expect(db.searchText('a', 'SECRET_LAGON42'), isEmpty);
+    expect(db.sessionMessages(scope, session), hasLength(1));
+    db.deleteSession(scope, session);
+    db.close();
+    expect(
+      String.fromCharCodes(File(path).readAsBytesSync()).toLowerCase(),
+      isNot(contains('lagon42')),
+    );
+  });
 }

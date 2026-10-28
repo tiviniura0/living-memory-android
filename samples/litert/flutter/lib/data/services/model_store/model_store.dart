@@ -75,7 +75,7 @@ class ModelStore {
     Future<Directory> Function()? root,
     this._ops = const ModelFileOps(),
     HttpClient Function()? httpClient,
-    @visibleForTesting bool allowInsecureLoopback = false,
+    bool allowInsecureLoopback = false,
     Duration stallTimeout = HttpFileDownloader.defaultStallTimeout,
     int maxAttempts = HttpFileDownloader.defaultMaxAttempts,
     Duration Function(int attempt) retryDelay = defaultRetryDelay,

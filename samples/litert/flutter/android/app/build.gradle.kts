@@ -20,11 +20,9 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Release signing: android/key.properties (git-ignored) points at a keystore kept outside the repo.
-// storeFile may be absolute, or relative to android/app/ (it goes through this module's file()).
-// Without key.properties a release build is signed with the debug key, like the Flutter template,
-// so `flutter run --release` works on a fresh checkout. A debug-signed APK can never be updated by
-// a properly signed one: add key.properties before handing a release build to anyone.
+// Stable keys stay outside the repository (docs/living-memory/v1.3.1/SIGNING.md).
+// A release without key.properties is refused unless experimental debug signing
+// is explicitly opted into. That certificate cannot promise an existing upgrade.
 val keystoreProperties = Properties().apply {
     val file = rootProject.file("key.properties")
     if (file.exists()) file.inputStream().use { load(it) }
