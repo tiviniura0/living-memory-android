@@ -1,0 +1,11 @@
+name: living_world_memory
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  living_memory_core:
+    path: ../living_memory_core
+  world_contracts:
+    path: ../world_contracts
+  crypto: ^3.0.7
