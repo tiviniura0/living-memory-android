@@ -174,3 +174,7 @@ receivers DiagnosticsReceiver/ProfileInstallReceiver avec DUMP. Aucun nouvel
 export n’est autorisé implicitement. Les permissions de stockage étendues sont
 absentes du manifeste fusionné inspecté. Le run final doit aussi vérifier la
 signature et le contenu de l’APK, pas seulement sa compilation.
+
+## Résultat final
+
+Run 40638529913 terminé avec succès : 3038 tests réussis, 15 ignorés, 129 tests ciblés ; analyse/formatage, build ARM64, manifeste fusionné, versions natives résolues, signature et hash du modèle embarqué contrôlés. Le scan du graphe natif après correction ne retourne aucun avis pour les 147 coordonnées/version interrogées ; le graphe final est identique à celui scanné. Les limites matérielles et fonctionnelles ci-dessus restent applicables. Voir REPORT.md et BUILD.json.

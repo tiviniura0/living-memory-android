@@ -19,19 +19,19 @@ avec provenance et catégorie distinctes, jamais une vérification externe.
 Conserver MemoryScope et les ports Living World AI indépendants de l’UI.
 
 ## Travaux et validation
-- [ ] 1. Baseline : reconstruire et tester le code V1.2 inchangé via Actions,
+- [x] 1. Baseline : reconstruire et tester le code V1.2 inchangé via Actions,
       conserver les identifiants des artefacts et preuves de signature/hash.
-- [ ] 2. Intégration : tests d’abord pour isolation, annulation, refus image
+- [x] 2. Intégration : tests d’abord pour isolation, annulation, refus image
       incompatible, absence de réponse incomplète, provenance ; implémentation
       via les services existants ; tests ciblés puis suite complète.
-- [ ] 3. Gestion des modèles : vérifier téléchargement/import/hash/annulation,
+- [x] 3. Gestion des modèles : vérifier téléchargement/import/hash/annulation,
       ajouter suppression explicite du registre sans supprimer le fichier
       d’origine ni les autres modèles. Tester persistance et confinement.
-- [ ] 4. Sécurité : permissions, composants, sauvegardes, réseau, logs,
+- [x] 4. Sécurité : permissions, composants, sauvegardes, réseau, logs,
       dépendances verrouillées, licences ; automatiser les contrôles possibles.
-- [ ] 5. Revue indépendante, correction des problèmes importants, analyse et
+- [x] 5. Revue indépendante, correction des problèmes importants, analyse et
       tests complets, build ARM64, contrôle de l’APK et des preuves Actions.
-- [ ] 6. Rapport factuel, installation prudente et protocole S22 : aucun essai
+- [x] 6. Rapport factuel, installation prudente et protocole S22 : aucun essai
       matériel revendiqué sans téléphone, aucun chiffre RAM/température inventé.
 
 ## Points de revue
@@ -95,3 +95,5 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
   liste exacte de ces composants et permissions, sans relâcher le manifeste.
 - Versions natives réellement résolues : Guava 33.7.2-android et OkHttp 4.9.2 ;
   aucune permission READ/WRITE/MANAGE_EXTERNAL_STORAGE dans le manifeste fusionné.
+
+- Validation finale : run 40638529913 réussi, commit cadef86749ea1fe0625f86b0ab1234c12115cff3. 129 tests ciblés et 3038 tests de suite réussis ; 15 ignorés. Manifeste fusionné, dépendances natives, signature, ABI et poids embarqué contrôlés. Voir REPORT.md/BUILD.json. Tests S22 : non exécutés. Aucune fusion stable.

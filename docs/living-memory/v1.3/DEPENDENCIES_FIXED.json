@@ -1,0 +1,25 @@
+{
+  "source": "https://api.osv.dev/v1/querybatch",
+  "queried_at_utc": "2026-10-28",
+  "queries": [
+    {
+      "package": {
+        "name": "com.google.guava:guava",
+        "ecosystem": "Maven"
+      },
+      "version": "33.7.2-android"
+    },
+    {
+      "package": {
+        "name": "com.squareup.okhttp3:okhttp",
+        "ecosystem": "Maven"
+      },
+      "version": "4.9.2"
+    }
+  ],
+  "results": [
+    {},
+    {}
+  ],
+  "note": "Planned constrained versions; actual resolution checked in APK build evidence."
+}
