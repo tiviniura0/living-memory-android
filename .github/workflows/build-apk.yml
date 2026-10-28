@@ -68,6 +68,7 @@ jobs:
           flutter test test/living_memory/privacy_logging_test.dart --reporter expanded || failed=1
           flutter test test/living_memory/security_storage_test.dart --reporter expanded || failed=1
           flutter test test/living_memory/model_transport_security_test.dart --reporter expanded || failed=1
+          flutter test test/living_memory/context_panel_test.dart --reporter expanded || failed=1
           exit "$failed"
       - name: Auto-memory focused contracts
         run: |

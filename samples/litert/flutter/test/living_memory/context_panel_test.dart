@@ -86,6 +86,18 @@ void main() {
       await tester.pumpAndSettle();
       expect(manager.checkpoints(id), hasLength(1));
       expect(find.textContaining('Décision conservée'), findsWidgets);
+      await tester.ensureVisible(find.text('Supprimer cette session'));
+      await tester.tap(find.text('Supprimer cette session'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Annuler'));
+      await tester.pumpAndSettle();
+      expect(manager.sessions(), hasLength(1));
+      await tester.tap(find.text('Supprimer cette session'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Supprimer définitivement'));
+      await tester.pumpAndSettle();
+      expect(manager.sessions(), isEmpty);
+      expect(find.textContaining('Décision conservée'), findsNothing);
       await tester.pumpWidget(const SizedBox());
       store.close();
       dir.deleteSync(recursive: true);
