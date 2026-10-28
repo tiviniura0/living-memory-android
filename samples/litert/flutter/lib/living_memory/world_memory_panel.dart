@@ -34,12 +34,12 @@ class _WorldMemoryScreenState extends State<WorldMemoryScreen> {
       final root = await getApplicationSupportDirectory();
       final path = '${root.path}/living-world-memory-v1.db';
       final key = await MemoryKey.forDatabase(path);
-      if (!mounted) return;
+      if (!mounted) { return; }
       final store = MemoryStore.open(path, profile: kKbEmbeddingProfileId,
         dimension: kKbEmbeddingDimension, encryptionKey: key);
       setState(() { _store = store; _directory = Directory('${root.path}/living-world-v14'); });
     } catch (_) {
-      if (mounted) setState(() => _status = 'Espace du monde inaccessible. Données conservées.');
+      if (mounted) { setState(() => _status = 'Espace du monde inaccessible. Données conservées.'); }
     }
   }
   @override
@@ -80,7 +80,7 @@ class _WorldMemoryPanelState extends State<WorldMemoryPanel> {
         throw StateError('Checkpoint invalide : aucune réinitialisation.');
       }
       final core = WorldCore(loaded.snapshot?.state ?? WorldFactory.create('world1', WorldConfig(), 2));
-      if (!mounted) return;
+      if (!mounted) { return; }
       _controller = WorldController(core, LocalAgentRunner(core), checkpoint)..setPaused(true);
       _memory = LivingWorldMemory(store: widget.store, worldId: core.snapshot().state.worldId,
         agentIds: core.snapshot().state.agents.map((a) => a.id).toSet(), embed: widget.embed);
@@ -91,10 +91,10 @@ class _WorldMemoryPanelState extends State<WorldMemoryPanel> {
     });
   }
   Future<void> _run(Future<void> Function() operation) async {
-    if (mounted) setState(() => _busy = true);
+    if (mounted) { setState(() => _busy = true); }
     try { await operation(); }
     catch (_) { _status = 'Opération interrompue. Données conservées ; réessaie la synchronisation.'; }
-    finally { if (mounted) setState(() => _busy = false); }
+    finally { if (mounted) { setState(() => _busy = false); } }
   }
   Future<void> _sync() async {
     _needsSync = true;
@@ -106,7 +106,7 @@ class _WorldMemoryPanelState extends State<WorldMemoryPanel> {
     _needsSync = false;
   }
   Future<void> _advance() => _run(() async {
-    if (_needsSync) throw StateError('Synchronisation requise.');
+    if (_needsSync) { throw StateError('Synchronisation requise.'); }
     final controller = _controller!;
     controller.core.setPaused(false);
     try { SimulationRunner(controller.core, controller.runner).advance(12); }
@@ -117,7 +117,7 @@ class _WorldMemoryPanelState extends State<WorldMemoryPanel> {
   });
   Future<void> _remember() => _run(() async {
     final text = _note.text.trim();
-    if (text.isEmpty) throw const FormatException('Note vide.');
+    if (text.isEmpty) { throw const FormatException('Note vide.'); }
     final state = _controller!.core.snapshot().state;
     final result = await _memory!.ingest(PerceivedEvent({'schemaVersion':1,'worldId':state.worldId,
       'agentId':'a1','eventId':'note_${DateTime.now().microsecondsSinceEpoch}',

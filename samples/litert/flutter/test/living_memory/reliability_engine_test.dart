@@ -69,6 +69,8 @@ void main() {
     );
     store.close();
     final db = sqlite3.open('${dir.path}/m.db');
+    // Model a genuine schema 2 fixture, without tables introduced by V1.4.
+    db.execute('DROP TABLE lm_v14_records');
     for (final trigger in [
       'session_fts_insert',
       'session_fts_delete',

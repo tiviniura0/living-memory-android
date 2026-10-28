@@ -81,3 +81,12 @@ provisionné, aucun secret demandé ou ajouté.
 
 ### Première preuve rouge
 Run40755565977 / job123053428142 terminé en échec attendu : dépendances historiques préparées avec succès, quatre fichiers de tests ne compilent pas car les nouveaux packages sont absents. Aucun test comportemental passé à ce stade. Artifact12846011328 conserve les quatre journaux. Ce rouge prouve l'absence des modules, pas encore la qualité des futures assertions.
+
+### Intégration et revue intermédiaire
+
+- Commits canoniques : 5e3dcca (extraction/transfert), 3d48b23 (adaptateur monde), 6812625 (extensions), a070984 (contraintes crypto et test effacement), a5a0537 (correctifs transaction/FK et régressions de revue).
+- Run40756678616 : échec du solveur, cause identifiée crypto3.0.6 épinglé dans trois modules L1 ; contraintes compatibles ^3.0.6, version applicative3.0.7 conservée.
+- Run40757101294 : export13/13 et extensions14/14 verts ; échecs reproduits suppression de mission et transaction imbriquée monde ; UI absente rouge attendue. Aucune validation finale annoncée.
+- Pubspec.lock applicatif généré par CI importé : uniquement huit dépendances path ajoutées, aucun changement de version externe par rapport à V1.3.1.
+- Revue indépendante T1–T4 : six constats importants, tracés dans REVIEW.md. Les nouvelles régressions couvrent schéma incomplet, callbacks dépassant le délai et courses entre adaptateurs.
+- L'hôte monde réutilise WorldFactory/WorldCore/SimulationRunner/CheckpointStore/WorldViewport L1 ; pas de règles ni carte réécrites. Il bloque l'avance tant que le checkpoint courant n'est pas acquitté par la mémoire.

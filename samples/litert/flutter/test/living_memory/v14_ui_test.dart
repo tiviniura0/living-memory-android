@@ -2,9 +2,9 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:living_memory_core/living_memory_core.dart';
-import 'package:litert_edge_demos/living_memory/world_memory_panel.dart';
 import 'package:litert_edge_demos/living_memory/extensions_panel.dart';
+import 'package:litert_edge_demos/living_memory/world_memory_panel.dart';
+import 'package:living_memory_core/living_memory_core.dart';
 
 void main() {
   testWidgets(

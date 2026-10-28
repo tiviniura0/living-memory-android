@@ -1,9 +1,9 @@
 import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:litert_edge_demos/living_memory/memory_store.dart' as old;
 import 'package:living_memory_core/living_memory_core.dart' as core;
 import 'package:living_memory_extensions/living_memory_extensions.dart' as ext;
-import 'package:litert_edge_demos/living_memory/memory_store.dart' as old;
 
 void main() {
   test('canonical core and historical import share type and persistent FTS', () {

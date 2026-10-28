@@ -22,6 +22,8 @@ void main() {
       manager.append(id, 'user', 'Décision conservée', decision: true);
       store.close();
       final db = sqlite3.open(path);
+      // Model a genuine schema 3 fixture, without tables introduced by V1.4.
+      db.execute('DROP TABLE lm_v14_records');
       db.execute('DROP TABLE context_checkpoint_events');
       for (final trigger in [
         'session_fts_insert',

@@ -24,6 +24,7 @@ import 'auto_memory_engine.dart';
 import 'auto_memory_panel.dart';
 import 'context_lifecycle_manager.dart';
 import 'context_panel.dart';
+import 'extensions_panel.dart';
 import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
 import 'memory_key.dart';
@@ -741,6 +742,14 @@ class _MemoryScreenState extends State<MemoryScreen>
                 ));
               } : null,
               child: const Text('Ouvrir Living World et sa mémoire'),
+            ),
+            OutlinedButton(
+              onPressed: enabled ? () async {
+                await Navigator.of(context).push<void>(MaterialPageRoute<void>(
+                  builder: (_) => ExtensionsPanel(store: store!, scope: _scope),
+                ));
+              } : null,
+              child: const Text('Extensions et missions locales'),
             ),
             if (_registry != null && _models != null)
               ModelPanel(
