@@ -38,6 +38,14 @@ jobs:
             flutter test "$test" --reporter expanded 2>&1 | tee "build/v14-evidence/$(basename "$test").log" || failed=1
           done
           exit "$failed"
+      - name: Formatting and analysis evidence
+        if: ${{ !cancelled() }}
+        working-directory: samples/litert/flutter
+        run: |
+          mkdir -p build/v14-evidence
+          dart format ../../../packages/living_memory_core ../../../packages/living_world_memory ../../../packages/living_memory_extensions lib/living_memory test/living_memory/v14*_test.dart
+          git -C ../../.. diff -- packages/living_memory_core packages/living_world_memory packages/living_memory_extensions samples/litert/flutter/lib/living_memory samples/litert/flutter/test/living_memory > build/v14-evidence/format.patch
+          flutter analyze > build/v14-evidence/analyze.log 2>&1
       - name: Preserve generated lockfile and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

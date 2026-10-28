@@ -1,6 +1,6 @@
 # Living Memory V1.4 — journal et feuille de route
 
-Statut : cadrage réalisé ; spécification proposée, en attente de revue.
+Statut : spécification validée par Tivini avec reprise obligatoire de L0/L1 ; plan écrit et TDD engagé.
 Aucune fonctionnalité V1.4 ni nouvel APK livré à ce stade.
 
 ## Reprise sans recréation
@@ -38,8 +38,8 @@ ne sont pas attribués à V1.4. Aucun appareil utilisé.
 ## Phases et conditions de poursuite
 
 - [x] 1. Vérifier dépôt/source/run, lire audits réutilisables et repérer les modules.
-- [ ] 2. Revoir et approuver la [spécification proposée](../../superpowers/specs/2026-10-28-living-memory-v1.4-design.md).
-- [ ] 3. Produire et faire revoir le plan d'implémentation `writing-plans`.
+- [x] 2. Revoir et approuver la [spécification proposée](../../superpowers/specs/2026-10-28-living-memory-v1.4-design.md).
+- [x] 3. Plan `writing-plans` écrit ; poursuite autorisée par Tivini sans nouvelle validation des choix couverts.
 - [ ] 4. TDD : migration additive et adaptateur mémoire/monde intégré.
 - [ ] 5. TDD : politique de permissions, outils, Skills existants, plugins et MCP.
 - [ ] 6. TDD : missions, file persistante, annulation et reprise explicite.
@@ -66,3 +66,18 @@ lecture du dépôt ou la publication de ces documents.
 vers preuves ; commit distinct après validation. Relire seulement le diff et les
 documents affectés. Aucun changement de branche stable, aucun service payant
 provisionné, aucun secret demandé ou ajouté.
+
+## Reprise L0/L1 et plan validé
+
+- CDC V1.0 retrouvé : libfile_c2f7c74c670881919ab80056bdbe9a94, 17 pages ; texte consulté.
+- Dossier L0 : libfile_84f2200fe3908191a8f9fb81b7fc95e8 ; sections audit/architecture et contrat L2 consultées. Plan L1 et spécification retrouvés dans Git, non recréés.
+- L1 source `5ca4ae5b08c5da6545276b252e39fdbf675430fe`, merge canonique GitHub `7687f388d7ab774611c8829e32dc1593f432c7f0` ; aucun changement sur la branche L1.
+- Plan : docs/superpowers/plans/2026-10-28-living-memory-v1.4.md ; commit tests/plan `e87f610ed12658097bf5d41645776a6c4840f417`.
+- Trois tests Python de frontières L1 réexécutés : succès. Aucun SDK Flutter/Dart installé ; téléchargements publics ciblés indisponibles ici. Aucun lancement Flutter local ni contournement des protections réseau.
+- CI TDD initiale : run 40755565977, statut en cours au moment de cette entrée ; aucun résultat anticipé.
+- Ruling: extraction canonique en package et adaptateur séparé contre MemoryPort L1 — exigence de modularité confirmée par CDC/L0 et réserves de Tivini — coût si erreur : reprendre les exports et adaptateurs, sans duplication du store.
+- Ruling: initialement héberger le raccordement dans Living Memory avec un espace monde distinct ; observateur Android L1 conservé — ne pas partager une base entre deux applications ni copier les moteurs — coût si erreur : packaging d'un second hôte, pas réécriture des moteurs.
+- Ruling: aucune nouvelle validation du plan demandée — autorisation explicite de Tivini — décisions majeures hors spécification restent soumises à accord.
+
+### Première preuve rouge
+Run40755565977 / job123053428142 terminé en échec attendu : dépendances historiques préparées avec succès, quatre fichiers de tests ne compilent pas car les nouveaux packages sont absents. Aucun test comportemental passé à ce stade. Artifact12846011328 conserve les quatre journaux. Ce rouge prouve l'absence des modules, pas encore la qualité des futures assertions.
