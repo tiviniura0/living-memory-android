@@ -4,6 +4,12 @@ import 'package:sqlite3/sqlite3.dart';
 
 /// SQLCipher is selected by the pinned sqlite3 build hook. A missing cipher
 /// is an error, never a silently unencrypted database. Keys are never logged.
+class _MigrationFailure implements Exception {
+  const _MigrationFailure(this.stage, this.code);
+  final int stage;
+  final int code;
+}
+
 class EncryptedMemoryDatabase {
   static bool isPlaintext(String path) {
     final file = File(path);
@@ -36,11 +42,12 @@ class EncryptedMemoryDatabase {
       lock.lockSync(FileLock.blockingExclusive);
       if (isPlaintext(path)) _migrate(path, key);
       return _keyed(path, key);
-    } catch (_) {
+    } catch (error) {
       // SQLite exceptions may include SQL and the raw key in a PRAGMA. Never
       // propagate them into Flutter error diagnostics, logs, or the UI.
       throw StateError(
-        'Mémoire chiffrée inaccessible. Données conservées ; ne pas réinitialiser ni désinstaller.',
+        'Mémoire chiffrée inaccessible. Données conservées ; ne pas réinitialiser ni désinstaller.'
+        '${error is _MigrationFailure ? ' Migration ${error.stage}/${error.code}.' : ''}',
       );
     } finally {
       lock.closeSync();
@@ -83,11 +90,13 @@ class EncryptedMemoryDatabase {
     final source = sqlite3.open(path, mode: OpenMode.readWrite);
     Database? verified;
     var sourceClosed = false;
+    var stage = 0;
     try {
       _requireCipher(source);
       final version =
           source.select('PRAGMA user_version').single.values.single as int;
       if (version > 4) throw StateError('Schéma futur refusé.');
+      stage = 1;
       _check(source);
       // Checkpoint and remove sidecars before replacement. A busy WAL must
       // abort migration; no rename over an active journal is allowed.
@@ -101,6 +110,7 @@ class EncryptedMemoryDatabase {
           .values
           .single;
       if (mode != 'delete') throw StateError('Base occupée.');
+      stage = 2;
       source.execute('PRAGMA temp_store=MEMORY');
       // An interrupted encrypted export is disposable only after the source
       // has been validated. The source itself is never deleted on failure.
@@ -109,14 +119,17 @@ class EncryptedMemoryDatabase {
         pending.path,
       ]);
       source.execute('PRAGMA protected.synchronous=FULL');
+      stage = 3;
       source.select("SELECT sqlcipher_export('protected')");
       source.execute('PRAGMA protected.user_version=$version');
       source.execute('DETACH DATABASE protected');
+      stage = 4;
       verified = _keyed(pending.path, key);
       _check(verified);
       if (verified.select('PRAGMA cipher_integrity_check').isNotEmpty) {
         throw StateError('Intégrité chiffrée invalide.');
       }
+      stage = 5;
       // Check every user/shadow table, including both generations of
       // checkpoints and FTS. EXCEPT compares full rows in both directions.
       source.execute('ATTACH DATABASE ? AS protected KEY "x\'$key\'"', [
@@ -154,7 +167,13 @@ class EncryptedMemoryDatabase {
       sourceClosed = true;
       // Same private directory/filesystem: atomic replacement; no plaintext
       // backup retained. Flash wear levelling prevents a physical erase claim.
+      stage = 6;
       pending.renameSync(path);
+    } catch (error) {
+      throw _MigrationFailure(
+        stage,
+        error is SqliteException ? error.resultCode : 0,
+      );
     } finally {
       verified?.close();
       if (!sourceClosed) source.close();
