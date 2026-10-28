@@ -66,6 +66,7 @@ jobs:
         run: |
           flutter test test/living_memory/privacy_logging_test.dart --reporter expanded
           flutter test test/living_memory/security_storage_test.dart --reporter expanded
+          flutter test test/living_memory/model_transport_security_test.dart --reporter expanded
       - name: Auto-memory focused contracts
         run: |
           mkdir -p build/evidence
