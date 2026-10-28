@@ -1,0 +1,48 @@
+# Living Memory V1.3 — plan et contrat d’intégration
+
+Référence : docs/living-memory-google-integration-correction.md.
+Base : f8f87666 ; runtime V1.2 : 376ccf33353ec101b1c424b6121eb69ecfc55f62.
+
+Objectif : raccorder les services Google existants à la mémoire locale, sans
+réécriture, changement de schéma SQLite ni fusion stable. Exécution dans la
+session autorisée par la mission. Une réponse libre ou une description visuelle
+n’est jamais présentée comme un fait vérifié et n’est pas mémorisée implicitement.
+
+## Architecture retenue
+Conserver le parcours RAG strict existant. Ajouter des actions explicites chat,
+rédaction et analyse d’image dans la route mémoire, en utilisant le même verrou
+et le même moteur E2B/E4B. Chaque génération ouvre une conversation neuve pour
+éviter un historique partagé entre agents. Réutiliser ImageRepository pour la
+sélection et normalisation, SpeechRepository pour STT/TTS et AudioRepository
+pour capture/lecture. Les imports de transcriptions/descriptions sont explicites,
+avec provenance et catégorie distinctes, jamais une vérification externe.
+Conserver MemoryScope et les ports Living World AI indépendants de l’UI.
+
+## Travaux et validation
+- [ ] 1. Baseline : reconstruire et tester le code V1.2 inchangé via Actions,
+      conserver les identifiants des artefacts et preuves de signature/hash.
+- [ ] 2. Intégration : tests d’abord pour isolation, annulation, refus image
+      incompatible, absence de réponse incomplète, provenance ; implémentation
+      via les services existants ; tests ciblés puis suite complète.
+- [ ] 3. Gestion des modèles : vérifier téléchargement/import/hash/annulation,
+      ajouter suppression explicite du registre sans supprimer le fichier
+      d’origine ni les autres modèles. Tester persistance et confinement.
+- [ ] 4. Sécurité : permissions, composants, sauvegardes, réseau, logs,
+      dépendances verrouillées, licences ; automatiser les contrôles possibles.
+- [ ] 5. Revue indépendante, correction des problèmes importants, analyse et
+      tests complets, build ARM64, contrôle de l’APK et des preuves Actions.
+- [ ] 6. Rapport factuel, installation prudente et protocole S22 : aucun essai
+      matériel revendiqué sans téléphone, aucun chiffre RAM/température inventé.
+
+## Points de revue
+Annulation pendant ouverture/fit/STT ; changement d’agent/projet ; fin de flux
+sans événement terminal ; modèle sans encodeur image ; erreurs de libération
+native ; refus micro ; fermeture de route pendant une capture ; suppression
+sans effacement d’un chemin externe ; données conservées si signature différente.
+
+## Journal
+- Dépôt cloné sur la branche dédiée ; aucun AGENTS.md trouvé.
+- Artefacts baseline existants : run 40579317895, APK 12769962723,
+  preuves légères 12770606152 ; run vérifié completed/success via API GitHub.
+- SDK Flutter absent initialement ; récupération du tag épinglé 3.47.3.
+- Graphify absent : cartographie par lectures, rg et tests ; pas de graphe inventé.
