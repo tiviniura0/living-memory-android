@@ -7,6 +7,12 @@ import 'package:litert_edge_demos/living_memory/context_panel.dart';
 import 'package:litert_edge_demos/living_memory/memory_store.dart';
 import 'package:litert_edge_demos/living_memory/module_contracts.dart';
 
+class _FailingDeletion extends ContextLifecycleManager {
+  _FailingDeletion(super.store, super.scope);
+  @override
+  void deleteSession(String id) => throw StateError('Synthetic delete failure');
+}
+
 void main() {
   for (final width in [375.0, 800.0]) {
     testWidgets('context controls fit width $width and large dark text', (
@@ -101,6 +107,50 @@ void main() {
       await tester.pumpWidget(const SizedBox());
       store.close();
       dir.deleteSync(recursive: true);
+    },
+  );
+  testWidgets(
+    'failed deletion keeps the session and does not clear parent view',
+    (tester) async {
+      final dir = Directory.systemTemp.createTempSync('failed-delete-');
+      final store = MemoryStore.open(
+        '${dir.path}/m.db',
+        profile: 'test',
+        dimension: 2,
+      );
+      addTearDown(() {
+        store.close();
+        dir.deleteSync(recursive: true);
+      });
+      store.createAgent('a', 'A');
+      final manager = _FailingDeletion(store, const MemoryScope(agentId: 'a'));
+      manager.startSession();
+      var cleared = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ContextPanel(
+                manager: manager,
+                busy: false,
+                onDeleted: () {
+                  cleared = true;
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Sessions et contexte'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Supprimer cette session'));
+      await tester.tap(find.text('Supprimer cette session'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Supprimer définitivement'));
+      await tester.pumpAndSettle();
+      expect(manager.sessions(), hasLength(1));
+      expect(cleared, isFalse);
+      expect(find.textContaining('Synthetic delete failure'), findsOneWidget);
     },
   );
 }

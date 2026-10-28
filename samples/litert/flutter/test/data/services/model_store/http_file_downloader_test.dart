@@ -625,6 +625,26 @@ void main() {
         expect(part().existsSync(), isFalse);
       });
 
+      for (final location in [
+        'https://user:secret@cdn.test/model',
+        'https://cdn.test/model#secret',
+      ]) {
+        test(
+          'redirect containing credentials or fragment is refused before next request: $location',
+          () async {
+            final server = await redirectingTo(location);
+            await expectLater(
+              download(
+                newDownloader(httpClient: routedTo(server)),
+                Uri.parse('https://models.test/$name'),
+              ),
+              throwsA(isA<UnsafeRedirectException>()),
+            );
+            expect(server.requests, hasLength(1));
+          },
+        );
+      }
+
       test('HTTPS down to plain HTTP: refused, the bytes never '
           'fetched', () async {
         final server = await redirectingTo('http://cdn.test/cdn/$name');

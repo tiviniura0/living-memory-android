@@ -85,6 +85,33 @@ void main() {
     ..createSync(recursive: true)
     ..writeAsBytesSync(content);
 
+  test(
+    'malformed hash is refused before touching import source or network',
+    () async {
+      final store = newStore();
+      final imported = await store.importCustomFile(
+        '/missing/model.litertlm',
+        expectedSha256: 'invalid',
+      );
+      expect(imported, isA<Error<CustomModelFile>>());
+      expect(
+        (imported as Error<CustomModelFile>).error,
+        isA<FormatException>(),
+      );
+      final downloaded = await store.downloadCustomFile(
+        server.url(name),
+        sha256: 'invalid',
+      );
+      expect(downloaded, isA<Error<CustomModelFile>>());
+      expect(
+        (downloaded as Error<CustomModelFile>).error,
+        isA<FormatException>(),
+      );
+      expect(server.requests, isEmpty);
+      expect(root.listSync(), isEmpty);
+    },
+  );
+
   group('import', () {
     test('stores the file, computes and records its checksum', () async {
       final store = newStore();
