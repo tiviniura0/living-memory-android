@@ -1,10 +1,12 @@
 import 'dart:convert';
+import 'dart:io';
 import 'dart:math' as math;
 
 import 'package:crypto/crypto.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'auto_memory_candidate.dart';
+import 'encrypted_database.dart';
 
 part 'auto_memory_store.dart';
 part 'context_store.dart';
@@ -85,11 +87,17 @@ class MemoryStore implements MemoryRepository {
     String path, {
     required String profile,
     required int dimension,
+    String? encryptionKey,
   }) {
     if (dimension < 1 || profile.isEmpty) {
       throw ArgumentError('Invalid embedding profile');
     }
-    final db = sqlite3.open(path);
+    if (Platform.isAndroid && encryptionKey == null && path != ':memory:') {
+      throw StateError('Clé Android requise.');
+    }
+    final db = encryptionKey == null
+        ? sqlite3.open(path)
+        : EncryptedMemoryDatabase.open(path, encryptionKey);
     try {
       if ((db.select('PRAGMA user_version').first.values.first as int) > 4) {
         throw StateError('Version SQLite future : aucune migration autorisée.');
@@ -130,6 +138,10 @@ class MemoryStore implements MemoryRepository {
       _migrateAutoMemory(db);
       _migrateLifecycle(db);
       _migrateSessionRetrieval(db);
+      db.execute('PRAGMA temp_store=MEMORY');
+      for (final table in ['chunk_fts', 'session_fts']) {
+        db.execute("INSERT INTO $table($table,rank) VALUES('secure-delete',1)");
+      }
       return MemoryStore._(db, dimension);
     } catch (_) {
       db.close();
@@ -341,6 +353,17 @@ class MemoryStore implements MemoryRepository {
     'DELETE FROM documents WHERE agent_id=? AND id=?',
     [agentId, id],
   );
+
+  /// Deletes every project/world of this agent, including archives, revisions
+  /// and decisions. Model files and other agents are independent.
+  void deleteAgent(String agentId) {
+    _transaction(() {
+      _db.execute('DELETE FROM documents WHERE agent_id=?', [agentId]);
+      _db.execute('DELETE FROM context_sessions WHERE agent_id=?', [agentId]);
+      _db.execute('DELETE FROM auto_settings WHERE agent_id=?', [agentId]);
+      _db.execute('DELETE FROM agents WHERE id=?', [agentId]);
+    });
+  }
 
   void _validateVector(List<double> vector) {
     final normSquared = vector.fold(0.0, (s, v) => s + v * v);

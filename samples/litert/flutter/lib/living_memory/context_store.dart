@@ -236,6 +236,16 @@ extension ContextStorage on MemoryStore {
     );
   }
 
+  /// Includes messages, decisions and both checkpoint tables through FKs.
+  /// Source documents explicitly saved from this session remain independent.
+  void deleteSession(String scopeKey, String id) {
+    _session(scopeKey, id);
+    _db.execute('DELETE FROM context_sessions WHERE scope_key=? AND id=?', [
+      scopeKey,
+      id,
+    ]);
+  }
+
   void markSessionDecision(
     String scopeKey,
     String id,

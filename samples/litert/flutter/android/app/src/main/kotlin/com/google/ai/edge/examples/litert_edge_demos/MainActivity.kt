@@ -21,6 +21,8 @@ class MainActivity : FlutterActivity() {
 
     override fun configureFlutterEngine(flutterEngine: io.flutter.embedding.engine.FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        io.flutter.plugin.common.MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
+            "living_memory/security").setMethodCallHandler(LivingMemorySecurity(applicationContext))
         documents = LivingMemoryDocuments(this)
         io.flutter.plugin.common.MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
             "living_memory/documents").setMethodCallHandler(documents)

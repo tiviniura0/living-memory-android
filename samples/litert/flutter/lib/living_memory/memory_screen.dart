@@ -28,6 +28,7 @@ import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
 import 'memory_speech.dart';
 import 'memory_store.dart';
+import 'memory_key.dart';
 import 'memory_text_dialog.dart';
 import 'module_contracts.dart';
 import 'multimodel/litert_memory_runtime.dart';
@@ -115,8 +116,12 @@ class _MemoryScreenState extends State<MemoryScreen>
   Future<void> _open() async {
     final dir = await getApplicationSupportDirectory();
     if (_closed) return;
+    final path = '${dir.path}/living-memory-v1.db';
+    final key = await MemoryKey.forDatabase(path);
+    if (_closed) return;
     _store = MemoryStore.open(
-      '${dir.path}/living-memory-v1.db',
+      path,
+      encryptionKey: key,
       profile: kKbEmbeddingProfileId,
       dimension: kKbEmbeddingDimension,
     );

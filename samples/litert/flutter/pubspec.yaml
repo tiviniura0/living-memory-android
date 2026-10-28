@@ -15,7 +15,7 @@
 name: litert_edge_demos
 description: "On-device AI demos: a multimodal voice chat with skills and a live camera assistant, on LiteRT."
 publish_to: 'none'
-version: 1.3.0+4
+version: 1.3.1+5
 
 environment:
   sdk: ^3.13.3
@@ -171,5 +171,7 @@ flutter:
 # build hook bundles the QNN runtime (from Maven, SHA-256 checked) only with this.
 hooks:
   user_defines:
+    sqlite3:
+      source: sqlcipher
     flutter_edge_ai_litertlm:
       qualcomm_npu: true

@@ -76,10 +76,7 @@ final class const TranscriptCorrection(final String heard, final String meant) {
 String correctVoiceTranscript(String transcript) {
   final (:text, :corrections) = correctTranscript(transcript);
   if (corrections.isNotEmpty) {
-    debugPrint(
-      '[Voice] transcript corrected: "$transcript" -> "$text" '
-      '(${corrections.join(', ')})',
-    );
+    debugPrint('[Voice] transcript correction applied (${corrections.length})');
   }
   return text;
 }

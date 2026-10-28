@@ -145,10 +145,10 @@ final class TranscriptJob {
     final Result<String> result;
     try {
       result = await _speech.transcribe(pcm, expected: _recognizer);
-    } catch (e, st) {
+    } catch (e) {
       // transcribe returns a Result; anything escaping it still ends this
       // job (with its reason) so the queue goes on.
-      debugPrint('[Voice] transcript of turn $turn threw: $e\n$st');
+      debugPrint('[Voice] transcript job failed');
       _pending
           .remove(serial)
           ?.onDone(TranscriptUnavailable(turn, watch.elapsed, '$e'));
@@ -174,11 +174,7 @@ final class TranscriptJob {
         outcome = TranscriptUnavailable(turn, watch.elapsed, '$error');
     }
     debugPrint(
-      '[Voice] transcript of turn $turn ${watch.elapsedMilliseconds}ms: '
-      '${switch (outcome) {
-        TranscriptReady(:final text) => '"$text"',
-        TranscriptUnavailable(:final reason) => 'none ($reason)',
-      }}',
+      '[Voice] transcript job completed (${watch.elapsedMilliseconds} ms)',
     );
     job.onDone(outcome);
   }
