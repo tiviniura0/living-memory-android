@@ -87,3 +87,11 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
   reprend que les messages postérieurs au dernier reset. Archives intactes.
   Coût : après reset, le rappel conversationnel se limite aux messages récents ;
   les documents et décisions permanentes restent accessibles par le RAG.
+
+- Première compilation V1.3 ARM64 réussie (40636706468), puis contrôle fusionné
+  refusant UIDTJobService du téléchargeur existant. Le manifeste réel confirme
+  sa permission système BIND_JOB_SERVICE ; les autres exports sont le launcher,
+  WorkManager BIND_JOB_SERVICE et deux receivers DUMP. Correction du gate par
+  liste exacte de ces composants et permissions, sans relâcher le manifeste.
+- Versions natives réellement résolues : Guava 33.7.2-android et OkHttp 4.9.2 ;
+  aucune permission READ/WRITE/MANAGE_EXTERNAL_STORAGE dans le manifeste fusionné.

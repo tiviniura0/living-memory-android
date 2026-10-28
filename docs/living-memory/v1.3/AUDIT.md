@@ -163,3 +163,14 @@ L’inférence respecte maintenant la frontière du dernier reset et ignore ces
 résumés lorsqu’un reset existe. Les archives et le comportement historique de
 navigation/compaction ne sont pas effacés ou réécrits. Une réinitialisation du
 contexte actif n’est pas la suppression des documents ou décisions permanentes.
+
+## Manifeste fusionné constaté pendant la compilation
+
+Le premier APK V1.3 compile, mais son run n’est pas validé car le gate initial
+refusait UIDTJobService du téléchargeur. Le manifeste réel montre que ce service
+est protégé par BIND_JOB_SERVICE. Le gate reconnaît maintenant exactement les
+services SystemJobService et UIDTJobService avec cette permission, et les deux
+receivers DiagnosticsReceiver/ProfileInstallReceiver avec DUMP. Aucun nouvel
+export n’est autorisé implicitement. Les permissions de stockage étendues sont
+absentes du manifeste fusionné inspecté. Le run final doit aussi vérifier la
+signature et le contenu de l’APK, pas seulement sa compilation.

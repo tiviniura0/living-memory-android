@@ -25,8 +25,14 @@ class AndroidSecurity(unittest.TestCase):
         for component in self.app:
             if component.get(A + 'exported') == 'true':
                 if component.get(A + 'name') not in {'.MainActivity', 'com.google.ai.edge.examples.litert_edge_demos.MainActivity'}:
-                    protected_job = (component.get(A + 'name') == 'androidx.work.impl.background.systemjob.SystemJobService' and component.get(A + 'permission') == 'android.permission.BIND_JOB_SERVICE')
-                    self.assertTrue(protected_job or component.get(A + 'permission') == 'android.permission.DUMP')
+                    expected = {
+                        'androidx.work.impl.background.systemjob.SystemJobService': ('service', 'android.permission.BIND_JOB_SERVICE'),
+                        'com.bbflight.background_downloader.UIDTJobService': ('service', 'android.permission.BIND_JOB_SERVICE'),
+                        'androidx.work.impl.diagnostics.DiagnosticsReceiver': ('receiver', 'android.permission.DUMP'),
+                        'androidx.profileinstaller.ProfileInstallReceiver': ('receiver', 'android.permission.DUMP'),
+                    }
+                    self.assertIn(component.get(A + 'name'), expected)
+                    self.assertEqual((component.tag, component.get(A + 'permission')), expected[component.get(A + 'name')])
                 else:
                     self.assertEqual(component.tag, 'activity')
         permissions = {p.get(A + 'name') for p in self.manifest.findall('uses-permission') if p.get(T + 'node') != 'remove'}
