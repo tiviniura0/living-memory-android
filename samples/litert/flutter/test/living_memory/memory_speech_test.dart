@@ -2,10 +2,10 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:litert_edge_demos/data/repositories/audio_repository.dart';
+import 'package:litert_edge_demos/domain/models/audio_interruption.dart';
 import 'package:litert_edge_demos/living_memory/memory_speech.dart';
 import 'package:litert_edge_demos/living_memory/multimodel/multi_model_engine.dart';
-import 'package:litert_edge_demos/domain/models/audio_interruption.dart';
-import 'package:litert_edge_demos/data/repositories/audio_repository.dart';
 import 'package:litert_edge_demos/utils/result.dart';
 import 'package:litert_edge_demos/utils/wav.dart';
 

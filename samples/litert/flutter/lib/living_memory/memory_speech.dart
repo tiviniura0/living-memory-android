@@ -161,8 +161,9 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
             :final isFinal,
           ):
             if (pcm.isNotEmpty) {
-              final playback =
-                  _playback ?? _value(audio.beginPlayback(sampleRate));
+              final PlaybackHandle playback =
+                  _playback ??
+                  _value<PlaybackHandle>(audio.beginPlayback(sampleRate));
               _playback = playback;
               playback.enqueue(pcm);
             }

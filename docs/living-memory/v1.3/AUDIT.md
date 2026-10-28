@@ -93,3 +93,22 @@ cartographie par recherche/lecture du code, aucun graphe synthétique revendiqu�
 Aucune mesure S22 de RAM, chauffe, latence, batterie, fonctionnement en avion,
 permission réelle, modèle E4B ou stabilité native. Une erreur Dart permet un repli ;
 un crash natif ou un arrêt Android ne peut pas être rattrapé par ce code.
+
+## Complément de l’audit natif
+
+147 coordonnées/version Maven du graphe Gradle baseline ont été interrogées.
+Deux avis sont revenus : Guava 33.5.0-android (GHSA-xxph-c9ww-hj94) et OkHttp
+4.9.0 (GHSA-3cqm-mf7h-prrj). Les contraintes ciblées passent à 33.7.2-android
+et 4.9.2. Le gate CI contrôle les versions **résolues** après compilation ;
+les versions demandées dans une branche du graphe ne suffisent pas.
+Les requêtes/réponses initiales sont conservées dans DEPENDENCIES_NATIVE_BASELINE.json.
+
+Sources primaires :
+- https://github.com/google/guava/security/advisories/GHSA-xxph-c9ww-hj94
+- https://github.com/google/guava/releases/tag/v33.7.2
+- https://github.com/advisories/GHSA-3cqm-mf7h-prrj
+- https://api.osv.dev/v1/querybatch
+
+La présence d’une version concernée n’est pas la preuve d’une exploitation
+possible dans cette application. L’objectif est de retirer ces versions connues,
+puis de vérifier le graphe et le build, sans mise à jour générale des plugins.

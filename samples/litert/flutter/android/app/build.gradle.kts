@@ -126,6 +126,10 @@ dependencies {
     // PDFBox's POM asks for 1.72. Use the maintained hardening release
     // (upstream 1.86, Maven coordinates verified), consistently for all three.
     constraints {
+        // GHSA-xxph-c9ww-hj94: preserve Android variant, patch unsafe deserialization.
+        implementation("com.google.guava:guava:33.7.2-android")
+        // GHSA-3cqm-mf7h-prrj: hostname verification fix, minimal compatible update.
+        implementation("com.squareup.okhttp3:okhttp:4.9.2")
         implementation("org.bouncycastle:bcprov-jdk15to18:1.86")
         implementation("org.bouncycastle:bcpkix-jdk15to18:1.86")
         implementation("org.bouncycastle:bcutil-jdk15to18:1.86")
