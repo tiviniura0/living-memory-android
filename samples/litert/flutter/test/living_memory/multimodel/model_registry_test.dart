@@ -185,7 +185,7 @@ void main() {
             ? registry.directory.listSync().whereType<File>().where(
                 (f) => f.path.endsWith('.part'),
               )
-            : [],
+            : <File>[],
         isEmpty,
       );
     },

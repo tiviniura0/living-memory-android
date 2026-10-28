@@ -7,6 +7,7 @@ import 'package:path/path.dart' as p;
 
 import '../../data/repositories/chat_model/custom_chat_model_codec.dart';
 import '../../domain/models/chat_model.dart';
+import '../../utils/model_file_limits.dart';
 import 'multi_model_engine.dart';
 
 abstract interface class ModelManager {
@@ -66,6 +67,7 @@ class ModelRegistry implements ModelManager {
           'Le modèle doit rester dans le registre privé.',
         );
       }
+      validateModelSize(model.file!.sizeBytes);
       parsed[entry.key] = model;
     }
     _models = parsed;
@@ -122,7 +124,7 @@ class ModelRegistry implements ModelManager {
         throw FileSystemException('Modèle absent', sourcePath);
       }
       final before = await source.stat();
-      if (before.size <= 0) throw const FormatException('Modèle vide.');
+      validateModelSize(before.size);
       final available = await freeBytes?.call();
       check();
       if (available != null && available < before.size + 64 * 1024 * 1024) {
@@ -130,11 +132,18 @@ class ModelRegistry implements ModelManager {
           'Espace insuffisant pour la copie privée et la réserve de 64 Mio.',
         );
       }
+      var copied = 0;
       final sink = part.openWrite();
       try {
         await sink.addStream(
           source.openRead().map((chunk) {
             check();
+            copied += chunk.length;
+            if (copied > before.size || copied > kMaximumModelBytes) {
+              throw const FormatException(
+                'Taille du modèle modifiée pendant la copie.',
+              );
+            }
             return chunk;
           }),
         );
@@ -195,7 +204,11 @@ class ModelRegistry implements ModelManager {
     if (!await _privateRegular(id, model)) return false;
     final file = File((model.source as LocalModelSource).path);
     try {
-      if (await file.length() != model.file!.sizeBytes) return false;
+      final size = await file.length();
+      if (size <= 0 ||
+          size > kMaximumModelBytes ||
+          size != model.file!.sizeBytes)
+        return false;
       return (await sha256.bind(file.openRead()).first).toString() ==
           model.file!.sha256;
     } on FileSystemException {

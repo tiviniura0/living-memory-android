@@ -15,8 +15,9 @@ void main() {
   ) async {
     expect(Platform.isAndroid, isTrue);
     final support = await getApplicationSupportDirectory();
-    final dir = await Directory('${support.path}/security-fixture')
-        .createTemp();
+    final base = await Directory('${support.path}/security-fixture')
+        .create(recursive: true);
+    final dir = await base.createTemp();
     final path = '${dir.path}/fixture.db';
     try {
       final key = await MemoryKey.forDatabase(path);

@@ -55,8 +55,8 @@ class _ContextPanelState extends State<ContextPanel> {
     _act(() {
       widget.manager.deleteSession(id);
       _selected = null;
+      widget.onDeleted?.call();
     });
-    widget.onDeleted?.call();
   }
 
   @override

@@ -19,6 +19,7 @@ import 'package:crypto/crypto.dart' as crypto;
 import 'package:flutter/foundation.dart';
 
 import '../../../domain/models/provisioning.dart';
+import '../../../utils/model_file_limits.dart';
 import '../../../utils/stall_watchdog.dart';
 import 'store_operation.dart';
 
@@ -162,7 +163,7 @@ final class HttpFileDownloader {
 
   final HttpClient Function() _newClient;
   final bool allowInsecureLoopback;
-  static const maxModelBytes = 8 * 1024 * 1024 * 1024;
+  static const maxModelBytes = kMaximumModelBytes;
 
   bool _safeUrl(Uri uri) =>
       uri.hasAuthority &&
@@ -182,13 +183,7 @@ final class HttpFileDownloader {
     }
   }
 
-  static void validateSize(int size) {
-    if (size <= 0 || size > maxModelBytes) {
-      throw const FormatException(
-        'Modèle : taille de 1 octet à 8 Gio requise.',
-      );
-    }
-  }
+  static void validateSize(int size) => validateModelSize(size);
 
   final Duration _stallTimeout;
 

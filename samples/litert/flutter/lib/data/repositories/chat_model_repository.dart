@@ -33,6 +33,7 @@ import '../../domain/models/chat_model.dart';
 import '../../domain/models/npu_availability.dart';
 import '../../domain/models/provisioning.dart';
 import '../../domain/ports/chat_model_planner.dart';
+import '../../utils/model_file_limits.dart';
 import '../../utils/redact_url.dart';
 import '../../utils/result.dart';
 import '../../utils/serial_queue.dart';
@@ -152,8 +153,21 @@ class ChatModelRepository implements ChatModelPlanner {
   final BundleReader _readBundle;
 
   /// [inspectLitertlm] through [_readBundle].
-  Future<Result<BundleReading>> _inspect(String path) =>
-      inspectLitertlm(path, read: _readBundle);
+  Future<Result<BundleReading>> _inspect(String path) async {
+    try {
+      final stat = await File(path).stat();
+      if (stat.type == FileSystemEntityType.file &&
+          stat.size > kMaximumModelBytes) {
+        validateModelSize(stat.size);
+      }
+    } on FormatException catch (error) {
+      return Result.error(error);
+    } on FileSystemException {
+      // Preserve the existing inspection/permission-advice path for missing
+      // or inaccessible files. Never parse an oversized readable file.
+    }
+    return inspectLitertlm(path, read: _readBundle);
+  }
 
   /// Writes what [load] migrates (a retired saved choice) back to the
   /// settings. Off for the headless self-test, which reads only.
@@ -758,6 +772,11 @@ class ChatModelRepository implements ChatModelPlanner {
       return Result.error(
         LocalModelException('$absolute is gone or empty: choose it again.'),
       );
+    }
+    try {
+      validateModelSize(stat.size);
+    } on FormatException catch (error) {
+      return Result.error(error);
     }
     final file = CustomModelFile(
       name: basename(absolute),
