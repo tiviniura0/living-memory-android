@@ -74,8 +74,9 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
       _check();
       final utterance = _value(await capture.stop());
       _check();
-      if (utterance.pcm.isEmpty)
+      if (utterance.pcm.isEmpty) {
         throw const FormatException('Enregistrement vide.');
+      }
       return await transcribe(utterance.pcm);
     } finally {
       await _capture?.cancel();
@@ -90,15 +91,16 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
   Future<String> transcribe(Uint8List pcm) async {
     _check();
     final text = _value(
-      await speech.transcribe(
+      await speech.transcribeWithLanguage(
         pcm,
         expected: ModelId.whisperBase,
         language: 'fr',
       ),
     );
     _check();
-    if (text.trim().isEmpty)
+    if (text.trim().isEmpty) {
       throw const FormatException('Aucune parole reconnue.');
+    }
     return text;
   }
 
@@ -159,9 +161,9 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
             :final isFinal,
           ):
             if (pcm.isNotEmpty) {
-              final playback = _playback ??= _value(
-                audio.beginPlayback(sampleRate),
-              );
+              final playback =
+                  _playback ?? _value(audio.beginPlayback(sampleRate));
+              _playback = playback;
               playback.enqueue(pcm);
             }
             if (isFinal) _playback?.end();
@@ -170,14 +172,15 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
           case VoiceTurnInterruptedEvent():
             throw const ModelCancelled();
           case VoiceErrorEvent(:final error):
-            throw error;
+            throw asException(error);
           default:
             break;
         }
       }
       _check();
-      if (!complete || _playback == null)
+      if (!complete || _playback == null) {
         throw const FormatException('Lecture audio incomplète.');
+      }
       _playback!.end();
       await _playback!.drained;
       _check();

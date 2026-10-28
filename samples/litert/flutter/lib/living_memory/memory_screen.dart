@@ -12,21 +12,21 @@ import '../config/model_catalog.dart';
 import '../data/repositories/chat_model_repository.dart';
 import '../data/repositories/conversation_repository.dart';
 import '../data/repositories/image_repository.dart';
-import '../domain/models/llm_image.dart';
 import '../data/services/knowledge/embedder_service.dart';
 import '../domain/models/assistant_event.dart';
 import '../domain/models/chat_model.dart';
 import '../domain/models/knowledge_query.dart';
+import '../domain/models/llm_image.dart';
 import '../domain/use_cases/chat_model_switcher.dart';
 import '../utils/result.dart';
 import 'assistant_session.dart';
-import 'memory_speech.dart';
 import 'auto_memory_engine.dart';
 import 'auto_memory_panel.dart';
 import 'context_lifecycle_manager.dart';
 import 'context_panel.dart';
 import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
+import 'memory_speech.dart';
 import 'memory_store.dart';
 import 'memory_text_dialog.dart';
 import 'module_contracts.dart';
@@ -310,17 +310,20 @@ class _MemoryScreenState extends State<MemoryScreen>
     Uint8List? png;
     if (image) {
       final repository = widget.images;
-      if (repository == null)
+      if (repository == null) {
         throw StateError('Sélecteur d’image indisponible.');
+      }
       final picked = _value(await repository.pick(ImageSourceKind.gallery));
       if (picked == null || _closed || _cancelled) return;
       png = picked.png;
-      if (instruction.isEmpty)
+      if (instruction.isEmpty) {
         instruction =
             'Décris cette image et distingue les observations des déductions.';
+      }
     }
-    if (instruction.isEmpty)
+    if (instruction.isEmpty) {
       throw const FormatException('Écris une instruction.');
+    }
     if (utf8.encode(instruction).length <= kKbMaxTextQueryUtf8Bytes) {
       final vector = _value(
         await widget.embedder.embedQuery(KnowledgeQuery.text(instruction)),
@@ -369,8 +372,9 @@ class _MemoryScreenState extends State<MemoryScreen>
 
   Future<void> _rememberOutput() async {
     final output = _output;
-    if (output == null || output.scopeKey != _scope.key)
+    if (output == null || output.scopeKey != _scope.key) {
       throw StateError('Production d’une autre portée refusée.');
+    }
     await _index(
       output.sourceLabel,
       ['${output.sourceLabel}\n${output.text}'],
@@ -472,8 +476,9 @@ class _MemoryScreenState extends State<MemoryScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    if ((_recording || _speaking) && state != AppLifecycleState.resumed)
+    if ((_recording || _speaking) && state != AppLifecycleState.resumed) {
       unawaited(_cancel());
+    }
   }
 
   Future<void> _ask({required bool generate}) async {

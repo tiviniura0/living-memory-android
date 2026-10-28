@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
 
+import '../config/model_catalog.dart' show ConversationProfile;
 import '../data/repositories/conversation_repository.dart';
 import '../domain/models/assistant_event.dart';
 import '../utils/result.dart';
@@ -110,10 +111,11 @@ class AssistantSession implements ChatProvider, ImageAnalysisProvider {
       await conversation.firstFittingPrompt(prompts, image: image),
     );
     check();
-    if (fit == null)
+    if (fit == null) {
       throw const ConversationTooLongException(
         'Instruction et média trop longs pour ce modèle.',
       );
+    }
     final text = StringBuffer();
     var completed = false;
     await for (final event in conversation.ask(prompts[fit], image: image)) {
