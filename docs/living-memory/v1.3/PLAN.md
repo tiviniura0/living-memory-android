@@ -69,3 +69,11 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
   existant, six messages récents bornés, respect des checkpoints et du scope.
 - Audit Maven baseline : deux avis OSV ; contraintes ciblées Guava/OkHttp et
   contrôle des versions résolues, sans mise à jour générale des dépendances.
+
+- Run 40636347827 : 126 tests ciblés passent, dont les quatre régressions audio ;
+  seul échec = recherche du dropdown non construit hors écran dans le test widget.
+  Correction du scroll de test vers la ListView externe ; assertions conservées.
+- Badging baseline : READ/WRITE_EXTERNAL_STORAGE transitives identifiées puis
+  retirées via fusion Android ; gate testé rouge sur ces permissions, vert sur
+  le source corrigé. Les composants WorkManager protégés par permission système
+  sont autorisés explicitement. Validation du manifeste final en CI.

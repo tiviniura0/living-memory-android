@@ -30,7 +30,7 @@ existe. Ne pas assimiler empreinte calculée et origine authentifiée. Les GGUF,
 `.task` et safetensors ne deviennent pas compatibles par changement d’extension.
 
 Appliquer le modèle puis, dans Living Memory, enregistrer le slot E2B ou E4B.
-Une copie privée complète est nécessaire ; une réserve de 64 Mio est contrôlée
+La copie initiale SAF vers le cache ne dispose pas encore d’arrêt en cours de transfert. Une copie privée complète est ensuite nécessaire ; une réserve de 64 Mio est contrôlée
 à cette étape sur Android. Ce contrôle ne garantit pas l’espace restant pour
 les autres services. Tester E2B d’abord, puis E4B séparément. Un encodeur image
 présent et activé est nécessaire à l’analyse d’image. Ne pas activer de backend

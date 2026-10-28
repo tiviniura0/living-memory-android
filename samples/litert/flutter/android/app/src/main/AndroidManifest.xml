@@ -33,6 +33,10 @@
          flutter_edge_ai_agent) merges POST_NOTIFICATIONS itself: removed here so Android never
          offers a notification permission for it. -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" tools:node="remove"/>
+    <!-- All imports use SAF or per-URI image picker grants, never shared storage. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" tools:node="remove"/>
+    <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE" tools:node="remove"/>
     <application
         android:label="Living Memory"
         android:allowBackup="false"

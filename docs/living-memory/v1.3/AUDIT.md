@@ -132,3 +132,24 @@ Les modèles continuent de s’ouvrir sans historique natif partagé entre agent
 
 Tests matériels non exécutés : tous les résultats logiciels gardent les doubles
 de l’inférence, des entrées/sorties audio et des événements du système.
+
+## Contrôle des permissions réellement empaquetées
+
+Le badging de l’APK baseline révèle READ_EXTERNAL_STORAGE et
+WRITE_EXTERNAL_STORAGE (maxSdk 28) ajoutées transitivement, malgré leur absence
+du manifeste source de l’application. Elles sont retirées explicitement avec
+les directives de fusion, ainsi que MANAGE_EXTERNAL_STORAGE par précaution.
+Le contrôle sur manifeste fusionné rejette ces permissions dans l’APK V1.3.
+Les services WorkManager protégés par BIND_JOB_SERVICE et les composants de
+profilage protégés par DUMP sont distingués des composants exportés sans garde.
+
+Annulation des modèles : téléchargement HTTP et copie d’enregistrement privé
+ont des signaux d’arrêt. La copie SAF initiale d’un modèle Android vers le cache
+n’a pas encore de signal Dart d’interruption ; un gros import peut donc devoir
+se terminer avant le retour du sélecteur. Ce point reste une limitation connue,
+en plus des essais matériels non exécutés. Aucun fichier source n’est supprimé.
+
+Les quatre tests audio rouges de la revue passent dans le run 40636347827 ;
+le seul échec restant de ce run concerne un sélecteur hors écran dans le nouveau
+test widget (ListView virtualisée). Son déplacement simulé est corrigé ; aucune
+assertion de produit n’est retirée. Le run final doit confirmer la suite entière.

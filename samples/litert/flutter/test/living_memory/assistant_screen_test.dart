@@ -94,11 +94,20 @@ void main() {
       expect(store.documents('personal').single.kind, 'assistant-draft');
       expect(store.documents('other'), isEmpty);
       final agentSelector = find.byType(DropdownButtonFormField<String>);
-      await tester.ensureVisible(agentSelector);
+      await tester.scrollUntilVisible(
+        agentSelector,
+        -400,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.tap(agentSelector);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Zzz autre agent').last);
       await tester.pumpAndSettle();
+      await tester.scrollUntilVisible(
+        find.text('Discuter'),
+        250,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Conserver la production'), findsNothing);
       await tester.enterText(find.byType(TextField), 'Salut');
       await tester.ensureVisible(find.text('Discuter'));
