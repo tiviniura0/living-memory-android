@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/domain/models/assistant_event.dart';
+import 'package:litert_edge_demos/domain/models/chat_capabilities.dart';
 import 'package:litert_edge_demos/living_memory/assistant_session.dart';
 import 'package:litert_edge_demos/living_memory/module_contracts.dart';
 import 'package:litert_edge_demos/utils/result.dart';
@@ -10,6 +11,17 @@ import 'package:litert_edge_demos/utils/result.dart';
 import '../fakes/fake_conversation_repository.dart';
 
 class _Chat extends FakeConversationRepository {
+  Completer<void>? fitGate;
+  @override
+  Future<Result<int?>> firstFittingPrompt(
+    List<String> prompts, {
+    Uint8List? image,
+    Uint8List? audioWav,
+  }) async {
+    await fitGate?.future;
+    return super.firstFittingPrompt(prompts, image: image, audioWav: audioWav);
+  }
+
   List<AssistantEvent> events = [
     const AssistantTextDelta('Brouillon'),
     AssistantDone(FakeConversationRepository.metrics()),
@@ -114,6 +126,33 @@ void main() {
           .generate(const MemoryScope(agentId: ''), 'Bonjour'),
       throwsArgumentError,
     );
+    await chat.close();
+  });
+  test('unsupported image model fails explicitly before ask', () async {
+    final chat = _Chat()
+      ..capabilities = const ChatCapabilities(
+        modelName: 'text only',
+        images: false,
+        tools: false,
+      );
+    await expectLater(
+      AssistantSession(chat).generate(a, 'Décris', image: Uint8List(3)),
+      throwsA(isA<Exception>()),
+    );
+    expect(chat.prompts, isEmpty);
+    await chat.close();
+  });
+  test('cancellation during fit prevents inference', () async {
+    final chat = _Chat()..fitGate = Completer<void>();
+    var cancelled = false;
+    final work = AssistantSession(chat)
+        .generate(a, 'Bonjour', cancelled: () => cancelled);
+    final assertion = expectLater(work, throwsA(isA<Exception>()));
+    await Future<void>.delayed(Duration.zero);
+    cancelled = true;
+    chat.fitGate!.complete();
+    await assertion;
+    expect(chat.prompts, isEmpty);
     await chat.close();
   });
 }
