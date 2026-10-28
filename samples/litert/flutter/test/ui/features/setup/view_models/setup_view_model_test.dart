@@ -91,6 +91,7 @@ void main() {
     final modelStore =
         store ??
         ModelStore(
+          allowInsecureLoopback: true,
           root: () async => root,
           retryDelay: (_) => Duration.zero,
           progressInterval: Duration.zero,
@@ -336,6 +337,7 @@ void main() {
       chunkDelay: const Duration(milliseconds: 5),
     );
     final store = ModelStore(
+      allowInsecureLoopback: true,
       root: () async => root,
       retryDelay: (_) => Duration.zero,
       progressInterval: Duration.zero,

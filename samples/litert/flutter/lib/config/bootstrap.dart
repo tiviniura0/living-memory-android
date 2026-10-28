@@ -61,7 +61,10 @@ Future<void> initEdgeAi({
 /// asks for; a backend that cannot run the model is a
 /// `BackendInitException` or a `LiteRtLmBundleException`, never a model on
 /// another backend. The app and the self-test register this one.
-const kStrictLiteRtLmEngine = LiteRtLmEngine(backendFallback: false);
+const kStrictLiteRtLmEngine = LiteRtLmEngine(
+  backendFallback: false,
+  nativeLogLevel: LiteRtLmLogLevel.silent,
+);
 
 /// The LiteRT embedding backend with EmbeddingGemma 2's images at
 /// [kEmbedderVisionTokensPerImage] tokens and `requireWeightCache`

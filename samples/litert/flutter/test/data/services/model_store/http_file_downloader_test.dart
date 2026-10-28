@@ -94,6 +94,7 @@ void main() {
     HttpClient Function()? httpClient,
   }) {
     final downloader = HttpFileDownloader(
+      allowInsecureLoopback: true,
       httpClient: httpClient,
       maxAttempts: maxAttempts,
       retryDelay: retryDelay ?? (_) => Duration.zero,
@@ -655,15 +656,16 @@ void main() {
         expect(server.requests.map((r) => r.path), ['/$name', '/cdn/$name']);
       });
 
-      test('plain HTTP up to HTTPS is followed', () async {
+      test('initial non-loopback HTTP is rejected before redirects', () async {
         final server = await redirectingTo('https://cdn.test/cdn/$name');
-
-        await download(
-          newDownloader(httpClient: routedTo(server)),
-          Uri.parse('http://models.test/$name'),
+        await expectLater(
+          download(
+            newDownloader(httpClient: routedTo(server)),
+            Uri.parse('http://models.test/$name'),
+          ),
+          throwsFormatException,
         );
-
-        expect(part().readAsBytesSync(), bytes);
+        expect(server.requests, isEmpty);
       });
     });
 

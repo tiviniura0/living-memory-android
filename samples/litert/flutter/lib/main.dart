@@ -21,13 +21,14 @@ import 'config/dependencies.dart';
 import 'config/licenses.dart';
 import 'selftest/self_test_mode.dart';
 import 'selftest/self_test_options.dart';
+import 'utils/private_logging.dart';
 
 /// [args]: the Linux runner passes argv after the binary name
 /// (`my_application.cc`, `fl_dart_project_set_dart_entrypoint_arguments`);
 /// macOS passes `NSProcessInfo.arguments` by default
 /// (`FlutterDartProject.dartEntrypointArguments`). `--selftest` (or
 /// `SELFTEST=1`) runs the headless self-test instead of the app.
-Future<void> main(List<String> args) async {
+Future<void> main(List<String> args) => runPrivateApplication(() async {
   if (SelfTestOptions.parse(args, Platform.environment) case final selfTest?) {
     await runSelfTestMode(selfTest);
   }
@@ -42,7 +43,7 @@ Future<void> main(List<String> args) async {
     return;
   }
   runApp(App(dependencies: dependencies));
-}
+});
 
 /// Shown when `AppDependencies.create` throws (a bad define such as
 /// `VOICE_GATE_DBFS`, or the inference engine failing to initialize). No

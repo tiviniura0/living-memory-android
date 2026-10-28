@@ -90,6 +90,8 @@ jobs:
           set -o pipefail
           flutter test --reporter expanded 2>&1 | tee build/evidence/flutter-test.log
       - name: Build installable arm64 APK
+        env:
+          LM_ALLOW_EXPERIMENTAL_DEBUG_SIGNING: 'true'
         run: |
           flutter build apk --release --target-platform android-arm64
           mkdir -p build/evidence
@@ -112,6 +114,13 @@ jobs:
           from pathlib import Path
           apk=Path('build/app/outputs/flutter-apk/app-release.apk')
           with zipfile.ZipFile(apk) as z:
+              cipher_libs = [n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so') and 'sqlite3' in n]
+              assert cipher_libs, 'Missing SQLCipher library'
+              cipher_hashes = {}
+              for name in cipher_libs:
+                  data = z.read(name)
+                  assert b'sqlcipher_export' in data and b'sqlite3_key' in data, name
+                  cipher_hashes[name] = hashlib.sha256(data).hexdigest()
               abis=sorted({n.split('/')[1] for n in z.namelist() if n.startswith('lib/') and n.endswith('.so')})
               assert abis==['arm64-v8a'], abis
               size=z.getinfo('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm').file_size
@@ -123,7 +132,7 @@ jobs:
           signature=Path('build/evidence/apk-signature.txt').read_text()
           cert=certificate_sha256(signature)
           previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
-          metadata={'commit_sha':os.environ['GITHUB_SHA'],'embedding_model_sha256':model_sha,'hardware_tested':False,'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
+          metadata={'commit_sha':os.environ['GITHUB_SHA'],'embedding_model_sha256':model_sha,'hardware_tested':False,'signing_mode':'experimental-debug-not-stable','sqlcipher_libraries_sha256':cipher_hashes,'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
                     'certificate_sha256':cert,'v1_certificate_matches':cert==previous}
           Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
           print(json.dumps(metadata,indent=2))

@@ -15,6 +15,7 @@ class ContextLifecycleManager {
   final MemoryStore store;
   final MemoryScope scope;
   final int tokenBudget;
+  void deleteSession(String id) => store.deleteSession(scope.key, id);
   String startSession() => store.createSession(scope.key, scope.agentId);
   List<({String id, String updatedAt})> sessions() =>
       store.contextSessions(scope.key);

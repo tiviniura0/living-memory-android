@@ -87,7 +87,7 @@ class EncryptedMemoryDatabase {
 
   static void _migrate(String path, String key) {
     final pending = File('$path.encrypted-pending');
-    final source = sqlite3.open(path, mode: OpenMode.readWrite);
+    final source = sqlite3.open(path);
     Database? verified;
     var sourceClosed = false;
     var stage = 0;

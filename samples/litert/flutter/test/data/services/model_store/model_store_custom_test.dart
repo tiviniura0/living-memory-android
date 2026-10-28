@@ -70,6 +70,7 @@ void main() {
 
   ModelStore newStore() {
     final store = ModelStore(
+      allowInsecureLoopback: true,
       root: () async => root,
       ops: ops,
       retryDelay: (_) => Duration.zero,

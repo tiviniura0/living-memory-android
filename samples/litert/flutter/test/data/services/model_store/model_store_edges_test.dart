@@ -94,12 +94,14 @@ void main() {
   }) {
     final store = openPart == null
         ? ModelStore(
+            allowInsecureLoopback: true,
             root: rootOf ?? () async => root,
             ops: ops,
             maxAttempts: maxAttempts,
             retryDelay: retryDelay ?? (_) => Duration.zero,
           )
         : ModelStore(
+            allowInsecureLoopback: true,
             root: rootOf ?? () async => root,
             ops: ops,
             maxAttempts: maxAttempts,

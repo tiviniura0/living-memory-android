@@ -148,6 +148,7 @@ final class const RemoteFile({
 final class HttpFileDownloader {
   HttpFileDownloader({
     HttpClient Function()? httpClient,
+    @visibleForTesting this.allowInsecureLoopback = false,
     this._stallTimeout = defaultStallTimeout,
     this._maxAttempts = defaultMaxAttempts,
     this._retryDelay = defaultRetryDelay,
@@ -160,6 +161,33 @@ final class HttpFileDownloader {
   static const defaultMaxAttempts = 3;
 
   final HttpClient Function() _newClient;
+  final bool allowInsecureLoopback;
+  static const maxModelBytes = 8 * 1024 * 1024 * 1024;
+
+  bool _safeUrl(Uri uri) =>
+      uri.hasAuthority &&
+      uri.host.isNotEmpty &&
+      uri.userInfo.isEmpty &&
+      !uri.hasFragment &&
+      (uri.isScheme('https') ||
+          (allowInsecureLoopback &&
+              uri.isScheme('http') &&
+              const ['localhost', '127.0.0.1', '::1'].contains(uri.host)));
+
+  void _validateUrl(Uri uri) {
+    if (!_safeUrl(uri))
+      throw const FormatException(
+        'Modèle : URL HTTPS sans identifiants ni fragment requise.',
+      );
+  }
+
+  static void validateSize(int size) {
+    if (size <= 0 || size > maxModelBytes)
+      throw const FormatException(
+        'Modèle : taille de 1 octet à 8 Gio requise.',
+      );
+  }
+
   final Duration _stallTimeout;
 
   /// Attempts per file before a network error is shown (each resumes).
@@ -186,6 +214,7 @@ final class HttpFileDownloader {
   /// The total size of [url]: a one-byte Range request (the 206's
   /// Content-Range), else a 200's Content-Length. No reconnects.
   Future<int> probeSize(String name, Uri url, CancelToken cancel) async {
+    _validateUrl(url);
     final HttpClientResponse response;
     try {
       response = await _open(name, url, 0, cancel, range: 'bytes=0-0');
@@ -208,9 +237,15 @@ final class HttpFileDownloader {
             response.headers.value(HttpHeaders.contentRangeHeader) ?? '',
           );
           final bytes = int.tryParse(total?.group(1) ?? '');
-          if (bytes != null && bytes > 0) return bytes;
+          if (bytes != null && bytes > 0) {
+            validateSize(bytes);
+            return bytes;
+          }
         case HttpStatus.ok:
-          if (response.contentLength > 0) return response.contentLength;
+          if (response.contentLength > 0) {
+            validateSize(response.contentLength);
+            return response.contentLength;
+          }
         case final status:
           throw DownloadHttpException(name, url, status);
       }
@@ -233,6 +268,8 @@ final class HttpFileDownloader {
     CancelToken cancel,
     FileStateReporter reporter,
   ) async {
+    _validateUrl(file.url);
+    validateSize(file.sizeBytes);
     for (var attempt = 1; ; attempt++) {
       try {
         await _transfer(file, part, cancel, reporter, attempt);
@@ -513,6 +550,7 @@ final class HttpFileDownloader {
     CancelToken cancel, {
     String? range,
   }) async {
+    _validateUrl(url);
     final client = _http;
     var uri = url;
     for (var hop = 0; hop < 10; hop++) {
@@ -547,9 +585,9 @@ final class HttpFileDownloader {
 
   /// Throws [UnsafeRedirectException] unless [to] is HTTP(S) and keeps
   /// HTTPS when [from] had it.
-  static void _checkRedirect(String name, Uri from, Uri to) {
-    final web = to.isScheme('https') || to.isScheme('http');
-    if (web && !(from.isScheme('https') && to.isScheme('http'))) return;
+  void _checkRedirect(String name, Uri from, Uri to) {
+    if (_safeUrl(to) && !(from.isScheme('https') && to.isScheme('http')))
+      return;
     debugPrint(
       '[ModelStore] $name: refused the redirect from ${from.scheme}://'
       '${from.host} to ${to.scheme}://${to.host}',

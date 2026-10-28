@@ -75,6 +75,7 @@ class ModelStore {
     Future<Directory> Function()? root,
     this._ops = const ModelFileOps(),
     HttpClient Function()? httpClient,
+    @visibleForTesting bool allowInsecureLoopback = false,
     Duration stallTimeout = HttpFileDownloader.defaultStallTimeout,
     int maxAttempts = HttpFileDownloader.defaultMaxAttempts,
     Duration Function(int attempt) retryDelay = defaultRetryDelay,
@@ -85,6 +86,7 @@ class ModelStore {
   }) : _rootOf = root ?? _defaultRoot,
        _downloader = HttpFileDownloader(
          httpClient: httpClient,
+         allowInsecureLoopback: allowInsecureLoopback,
          stallTimeout: stallTimeout,
          maxAttempts: maxAttempts,
          retryDelay: retryDelay,
@@ -213,6 +215,10 @@ class ModelStore {
     String? moveFrom,
     String? reserved,
   }) => _customOp((cancel) async {
+    if (expectedSha256 != null &&
+        !RegExp(r'^[0-9a-f]{64}$').hasMatch(expectedSha256)) {
+      throw const FormatException('Empreinte SHA-256 invalide.');
+    }
     final name = _baseName(path);
     if (!name.toLowerCase().endsWith(kCustomModelExtension) ||
         !isPlainFileName(name)) {
@@ -221,6 +227,7 @@ class ModelStore {
       );
     }
     final size = await File(path).length();
+    HttpFileDownloader.validateSize(size);
     final target = File(await customPathOf(name));
     File? placed;
     final (_, hex) = await _importer.importFile(
@@ -299,6 +306,10 @@ class ModelStore {
     Future<String?> Function(String path)? accept,
     String? reserved,
   }) => _customOp((cancel) async {
+    if (sha256 != null && !RegExp(r'^[0-9a-f]{64}$').hasMatch(sha256)) {
+      throw const FormatException('Empreinte SHA-256 invalide.');
+    }
+    if (sizeBytes != null) HttpFileDownloader.validateSize(sizeBytes);
     final name = customFileNameFor(url);
     final target = File(await customPathOf(name));
     final part = HttpFileDownloader.partFileFor(target, url);

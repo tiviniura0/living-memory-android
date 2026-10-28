@@ -5,9 +5,15 @@ import 'memory_store.dart';
 
 /// Bounded history, no nested scrolling and no model call from this panel.
 class ContextPanel extends StatefulWidget {
-  const ContextPanel({super.key, required this.manager, required this.busy});
+  const ContextPanel({
+    super.key,
+    required this.manager,
+    required this.busy,
+    this.onDeleted,
+  });
   final ContextLifecycleManager manager;
   final bool busy;
+  final VoidCallback? onDeleted;
   @override
   State<ContextPanel> createState() => _ContextPanelState();
 }
@@ -23,6 +29,34 @@ class _ContextPanelState extends State<ContextPanel> {
       _error = '$e';
     }
     setState(() {});
+  }
+
+  Future<void> _delete(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer cette session ?'),
+        content: const Text(
+          'Messages, décisions et résumés de cette session seront effacés. Les sources enregistrées séparément restent conservées.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer définitivement'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || widget.busy) return;
+    _act(() {
+      widget.manager.deleteSession(id);
+      _selected = null;
+    });
+    widget.onDeleted?.call();
   }
 
   @override
@@ -90,6 +124,10 @@ class _ContextPanelState extends State<ContextPanel> {
                         manager.resetActiveContext(id);
                       }),
                 child: const Text('Réinitialiser le contexte actif'),
+              ),
+              TextButton(
+                onPressed: widget.busy ? null : () => _delete(id),
+                child: const Text('Supprimer cette session'),
               ),
             ],
           ),

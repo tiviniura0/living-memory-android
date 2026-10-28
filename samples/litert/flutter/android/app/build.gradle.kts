@@ -30,6 +30,7 @@ val keystoreProperties = Properties().apply {
     if (file.exists()) file.inputStream().use { load(it) }
 }
 val hasReleaseKey = keystoreProperties.getProperty("storeFile") != null
+val allowExperimentalSigning = providers.environmentVariable("LM_ALLOW_EXPERIMENTAL_DEBUG_SIGNING").orNull == "true"
 
 android {
     namespace = "com.google.ai.edge.examples.litert_edge_demos"
@@ -103,6 +104,9 @@ android {
 tasks.configureEach {
     if (name == "preReleaseBuild" && !hasReleaseKey) {
         doFirst {
+            check(allowExperimentalSigning) {
+                "Stable signing required: configure external android/key.properties, or explicitly opt in to LM_ALLOW_EXPERIMENTAL_DEBUG_SIGNING=true for an experimental APK."
+            }
             logger.warn(
                 "android/key.properties not found: signing the release build with the DEBUG key",
             )

@@ -174,6 +174,7 @@ void main() {
     Duration Function()? clock,
   }) {
     final store = ModelStore(
+      allowInsecureLoopback: true,
       clock: clock,
       closeWait: closeWait,
       root: () async => root,
@@ -254,6 +255,7 @@ void main() {
       () async {
         serve(file: ServedFile(bytes, dropAfter: 200 * 1024));
         final store = ModelStore(
+          allowInsecureLoopback: true,
           root: () async => root,
           ops: ops,
           retryDelay: (_) => Duration.zero,

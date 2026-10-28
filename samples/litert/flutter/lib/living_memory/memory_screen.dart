@@ -26,8 +26,8 @@ import 'context_lifecycle_manager.dart';
 import 'context_panel.dart';
 import 'gemma_memory_extractor.dart';
 import 'memory_chunker.dart';
-import 'memory_speech.dart';
 import 'memory_key.dart';
+import 'memory_speech.dart';
 import 'memory_store.dart';
 import 'memory_text_dialog.dart';
 import 'module_contracts.dart';
@@ -643,6 +643,46 @@ class _MemoryScreenState extends State<MemoryScreen>
     await _index('Note du ${DateTime.now().toLocal()}', [text], 'note');
   }
 
+  Future<void> _deleteAgent() async {
+    final id = _agent;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Supprimer cet agent ?'),
+        content: const Text(
+          'Toutes ses sources, souvenirs, décisions, sessions et résumés, dans tous ses projets, seront effacés. Les autres agents et les modèles sont conservés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer définitivement'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted || _busy || id != _agent) return;
+    await _run(() async {
+      _store!.deleteAgent(id);
+      if (_store!.agents().isEmpty)
+        _store!.createAgent('personal', 'Ma mémoire');
+      _agent = _store!.agents().first.id;
+      _project = '';
+      _clearPrivateView();
+      _status = 'Agent et ses données supprimés.';
+    });
+  }
+
+  void _clearPrivateView() {
+    _hits = [];
+    _answer = '';
+    _output = null;
+    _question.clear();
+  }
+
   Future<void> _agentDialog() async {
     final id = await _textDialog(
       'Nouvel agent',
@@ -743,6 +783,11 @@ class _MemoryScreenState extends State<MemoryScreen>
                     tooltip: 'Créer un agent',
                     onPressed: enabled ? () => _run(_agentDialog) : null,
                     icon: const Icon(Icons.person_add),
+                  ),
+                  IconButton(
+                    tooltip: 'Supprimer cet agent',
+                    onPressed: enabled ? _deleteAgent : null,
+                    icon: const Icon(Icons.person_remove_outlined),
                   ),
                 ],
               ),
@@ -915,6 +960,7 @@ class _MemoryScreenState extends State<MemoryScreen>
                 key: ValueKey('context-$_agent-$_project'),
                 manager: _lifecycle,
                 busy: _busy,
+                onDeleted: () => setState(_clearPrivateView),
               ),
               const Text('Sources de cet agent et de ce projet'),
               for (final doc in store.documents(_agent, projectId: _project))
@@ -963,7 +1009,7 @@ class _MemoryScreenState extends State<MemoryScreen>
             const SizedBox(height: 24),
             const Text(
               'Limites V1 : 16 Mio / 200 pages PDF, 10 000 passages par agent. '
-              'Stockage privé Android, non chiffré par l’application. '
+              'Sur Android : mémoire SQLite chiffrée avec clé protégée par Keystore. '
               'Les productions IA et transcriptions doivent être vérifiées. Les images et enregistrements ne sont pas conservés ; seuls les textes explicitement enregistrés sont indexés.',
             ),
           ],
