@@ -3,7 +3,7 @@ name: Living Memory Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'work/living-memory-local-rag', 'work/living-memory-v1.1-auto-memory', 'work/living-memory-v1.2-multimodel', 'work/living-memory-v1.3-google-integration']
+    branches: [main, 'work/living-memory-local-rag', 'work/living-memory-v1.1-auto-memory', 'work/living-memory-v1.2-multimodel', 'work/living-memory-v1.3-google-integration', 'work/living-memory-v1.3.1-security']
     paths:
       - 'samples/litert/flutter/**'
       - '.github/workflows/build-apk.yml'
@@ -62,6 +62,10 @@ jobs:
           mkdir -p build/evidence
           set -o pipefail
           python -m unittest discover -s tool -p test_android_security.py -v 2>&1 | tee build/evidence/android-security-source.log
+      - name: V1.3.1 security contracts
+        run: |
+          flutter test test/living_memory/privacy_logging_test.dart --reporter expanded
+          flutter test test/living_memory/security_storage_test.dart --reporter expanded
       - name: Auto-memory focused contracts
         run: |
           mkdir -p build/evidence
