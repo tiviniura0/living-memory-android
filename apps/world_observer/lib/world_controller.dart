@@ -1,28 +1,34 @@
 import 'package:flutter/foundation.dart';
-
-import 'runtime/world_loop.dart';
-
 import 'package:agent_runtime/agent_runtime.dart';
 import 'package:world_persistence/world_persistence.dart';
 
+import 'runtime/world_session.dart';
+
 class WorldController extends ChangeNotifier {
-  WorldCore core;
-  LocalAgentRunner runner;
-  final CheckpointStore store;
+  late final WorldSession session;
   late final ValueNotifier<WorldView> view;
-  late WorldLoop _loop;
-  int _lastAutosaveTick = 0;
-  bool paused = false;
-  int speed = 1;
-  double effectiveSpeed = 0;
   String? selectedAgentId;
-  String saveStatus = 'Sauvegarde locale';
-  Future<void> _writes = Future.value();
-  WorldController(this.core, this.runner, this.store) {
+  WorldController(
+    WorldCore core,
+    LocalAgentRunner runner,
+    CheckpointStore store,
+  ) {
+    session = WorldSession(core, runner, store);
     view = ValueNotifier(WorldView(core.snapshot()));
-    _loop = WorldLoop(SimulationRunner(core, runner));
+    session.onChange = publish;
   }
+  WorldCore get core => session.core;
+  LocalAgentRunner get runner => session.runner;
+  CheckpointStore get store => session.store;
+  bool get paused => session.paused;
+  int get speed => session.speed;
+  double get effectiveSpeed => session.effectiveSpeed;
+  String get saveStatus => session.saveStatus;
+  set saveStatus(String value) => session.saveStatus = value;
   void publish() {
+    if (selectedAgentId != null &&
+        !core.snapshot().state.agents.any((a) => a.id == selectedAgentId))
+      selectedAgentId = null;
     view.value = WorldView(
       core.snapshot(),
       selectedAgentId: selectedAgentId,
@@ -37,94 +43,27 @@ class WorldController extends ChangeNotifier {
     publish();
   }
 
-  void setPaused(bool value) {
-    paused = value;
-    _loop.setPaused(value);
-    publish();
-  }
-
-  void setSpeed(int value) {
-    if (![1, 2, 4].contains(value)) throw ArgumentError('speed');
-    speed = value;
-    publish();
-  }
-
+  void setPaused(bool value) => session.setPaused(value);
+  void setSpeed(int value) => session.setSpeed(value);
   void setPopulationMax(int value) {
     final r = core.setPopulationMax(value);
     if (r.status == ActionStatus.rejected) saveStatus = 'Plafond invalide';
     publish();
   }
 
-  void advance(Duration elapsed) {
-    _loop.setSpeed(speed);
-    final count = _loop.advance(elapsed);
-    effectiveSpeed = _loop.effectiveSpeed;
-    if (count > 0) {
-      publish();
-      final tick = core.snapshot().state.tick;
-      if (tick - _lastAutosaveTick >= 200) {
-        _lastAutosaveTick = tick;
-        save();
-      }
-    }
-  }
-
-  Future<void> save() {
-    final snapshot = core.snapshot();
-    final task = _writes.then((_) async {
-      try {
-        await store.save(snapshot);
-        saveStatus = 'Sauvegardé · tick ${snapshot.state.tick}';
-      } catch (_) {
-        saveStatus = 'Sauvegarde impossible — réessayer';
-      }
-      publish();
-    });
-    _writes = task;
-    return task;
-  }
-
-  Future<void> restore() async {
-    setPaused(true);
-    await _writes;
-    final r = await store.load();
-    if (r.snapshot != null) {
-      core = WorldCore(r.snapshot!.state)..setPaused(true);
-      runner = LocalAgentRunner(core);
-      _loop = WorldLoop(SimulationRunner(core, runner))..setPaused(true);
-      _lastAutosaveTick = core.snapshot().state.tick;
-      selectedAgentId = null;
-      saveStatus = r.recovered
-          ? 'Sauvegarde précédente restaurée'
-          : 'Reprise · tick ${r.snapshot!.state.tick}';
-    } else if (r.warnings.isNotEmpty) {
-      saveStatus = r.warnings.join(' ');
-    }
-    publish();
-  }
-
-  Future<String> exportJson() async {
-    await save();
-    return store.exportJson();
-  }
-
-  Future<void> importJson(String json, {int? populationMaxOverride}) async {
-    setPaused(true);
-    await _writes;
-    try {
-      await store.importJson(
-        json,
-        populationMaxOverride: populationMaxOverride,
-      );
-      await restore();
-    } catch (_) {
-      saveStatus = 'Import refusé — monde conservé';
-      publish();
-    }
-  }
-
+  void advance(Duration elapsed) => session.advance(elapsed);
+  Future<void> save() => session.save();
+  Future<void> restore() => session.restore();
+  Future<String> exportJson() => session.exportJson();
+  Future<void> importJson(String json, {int? populationMaxOverride}) =>
+      session.importJson(json, populationMaxOverride: populationMaxOverride);
+  Future<void> importWithConsent(
+    String json,
+    Future<bool> Function(int cap, int population) confirm,
+  ) => session.importWithConsent(json, confirm);
   @override
   void dispose() {
+    session.onChange = null;
     view.dispose();
     super.dispose();
   }

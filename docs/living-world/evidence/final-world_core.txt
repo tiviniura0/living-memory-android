@@ -1,0 +1,26 @@
+Analyzing world_core...
+No issues found!
+00:00 +0: loading test/command_test.dart
+00:00 +0: test/command_test.dart: route_avoids_obstacle
+00:00 +1: test/command_test.dart: route_avoids_obstacle
+00:00 +2: test/world_clock_test.dart: same_seed_same_map
+00:00 +3: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +4: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +5: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +6: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +7: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +8: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +9: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +10: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +11: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +12: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +13: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +14: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +15: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +16: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +17: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +18: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +19: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +20: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +21: test/event_retention_test.dart: event_ids_stay_unique_after_retention
+00:00 +22: test/event_retention_test.dart: event_ids_stay_unique_after_retention

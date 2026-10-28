@@ -1,0 +1,52 @@
+00:00 +0: loading test/world_clock_test.dart
+00:00 +0: test/world_clock_test.dart: same_seed_same_map
+00:00 +0 -1: test/world_clock_test.dart: same_seed_same_map [E]
+  type 'Null' is not a subtype of type 'List<dynamic>' in type cast
+  package:world_contracts/src/world_types.dart 145:21  WorldState.agents
+  test/world_clock_test.dart 5:89                      main.<fn>
+  
+00:00 +0 -1: test/world_clock_test.dart: restored_rng_same_sequence
+00:00 +0 -2: test/world_clock_test.dart: restored_rng_same_sequence [E]
+  Expected: <270369>
+    Actual: <1>
+  
+  package:matcher                  expect
+  test/world_clock_test.dart 6:59  main.<fn>
+  
+00:00 +0 -2: test/world_clock_test.dart: paused_step_preserves_state
+00:00 +0 -3: test/world_clock_test.dart: paused_step_preserves_state [E]
+  Expected: <40>
+    Actual: <0>
+  
+  package:matcher                   expect
+  test/world_clock_test.dart 7:164  main.<fn>
+  
+00:00 +0 -3: test/world_clock_test.dart: lower_cap_keeps_agents
+00:00 +0 -4: test/world_clock_test.dart: lower_cap_keeps_agents [E]
+  Expected: ActionStatus:<ActionStatus.applied>
+    Actual: ActionStatus:<ActionStatus.rejected>
+  
+  package:matcher                  expect
+  test/world_clock_test.dart 8:57  main.<fn>
+  
+00:00 +0 -4: test/world_clock_test.dart: add_over_cap_rejected
+00:00 +0 -5: test/world_clock_test.dart: add_over_cap_rejected [E]
+  Expected: ActionStatus:<ActionStatus.rejected>
+    Actual: ActionStatus:<ActionStatus.applied>
+  
+  package:matcher                  expect
+  test/world_clock_test.dart 9:77  main.<fn>
+  
+00:00 +0 -5: test/world_clock_test.dart: invalid_tick_count_rejected
+00:00 +0 -6: test/world_clock_test.dart: invalid_tick_count_rejected [E]
+  Expected: throws <Instance of 'RangeError'>
+    Actual: <Closure: () => List<WorldEvent>>
+     Which: returned []
+  
+  package:matcher                   expect
+  test/world_clock_test.dart 10:40  main.<fn>
+  
+00:00 +0 -6: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

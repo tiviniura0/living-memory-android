@@ -1,0 +1,14 @@
+00:00 +0: loading test/event_retention_test.dart
+00:00 +0: event_ids_stay_unique_after_retention
+00:00 +0 -1: event_ids_stay_unique_after_retention [E]
+  Expected: return normally
+    Actual: <Closure: () => WorldState>
+     Which: threw FormatException:<FormatException: Invalid snapshot>
+  
+  package:matcher                       expect
+  test/event_retention_test.dart 5:416  main.<fn>
+  
+00:00 +0 -1: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

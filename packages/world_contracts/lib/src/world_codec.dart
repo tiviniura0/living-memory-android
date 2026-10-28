@@ -133,18 +133,33 @@ class WorldCodec {
     }
     for (final a in agents) {
       check(
-        a['currentAction'] == null || commands.contains(a['currentAction']),
+        a['currentAction'] == null ||
+            pending.any(
+              (p) =>
+                  p['commandId'] == a['currentAction'] &&
+                  p['actorId'] == a['id'],
+            ),
       );
     }
-    for(final r in resources){
-      if(r['reservationAgentId']!=null){
-        check(pending.any((p)=>p['kind']=='gather'&&p['actorId']==r['reservationAgentId']&&p['reservedResourceId']==r['id']&&p['dueTick']==r['reservationUntilTick']));
+    for (final r in resources) {
+      if (r['reservationAgentId'] != null) {
+        check(
+          pending.any(
+            (p) =>
+                p['kind'] == 'gather' &&
+                p['actorId'] == r['reservationAgentId'] &&
+                p['reservedResourceId'] == r['id'] &&
+                p['dueTick'] == r['reservationUntilTick'],
+          ),
+        );
       }
     }
-    for(final p in pending){
-      if(p['kind']=='gather'){
-        final r=resources.firstWhere((r)=>r['id']==p['reservedResourceId']);
-        check(r['reservationAgentId']==p['actorId']&&r['food']>0);
+    for (final p in pending) {
+      if (p['kind'] == 'gather') {
+        final r = resources.firstWhere(
+          (r) => r['id'] == p['reservedResourceId'],
+        );
+        check(r['reservationAgentId'] == p['actorId'] && r['food'] > 0);
       }
     }
     final applied = s['appliedCommandIds'] as List;

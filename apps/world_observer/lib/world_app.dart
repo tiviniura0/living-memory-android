@@ -337,13 +337,46 @@ class _WorldAppState extends State<WorldApp>
         actions: [
           TextButton(
             onPressed: () async {
-              input.text = await controller.exportJson();
+              try {
+                input.text = await controller.exportJson();
+              } catch (_) {
+                if (context.mounted)
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Sauvegarde impossible : export annulé'),
+                    ),
+                  );
+              }
             },
             child: const Text('Préparer export'),
           ),
           TextButton(
             onPressed: () async {
-              await controller.importJson(input.text);
+              await controller.importWithConsent(input.text, (
+                cap,
+                count,
+              ) async {
+                return await showDialog<bool>(
+                      context: dialogContext,
+                      builder: (confirmation) => AlertDialog(
+                        title: const Text('Relever le plafond ?'),
+                        content: Text(
+                          'Ce fichier contient $count habitants pour un plafond de $cap. Relever explicitement le plafond à $count pour les conserver ?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(confirmation, false),
+                            child: const Text('Annuler'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(confirmation, true),
+                            child: Text('Importer avec $count habitants'),
+                          ),
+                        ],
+                      ),
+                    ) ??
+                    false;
+              });
               if (dialogContext.mounted) Navigator.pop(dialogContext);
             },
             child: const Text('Importer'),

@@ -1,0 +1,15 @@
+00:00 +0: loading test/import_validation_test.dart
+00:00 +0: orphan_reservation_rejected
+00:00 +0 -1: orphan_reservation_rejected [E]
+  Expected: throws <Instance of 'FormatException'>
+    Actual: <Closure: () => WorldState>
+     Which: returned <Instance of 'WorldState'>
+  
+  package:matcher                         expect
+  test/import_validation_test.dart 7:147  main.<fn>
+  
+00:00 +0 -1: snapshot_cannot_be_mutated
+00:00 +1 -1: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

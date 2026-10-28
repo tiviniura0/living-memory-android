@@ -1,0 +1,18 @@
+Analyzing world_headless...
+No issues found!
+00:00 +0: loading test/session_transaction_test.dart
+00:00 +0: test/world_metrics_test.dart: metrics_buffer_bounded
+00:00 +1: test/scenario_test.dart: headless_matches_step_by_step
+00:00 +2: test/scenario_test.dart: headless_matches_step_by_step
+00:00 +3: test/scenario_test.dart: headless_matches_step_by_step
+00:00 +4: test/scenario_test.dart: headless_matches_step_by_step
+00:00 +5: test/scenario_test.dart: headless_matches_step_by_step
+00:00 +6: test/world_loop_test.dart: max_8_ticks_per_frame
+00:00 +7: test/world_loop_test.dart: max_8_ticks_per_frame
+00:00 +8: test/world_loop_test.dart: max_8_ticks_per_frame
+00:00 +9: test/scenario_test.dart: save_resume_same_hash
+00:00 +10: test/scenario_test.dart: save_resume_same_hash
+00:00 +11: test/scenario_test.dart: save_resume_same_hash
+00:00 +12: test/world_loop_test.dart: reports_slow_actual_speed
+00:00 +13: test/scenario_test.dart: invalid_input_exit_2
+00:01 +14: All tests passed!

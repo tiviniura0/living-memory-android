@@ -1,0 +1,11 @@
+Analyzing world_persistence...
+No issues found!
+00:00 +0: loading test/checkpoint_test.dart
+00:00 +0: test/checkpoint_test.dart: roundtrip_mid_action
+00:00 +1: test/checkpoint_test.dart: interrupted_before_manifest_uses_previous
+00:00 +2: test/checkpoint_test.dart: corrupt_latest_falls_back
+00:00 +3: test/checkpoint_test.dart: future_import_preserves_world
+00:00 +4: test/checkpoint_test.dart: duplicate_id_import_rejected
+00:00 +5: test/checkpoint_test.dart: oversized_import_rejected
+00:00 +6: test/checkpoint_test.dart: lower_cap_export_import_roundtrip_with_explicit_override
+00:00 +7: test/checkpoint_test.dart: event_log_and_observedBy_survive_restore
