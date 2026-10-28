@@ -69,6 +69,7 @@ jobs:
           flutter test test/living_memory/security_storage_test.dart --reporter expanded || failed=1
           flutter test test/living_memory/model_transport_security_test.dart --reporter expanded || failed=1
           flutter test test/living_memory/context_panel_test.dart --reporter expanded || failed=1
+          flutter test test/data/repositories/chat_model_repository_test.dart test/living_memory/multimodel/model_registry_test.dart --reporter expanded || failed=1
           exit "$failed"
       - name: Auto-memory focused contracts
         run: |
@@ -114,7 +115,7 @@ jobs:
           from pathlib import Path
           apk=Path('build/app/outputs/flutter-apk/app-release.apk')
           with zipfile.ZipFile(apk) as z:
-              cipher_libs = [n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so') and 'sqlite3' in n]
+              cipher_libs = [n for n in z.namelist() if n.startswith('lib/') and n.endswith('.so') and 'sqlcipher' in n]
               assert cipher_libs, 'Missing SQLCipher library'
               cipher_hashes = {}
               for name in cipher_libs:
@@ -141,8 +142,10 @@ jobs:
         if: always()
         run: |
           mkdir -p build/evidence
-          cp ../../../docs/living-memory/v1.3/AUDIT.md build/evidence/validation-report.md
-          cp ../../../docs/living-memory/v1.3/INSTALL_S22.md build/evidence/S22-protocol.md
+          cp ../../../docs/living-memory/v1.3.1/AUDIT.md build/evidence/validation-report.md
+          cp ../../../docs/living-memory/v1.3.1/INSTALL_S22.md build/evidence/S22-protocol.md
+          cp ../../../docs/living-memory/v1.3.1/SIGNING.md build/evidence/signing-procedure.md
+          cp ../../../docs/living-memory/v1.3.1/STORAGE.md build/evidence/storage-strategy.md
           python3 - <<'PYREPORT'
           import os
           from pathlib import Path

@@ -159,4 +159,35 @@ void main() {
       expect(await source.exists(), isTrue);
     },
   );
+  test(
+    'oversized sparse local model is rejected before reserve or copying',
+    () async {
+      var preflightPassed = false;
+      final registry = ModelRegistry(
+        Directory('${dir.path}/registry'),
+        freeBytes: () async {
+          preflightPassed = true;
+          throw StateError('SIZE_PREFLIGHT_MISSING');
+        },
+      );
+      final source = File('${dir.path}/large.litertlm');
+      final handle = source.openSync(mode: FileMode.write);
+      handle.truncateSync(8 * 1024 * 1024 * 1024 + 1);
+      handle.closeSync();
+      await expectLater(
+        registry.register('e2b', source.path, model(source.path)),
+        throwsFormatException,
+      );
+      expect(preflightPassed, isFalse);
+      expect(registry.models, isEmpty);
+      expect(
+        registry.directory.existsSync()
+            ? registry.directory.listSync().whereType<File>().where(
+                (f) => f.path.endsWith('.part'),
+              )
+            : [],
+        isEmpty,
+      );
+    },
+  );
 }

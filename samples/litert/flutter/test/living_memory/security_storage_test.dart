@@ -172,4 +172,70 @@ void main() {
       isNot(contains('lagon42')),
     );
   });
+  test(
+    'migration preserves FTS after historical source and session deletions',
+    () {
+      final plain = open();
+      seed(plain, 'a');
+      final scope = const MemoryScope(agentId: 'a').key;
+      final removed = plain.createSession(scope, 'a');
+      plain.appendSessionMessage(
+        scope,
+        removed,
+        'user',
+        'Removed decision',
+        decision: true,
+      );
+      final keep = plain.createSession(scope, 'a');
+      plain.appendSessionMessage(
+        scope,
+        keep,
+        'user',
+        'UNIQUE_REMAINING_DECISION',
+        decision: true,
+      );
+      final second = plain.addDocument(
+        agentId: 'a',
+        name: 'keep',
+        digest: 'keep',
+        chunks: [
+          const MemoryChunk(
+            page: 1,
+            ordinal: 1,
+            text: 'UNIQUE_REMAINING_SOURCE',
+          ),
+        ],
+        vectors: [
+          [1, 0],
+        ],
+      );
+      plain.deleteDocument(
+        'a',
+        plain.documents('a').firstWhere((d) => d.id != second).id,
+      );
+      plain.deleteSession(scope, removed);
+      expect(plain.searchText('a', 'UNIQUE_REMAINING_SOURCE'), hasLength(1));
+      expect(
+        plain.searchDecisions(scope, 'a', 'UNIQUE_REMAINING_DECISION'),
+        hasLength(1),
+      );
+      plain.close();
+      final migrated = open(encryptionKey: key);
+      try {
+        expect(
+          migrated.searchText('a', 'UNIQUE_REMAINING_SOURCE'),
+          hasLength(1),
+        );
+        expect(
+          migrated.searchDecisions(scope, 'a', 'UNIQUE_REMAINING_DECISION'),
+          hasLength(1),
+        );
+        migrated.deleteDocument('a', second);
+        migrated.deleteSession(scope, keep);
+        expect(migrated.searchText('a', 'UNIQUE_REMAINING_SOURCE'), isEmpty);
+      } finally {
+        migrated.close();
+      }
+    },
+  );
 }

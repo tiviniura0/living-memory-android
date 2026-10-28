@@ -805,7 +805,11 @@ void main() {
       '',
       '${bytes.length}',
     ) as Ok<ModelUrlRequest>).value;
-    expect(request.url, signed, reason: 'the download gets the whole link');
+    expect(
+      request.url,
+      signed.removeFragment(),
+      reason: 'the query is preserved; fragments are never sent',
+    );
 
     await vm.download.execute(request);
 

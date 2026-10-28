@@ -176,6 +176,34 @@ void main() {
       repo.state.value.candidate!.bundle.info!;
 
   test(
+    'oversized sparse local selection is rejected before native inspection',
+    () async {
+      final store = ModelStore(root: () async => root);
+      stores.add(store);
+      final large = '${picked.path}/large.litertlm';
+      var inspected = false;
+      final repo = ChatModelRepository(
+        settings: TypedSettings(store: prefs),
+        store: store,
+        folders: [],
+        readBundle: (path) async {
+          inspected = true;
+          throw StateError('INSPECTION_REACHED');
+        },
+      );
+      repos.add(repo);
+      final handle = File(large).openSync(mode: FileMode.write);
+      handle.truncateSync(8 * 1024 * 1024 * 1024 + 1);
+      handle.closeSync();
+      final result = await repo.useLocalFile(large);
+      expect(result, isA<Error<CustomChatModel>>());
+      expect(inspected, isFalse);
+      expect(repo.state.value.candidate, isNull);
+      expect(prefs.values[Settings.customChatModel.key], isNull);
+    },
+  );
+
+  test(
     'runtime plan never changes saved settings and clears after failure',
     () async {
       final repo = newRepo();

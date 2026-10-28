@@ -76,7 +76,7 @@ final class const ModelUrlRequest({
     }
     return Result.ok(
       ModelUrlRequest(
-        url: uri,
+        url: uri.removeFragment(),
         sha256: sha.isEmpty ? null : sha,
         sizeBytes: bytes,
       ),
