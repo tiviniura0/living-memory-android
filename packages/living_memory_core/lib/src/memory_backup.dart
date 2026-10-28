@@ -1,7 +1,10 @@
+import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
 import 'package:sqlite3/sqlite3.dart';
+
+import 'memory_store.dart';
 
 /// Independent encrypted transfers. The caller supplies an unwrapped database
 /// key; this API never accesses or exports Android Keystore material.
@@ -120,11 +123,128 @@ class MemoryBackup {
         rows.single['dimension'] != dimension) {
       throw StateError('Profil de mémoire incompatible.');
     }
-    // These canonical tables must exist even for an otherwise empty memory.
-    for (final table in ['agents', 'documents', 'chunks']) {
-      db.select('SELECT count(*) FROM "$table"');
-    }
+    _validateSchema(db, version, profile, dimension);
     return version;
+  }
+
+  static String _identifier(String value) =>
+      '"${value.replaceAll('"', '""')}"';
+
+  static String _rows(ResultSet rows) =>
+      jsonEncode(rows.map((row) => row.values.toList()).toList());
+
+  static String _normalizedSql(String sql) =>
+      sql.replaceAll(RegExp(r'\s+'), ' ').trim().toLowerCase();
+
+  static void _validateSchema(
+    Database db,
+    int version,
+    String profile,
+    int dimension,
+  ) {
+    // Build the expectation with the same migrations used by the application.
+    // Only this disposable in-memory store is migrated; imported bytes are
+    // inspected without repair or schema creation.
+    final reference = MemoryStore.open(
+      ':memory:',
+      profile: profile,
+      dimension: dimension,
+    );
+    try {
+      final expected = reference.extensionDatabase;
+      final objects = expected.select(
+        "SELECT type,name,tbl_name,sql FROM sqlite_master "
+        "WHERE type IN ('table','index','trigger') AND name NOT LIKE 'sqlite_%'",
+      );
+      for (final object in objects) {
+        final name = object['name'] as String;
+        final table = object['tbl_name'] as String;
+        // Schema four predates the additive extension receipt table.
+        if (version == 4 && table == 'lm_v14_records') continue;
+        final actual = db.select(
+          'SELECT type,tbl_name,sql FROM sqlite_master WHERE name=?',
+          [name],
+        );
+        if (actual.length != 1 ||
+            actual.single['type'] != object['type'] ||
+            actual.single['tbl_name'] != table) {
+          throw StateError('Structure de mémoire incompatible.');
+        }
+        final quoted = _identifier(name);
+        if (object['type'] == 'table') {
+          for (final pragma in ['table_xinfo', 'foreign_key_list']) {
+            if (_rows(db.select('PRAGMA $pragma($quoted)')) !=
+                _rows(expected.select('PRAGMA $pragma($quoted)'))) {
+              throw StateError('Colonnes de mémoire incompatibles.');
+            }
+          }
+          // FTS external-content configuration is not represented by column
+          // metadata. Check its module, backing table, tokenizer and rowid.
+          if (name == 'chunk_fts' || name == 'session_fts') {
+            if (_normalizedSql(actual.single['sql'] as String) !=
+                _normalizedSql(object['sql'] as String)) {
+              throw StateError('Index de recherche incompatible.');
+            }
+          }
+          // Include implicit UNIQUE/PK indexes as well as named indexes.
+          for (final index in expected.select('PRAGMA index_list($quoted)')) {
+            final indexName = index['name'] as String;
+            final found = db.select('PRAGMA index_list($quoted)').where(
+              (row) => row['name'] == indexName,
+            ).toList();
+            if (found.length != 1 ||
+                found.single['unique'] != index['unique'] ||
+                found.single['origin'] != index['origin'] ||
+                found.single['partial'] != index['partial'] ||
+                _rows(db.select('PRAGMA index_xinfo(${_identifier(indexName)})')) !=
+                    _rows(expected.select('PRAGMA index_xinfo(${_identifier(indexName)})'))) {
+              throw StateError('Contraintes de mémoire incompatibles.');
+            }
+          }
+        } else if (_normalizedSql(actual.single['sql'] as String) !=
+            _normalizedSql(object['sql'] as String)) {
+          // Trigger bodies are essential: valid FTS pages alone do not ensure
+          // future writes and scoped deletions will update those pages.
+          throw StateError('Index ou déclencheur de mémoire incompatible.');
+        }
+      }
+      final missions = db.select(
+        "SELECT type FROM sqlite_master WHERE name='lm_v14_missions'",
+      );
+      if (missions.isNotEmpty) {
+        if (missions.single['type'] != 'table') {
+          throw StateError('Structure de missions incompatible.');
+        }
+        final columns = {
+          for (final column in db.select('PRAGMA table_info(lm_v14_missions)'))
+            column['name'] as String: column,
+        };
+        for (final column in {
+          'id': 'TEXT',
+          'agent_id': 'TEXT',
+          'scope_json': 'TEXT',
+          'due_at': 'INTEGER',
+          'steps_json': 'TEXT',
+          'state': 'TEXT',
+          'next_step': 'INTEGER',
+        }.entries) {
+          final actual = columns[column.key];
+          if (actual == null ||
+              (actual['type'] as String).toUpperCase() != column.value ||
+              (column.key == 'id' ? actual['pk'] != 1 : actual['notnull'] != 1)) {
+            throw StateError('Colonnes de missions incompatibles.');
+          }
+        }
+        if (!db.select('PRAGMA foreign_key_list(lm_v14_missions)').any(
+          (row) => row['table'] == 'agents' && row['from'] == 'agent_id' &&
+              row['to'] == 'id' && row['on_delete'] == 'CASCADE',
+        )) {
+          throw StateError('Portée de missions incompatible.');
+        }
+      }
+    } finally {
+      reference.close();
+    }
   }
 
   static void _transfer({

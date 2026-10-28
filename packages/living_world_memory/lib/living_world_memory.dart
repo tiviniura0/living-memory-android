@@ -163,7 +163,19 @@ class LivingWorldMemory implements MemoryPort {
       throw StateError('Limite de souvenirs atteinte. Export requis.');
     final vector = await embed(d['text'] as String);
     late String source;
+    var alreadyPresent = false;
     store.extensionTransaction(() {
+      final concurrent = store.extensionDatabase.select(
+        'SELECT payload FROM lm_v14_records WHERE namespace=? AND scope_key=? AND record_id=?',
+        ['world.event', scope.key, eventId],
+      );
+      if (concurrent.isNotEmpty) {
+        final receipt = jsonDecode(concurrent.single['payload'] as String) as Map<String,dynamic>;
+        if (receipt['digest'] != digest) throw const FormatException('Événement déjà lié à un autre contenu.');
+        source = receipt['sourceId'] as String;
+        alreadyPresent = true;
+        return;
+      }
       source = store.addDocument(
         agentId: scope.agentId,
         name: 'Monde · ${d['kind']} · tick ${d['tick']}',
@@ -174,18 +186,20 @@ class LivingWorldMemory implements MemoryPort {
         projectId: scope.projectId,
         worldId: worldId,
       );
-      _put('world.event', scope, eventId, {
+      final receipt = <String,dynamic>{
         ...d,
         'digest': digest,
         'sourceId': source,
         'writtenAtUtc': DateTime.now().toUtc().toIso8601String(),
         'deleted': false,
-      });
+      };
+      store.extensionDatabase.execute('INSERT INTO lm_v14_records(namespace,scope_key,record_id,agent_id,payload) VALUES(?,?,?,?,?)',
+        ['world.event',scope.key,eventId,scope.agentId,jsonEncode(receipt)]);
     });
     return MemoryAck({
       'eventId': eventId,
       'agentId': agent,
-      'status': 'accepted',
+      'status': alreadyPresent ? 'already_present' : 'accepted',
       'sourceId': source,
     });
   });
@@ -269,6 +283,7 @@ class LivingWorldMemory implements MemoryPort {
     for (final candidate in candidates) {
       final r = candidate.event;
       if (r['deleted'] == true) continue;
+      if (candidate.shared && !_stillShared(r, agent)) continue;
       final scope = _scope(r['agentId'] as String);
       final rows = store.extensionDatabase.select(
         '''SELECT c.content,c.vector FROM chunks c JOIN documents d ON d.id=c.document_id
@@ -306,6 +321,7 @@ class LivingWorldMemory implements MemoryPort {
     var used = 0;
     final output = <MemoryReference>[];
     for (final r in results) {
+      if (r.shared && !_stillShared(r.event, agent)) continue;
       final size = utf8.encode(r.event['text'] as String).length;
       if (used + size > budget || output.length >= top) continue;
       used += size;
@@ -328,6 +344,16 @@ class LivingWorldMemory implements MemoryPort {
     }
     return List.unmodifiable(output);
   });
+
+  bool _stillShared(Map<String,dynamic> event, String recipient) {
+    final rows = store.extensionDatabase.select(
+      'SELECT payload FROM lm_v14_records WHERE namespace=? AND scope_key=? AND record_id=?',
+      ['world.share.$worldId',_scope(event['agentId'] as String).key,event['sourceId']],
+    );
+    if (rows.isEmpty) return false;
+    final share = jsonDecode(rows.single['payload'] as String) as Map<String,dynamic>;
+    return (share['recipients'] as List).contains(recipient);
+  }
 
   Future<void> publish({
     required String agentId,

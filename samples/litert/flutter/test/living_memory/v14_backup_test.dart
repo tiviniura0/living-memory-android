@@ -288,7 +288,9 @@ void main() {
       final db = keyed(activePath, sourceKey);
       try {
         db.execute('''CREATE TABLE lm_v14_missions (
-        id TEXT PRIMARY KEY, scope_json TEXT NOT NULL, due_at INTEGER NOT NULL,
+        id TEXT PRIMARY KEY,
+        agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+        scope_json TEXT NOT NULL, due_at INTEGER NOT NULL,
         steps_json TEXT NOT NULL, state TEXT NOT NULL,
         next_step INTEGER NOT NULL DEFAULT 0)''');
         for (final state in [
@@ -297,8 +299,9 @@ void main() {
           'awaitingPermission',
           'succeeded',
         ]) {
-          db.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?)', [
+          db.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)', [
             state,
+            'a',
             '{"agentId":"a"}',
             0,
             '[]',

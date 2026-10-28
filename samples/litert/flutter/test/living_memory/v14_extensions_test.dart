@@ -484,7 +484,7 @@ void main() {
     );
 
     test('crash while running becomes indeterminate after reopen and never replays', () async {
-      var queue = MissionQueue(db, clock: () => _now);
+      final queue = MissionQueue(db, clock: () => _now);
       queue.enqueue(id: 'crash', scope: _scope, dueAt: _now, steps: [{}]);
       final started = Completer<void>();
       final finish = Completer<void>();

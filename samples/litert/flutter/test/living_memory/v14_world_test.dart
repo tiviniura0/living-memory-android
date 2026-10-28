@@ -1,5 +1,5 @@
-import 'dart:io';
 import 'dart:async';
+import 'dart:io';
 
 import 'package:agent_runtime/agent_runtime.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -186,6 +186,17 @@ void main() {
     await memory.revoke(agentId:'a1',sourceId:source);
     embedding.complete([1,0]);
     expect(await result,isEmpty);
+  });
+
+  test('retrieval query embedding is distinct from document embedding', () async {
+    final adapter = Function.apply(LivingWorldMemory.new, [], {
+      #store:store,#worldId:'world1',#agentIds:{'a1','a2'},
+      #embed:(String text) async => text == 'Lagon42' ? <double>[1,0] : <double>[0,1],
+      #embedQuery:(String text) async => <double>[1,0],
+    }) as LivingWorldMemory;
+    await adapter.ingest(event('query-role','Lagon42'));
+    final hits = await adapter.recall(RecallQuery({'schemaVersion':1,'worldId':'world1','agentId':'a1','text':'Où est la source ?', 'topK':3,'contextBudgetBytes':1000}));
+    expect(hits.single.data['text'],'Lagon42');
   });
 
 }

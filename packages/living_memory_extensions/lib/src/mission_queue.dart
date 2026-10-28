@@ -47,6 +47,7 @@ final class MissionQueue {
   final DateTime Function() _clock;
   final Duration stepTimeout;
   bool _busy = false;
+  bool _inFlight = false;
   void enqueue({
     required String id,
     required ExtensionScope scope,
@@ -91,7 +92,7 @@ final class MissionQueue {
     required Future<void> Function(Mission mission, Map<String, Object?> step)
     execute,
   }) async {
-    if (_busy) return;
+    if (_busy || _inFlight) return;
     _busy = true;
     try {
       // At most eight effects across one activation, even across missions.
@@ -115,10 +116,19 @@ final class MissionQueue {
           if (mission.state != MissionState.running) break;
           budget--;
           try {
-            await execute(
-              mission,
-              frozenJson(Map<String, Object?>.from(steps[index] as Map)),
-            ).timeout(stepTimeout);
+            final step = frozenJson(Map<String, Object?>.from(steps[index] as Map));
+            _inFlight = true;
+            final effect = Future<void>.sync(() => execute(mission, step))
+                .whenComplete(() { _inFlight = false; });
+            await effect.timeout(stepTimeout);
+          } on TimeoutException {
+            _db.execute(
+              "UPDATE lm_v14_missions SET state='indeterminate' WHERE id=? AND scope_json=? AND state='running'",
+              [id, scope.key],
+            );
+            // The adapter is still running. No subsequent step or mission may
+            // dispatch until it settles, even after this activation returns.
+            return;
           } on ExtensionDenied {
             _db.execute(
               "UPDATE lm_v14_missions SET state='awaitingPermission' WHERE id=? AND scope_json=? AND state='running'",

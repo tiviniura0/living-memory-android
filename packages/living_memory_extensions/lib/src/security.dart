@@ -193,6 +193,7 @@ final class ToolRegistry {
   final SecurityManager security;
   final Duration timeout;
   final _tools = <String, _Tool>{};
+  bool _inFlight = false;
   void register({
     required ApprovedPlugin plugin,
     required String tool,
@@ -206,11 +207,17 @@ final class ToolRegistry {
     ExtensionRequest request,
     String grant,
   ) async {
+    if (_inFlight) throw const ExtensionDenied();
     final tool = _tools[request.tool];
     if (tool == null || tool.plugin.fingerprint != request.pluginHash)
       throw const ExtensionDenied();
     security.consume(request, grant);
-    final result = frozenJson(await tool.invoke(request).timeout(timeout));
+    // A timeout bounds the caller's wait, not the adapter's lifetime. Keep the
+    // singleton host dispatcher occupied until the original effect settles.
+    _inFlight = true;
+    final effect = Future<Map<String, Object?>>.sync(() => tool.invoke(request))
+        .whenComplete(() { _inFlight = false; });
+    final result = frozenJson(await effect.timeout(timeout));
     if (utf8.encode(jsonEncode(result)).length > 1048576)
       throw const FormatException('Tool result too large');
     return result;
