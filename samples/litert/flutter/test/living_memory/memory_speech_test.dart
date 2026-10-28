@@ -14,7 +14,7 @@ void main() {
       final recognizer = FakeRecognizer('Bonjour Tivini');
       final speech = await loadedSpeech(
         recognizer: recognizer,
-        synthesizer: FakeSynthesizer(),
+        synthesizer: RecordingSynth(),
       );
       final audio = FakeAudioRepository()..autoDrain = true;
       final adapter = MemorySpeech(
@@ -39,7 +39,7 @@ void main() {
       final recognizer = FakeRecognizer('secret');
       final speech = await loadedSpeech(
         recognizer: recognizer,
-        synthesizer: FakeSynthesizer(),
+        synthesizer: RecordingSynth(),
       );
       final audio = FakeAudioRepository();
       final adapter = MemorySpeech(
@@ -60,7 +60,7 @@ void main() {
   test(
     'TTS uses existing synthesizer and playback, then releases focus',
     () async {
-      final tts = FakeSynthesizer();
+      final tts = RecordingSynth();
       final speech = await loadedSpeech(
         recognizer: FakeRecognizer(),
         synthesizer: tts,

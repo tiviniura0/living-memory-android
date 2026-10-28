@@ -1,0 +1,85 @@
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:litert_edge_demos/config/knowledge_config.dart';
+import 'package:litert_edge_demos/data/services/knowledge/embedder_service.dart';
+import 'package:litert_edge_demos/domain/models/knowledge_query.dart';
+import 'package:litert_edge_demos/living_memory/memory_screen.dart';
+import 'package:litert_edge_demos/living_memory/memory_store.dart';
+import 'package:litert_edge_demos/utils/result.dart';
+
+import '../fakes/fake_conversation_repository.dart';
+
+class _Embedder implements EmbedderService {
+  @override
+  Future<Result<List<double>>> embedQuery(KnowledgeQuery query) async =>
+      Result.ok([1, ...List.filled(kKbEmbeddingDimension - 1, 0.0)]);
+  @override
+  Future<Result<List<List<double>>>> embedDocuments(List<String> texts) async =>
+      Result.ok([
+        for (final _ in texts)
+          [1, ...List.filled(kKbEmbeddingDimension - 1, 0.0)],
+      ]);
+  @override
+  dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);
+}
+
+void main() {
+  testWidgets(
+    'chat output is displayed, scoped in SQLite, and saved only on request',
+    (tester) async {
+      final dir = Directory.systemTemp.createTempSync('assistant-screen-');
+      const channel = MethodChannel('plugins.flutter.io/path_provider');
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        (_) async => dir.path,
+      );
+      final chat = FakeConversationRepository();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: MemoryScreen(embedder: _Embedder(), conversation: chat),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Bonjour');
+      await tester.ensureVisible(find.text('Discuter'));
+      await tester.tap(find.text('Discuter'));
+      for (var n = 0; n < 30 && chat.prompts.isEmpty; n++) {
+        await tester.pump(const Duration(milliseconds: 10));
+      }
+      expect(chat.prompts, hasLength(1));
+      chat.emit('Bonjour Tivini.');
+      final finish = chat.finish();
+      await tester.pumpAndSettle();
+      await finish;
+      expect(find.text('Bonjour Tivini.'), findsWidgets);
+      final store = MemoryStore.open(
+        '${dir.path}/living-memory-v1.db',
+        profile: kKbEmbeddingProfileId,
+        dimension: kKbEmbeddingDimension,
+      );
+      expect(
+        store.documents('personal'),
+        isEmpty,
+        reason: 'no implicit durable source from AI output',
+      );
+      await tester.ensureVisible(find.text('Conserver la production'));
+      await tester.tap(find.text('Conserver la production'));
+      await tester.pumpAndSettle();
+      expect(store.documents('personal'), hasLength(1));
+      expect(store.documents('personal').single.kind, 'assistant-draft');
+      expect(store.documents('other'), isEmpty);
+      store.close();
+      await tester.pumpWidget(const SizedBox());
+      await tester.pump();
+      await chat.close();
+      tester.binding.defaultBinaryMessenger.setMockMethodCallHandler(
+        channel,
+        null,
+      );
+      dir.deleteSync(recursive: true);
+    },
+  );
+}
