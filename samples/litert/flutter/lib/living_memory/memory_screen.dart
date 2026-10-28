@@ -36,6 +36,7 @@ import 'multimodel/model_panel.dart';
 import 'multimodel/model_registry.dart';
 import 'multimodel/multi_model_engine.dart';
 import 'reliability_engine.dart';
+import 'world_memory_panel.dart';
 
 const _profile = ConversationProfile(
   name: 'living-memory',
@@ -726,12 +727,20 @@ class _MemoryScreenState extends State<MemoryScreen>
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Living Memory V1.3 • expérimental')),
+        appBar: AppBar(title: const Text('Living Memory V1.4 • expérimental')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             const Text(
               'Documents et réponses restent sur cet appareil.\nTXT UTF-8 et PDF texte • pas d’OCR',
+            ),
+            OutlinedButton(
+              onPressed: enabled ? () async {
+                await Navigator.of(context).push<void>(MaterialPageRoute(
+                  builder: (_) => WorldMemoryScreen(embed: _embedMemory),
+                ));
+              } : null,
+              child: const Text('Ouvrir Living World et sa mémoire'),
             ),
             if (_registry != null && _models != null)
               ModelPanel(

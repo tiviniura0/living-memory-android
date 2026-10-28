@@ -34,7 +34,7 @@ jobs:
           mkdir -p build/v14-evidence
           set -o pipefail
           failed=0
-          for test in test/living_memory/v14*_test.dart; do
+          for test in test/living_memory/v14*_test.dart test/living_memory/schema3_migration_test.dart test/living_memory/reliability_engine_test.dart; do
             flutter test "$test" --reporter expanded 2>&1 | tee "build/v14-evidence/$(basename "$test").log" || failed=1
           done
           exit "$failed"

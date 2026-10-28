@@ -9,6 +9,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.1.1"
+  agent_runtime:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/agent_runtime"
+      relative: true
+    source: path
+    version: "0.1.0"
   args:
     dependency: transitive
     description:
@@ -670,6 +677,27 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.1.0"
+  living_memory_core:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/living_memory_core"
+      relative: true
+    source: path
+    version: "0.1.0"
+  living_memory_extensions:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/living_memory_extensions"
+      relative: true
+    source: path
+    version: "0.1.0"
+  living_world_memory:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/living_world_memory"
+      relative: true
+    source: path
+    version: "0.1.0"
   logging:
     dependency: transitive
     description:
@@ -1203,6 +1231,34 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.2.0"
+  world_contracts:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/world_contracts"
+      relative: true
+    source: path
+    version: "0.1.0"
+  world_core:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/world_core"
+      relative: true
+    source: path
+    version: "0.1.0"
+  world_observer:
+    dependency: "direct main"
+    description:
+      path: "../../../apps/world_observer"
+      relative: true
+    source: path
+    version: "0.1.0+1"
+  world_persistence:
+    dependency: "direct main"
+    description:
+      path: "../../../packages/world_persistence"
+      relative: true
+    source: path
+    version: "0.1.0"
   xdg_directories:
     dependency: transitive
     description:

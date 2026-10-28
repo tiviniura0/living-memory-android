@@ -88,40 +88,97 @@ void main() {
     directory.deleteSync(recursive: true);
   });
 
-  test('roundtrip preserves data and FTS under independent recovery/device keys', () {
-    final originalBytes = File(activePath).readAsBytesSync();
-    export();
-    restore();
-    expect(File(activePath).readAsBytesSync(), originalBytes);
+  test(
+    'roundtrip preserves data and FTS under independent recovery/device keys',
+    () {
+      final originalBytes = File(activePath).readAsBytesSync();
+      export();
+      restore();
+      expect(File(activePath).readAsBytesSync(), originalBytes);
+      expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+      for (final path in [backupPath, restoredPath]) {
+        final bytes = File(path).readAsBytesSync();
+        expect(
+          String.fromCharCodes(bytes),
+          isNot(contains('SECRET_LAGOON_BACKUP')),
+        );
+        expect(
+          String.fromCharCodes(bytes.take(16)),
+          isNot('SQLite format 3\u0000'),
+        );
+      }
+      final restored = MemoryStore.open(
+        restoredPath,
+        profile: 'test',
+        dimension: 2,
+        encryptionKey: deviceKey,
+      );
+      try {
+        expect(restored.agents().single.id, 'a');
+        expect(restored.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+      } finally {
+        restored.close();
+      }
+      expect(() => keyed(backupPath, sourceKey), throwsA(anything));
+      expect(() => keyed(restoredPath, recoveryKey), throwsA(anything));
+      final recovered = keyed(backupPath, recoveryKey);
+      try {
+        expect(recovered.select('PRAGMA cipher_integrity_check'), isEmpty);
+        expect(recovered.select('PRAGMA foreign_key_check'), isEmpty);
+        expect(
+          recovered.select('SELECT name FROM agents').single['name'],
+          'Alice',
+        );
+      } finally {
+        recovered.close();
+      }
+    },
+  );
+
+  test('valid encryption and profile cannot disguise an incomplete schema', () {
+    final forged = sqlite3.open(backupPath);
+    try {
+      expect(forged.select('PRAGMA cipher_version'), isNotEmpty);
+      forged.execute('PRAGMA key = "x\'$recoveryKey\'"');
+      forged.execute('CREATE TABLE profile(id INTEGER PRIMARY KEY, name TEXT, dimension INTEGER)');
+      forged.execute("INSERT INTO profile VALUES(1, 'test', 2)");
+      forged.execute('CREATE TABLE agents(id TEXT PRIMARY KEY, name TEXT)');
+      forged.execute('CREATE TABLE documents(id TEXT PRIMARY KEY)');
+      forged.execute('CREATE TABLE chunks(document_id TEXT)');
+      forged.execute('PRAGMA user_version=5');
+    } finally {
+      forged.close();
+    }
+    final archive = File(backupPath).readAsBytesSync();
+    expect(restore, throwsStateError);
+    expect(File(restoredPath).existsSync(), isFalse);
+    expect(File(backupPath).readAsBytesSync(), archive);
     expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
-    for (final path in [backupPath, restoredPath]) {
-      final bytes = File(path).readAsBytesSync();
-      expect(String.fromCharCodes(bytes), isNot(contains('SECRET_LAGOON_BACKUP')));
-      expect(String.fromCharCodes(bytes.take(16)), isNot('SQLite format 3\u0000'));
-    }
-    final restored = MemoryStore.open(
-      restoredPath,
-      profile: 'test',
-      dimension: 2,
-      encryptionKey: deviceKey,
-    );
-    try {
-      expect(restored.agents().single.id, 'a');
-      expect(restored.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
-    } finally {
-      restored.close();
-    }
-    expect(() => keyed(backupPath, sourceKey), throwsA(anything));
-    expect(() => keyed(restoredPath, recoveryKey), throwsA(anything));
-    final recovered = keyed(backupPath, recoveryKey);
-    try {
-      expect(recovered.select('PRAGMA cipher_integrity_check'), isEmpty);
-      expect(recovered.select('PRAGMA foreign_key_check'), isEmpty);
-      expect(recovered.select('SELECT name FROM agents').single['name'], 'Alice');
-    } finally {
-      recovered.close();
-    }
   });
+
+  for (final defect in [
+    ('missing context history', 'DROP TABLE context_checkpoint_events'),
+    ('missing source FTS', 'DROP TABLE chunk_fts'),
+    ('missing session FTS trigger', 'DROP TRIGGER session_fts_insert'),
+    ('missing source scope index', 'DROP INDEX documents_agent'),
+    ('missing version five receipts', 'DROP TABLE lm_v14_records'),
+    ('renamed source content column', 'ALTER TABLE chunks RENAME COLUMN content TO unexpected'),
+  ]) {
+    test('restoration refuses a canonical schema with ${defect.$1}', () {
+      export();
+      final malformed = keyed(backupPath, recoveryKey);
+      try {
+        malformed.execute(defect.$2);
+      } finally {
+        malformed.close();
+      }
+      final archive = File(backupPath).readAsBytesSync();
+      expect(restore, throwsStateError);
+      expect(File(restoredPath).existsSync(), isFalse);
+      expect(File(backupPath).readAsBytesSync(), archive);
+      expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+    });
+  }
 
   test('recovery keys are independent raw 256-bit values', () {
     final a = MemoryBackup.generateRecoveryKey();
@@ -150,11 +207,14 @@ void main() {
     expect(File(backupPath).readAsBytesSync(), archive);
   });
 
-  test('wrong source key creates no destination and leaves live store usable', () {
-    expect(() => export(key: deviceKey), throwsStateError);
-    expect(File(backupPath).existsSync(), isFalse);
-    expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
-  });
+  test(
+    'wrong source key creates no destination and leaves live store usable',
+    () {
+      expect(() => export(key: deviceKey), throwsStateError);
+      expect(File(backupPath).existsSync(), isFalse);
+      expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+    },
+  );
 
   test('truncated encrypted archive is rejected before creating a target', () {
     export();
@@ -167,19 +227,22 @@ void main() {
     expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
   });
 
-  test('export and restore never replace an existing or active destination', () {
-    final original = File(activePath).readAsBytesSync();
-    expect(() => export(destination: activePath), throwsStateError);
-    export();
-    final archive = File(backupPath).readAsBytesSync();
-    expect(export, throwsStateError);
-    expect(() => restore(destination: activePath), throwsStateError);
-    File(restoredPath).writeAsStringSync('existing destination');
-    expect(restore, throwsStateError);
-    expect(File(restoredPath).readAsStringSync(), 'existing destination');
-    expect(File(activePath).readAsBytesSync(), original);
-    expect(File(backupPath).readAsBytesSync(), archive);
-  });
+  test(
+    'export and restore never replace an existing or active destination',
+    () {
+      final original = File(activePath).readAsBytesSync();
+      expect(() => export(destination: activePath), throwsStateError);
+      export();
+      final archive = File(backupPath).readAsBytesSync();
+      expect(export, throwsStateError);
+      expect(() => restore(destination: activePath), throwsStateError);
+      File(restoredPath).writeAsStringSync('existing destination');
+      expect(restore, throwsStateError);
+      expect(File(restoredPath).readAsStringSync(), 'existing destination');
+      expect(File(activePath).readAsBytesSync(), original);
+      expect(File(backupPath).readAsBytesSync(), archive);
+    },
+  );
 
   test('future schema is refused without touching the archive', () {
     export();
@@ -192,12 +255,15 @@ void main() {
     expect(File(backupPath).readAsBytesSync(), archive);
   });
 
-  test('profile or dimension mismatch refuses restoration without a target', () {
-    export();
-    expect(() => restore(profile: 'other-model'), throwsStateError);
-    expect(() => restore(dimension: 768), throwsStateError);
-    expect(File(restoredPath).existsSync(), isFalse);
-  });
+  test(
+    'profile or dimension mismatch refuses restoration without a target',
+    () {
+      export();
+      expect(() => restore(profile: 'other-model'), throwsStateError);
+      expect(() => restore(dimension: 768), throwsStateError);
+      expect(File(restoredPath).existsSync(), isFalse);
+    },
+  );
 
   test('missing profile and invalid foreign keys reject the transfer', () {
     export();
@@ -216,47 +282,67 @@ void main() {
     expect(File(restoredPath).existsSync(), isFalse);
   });
 
-  test('restored missions require fresh approval instead of resuming effects', () {
-    final db = keyed(activePath, sourceKey);
-    try {
-      db.execute('''CREATE TABLE lm_v14_missions (
+  test(
+    'restored missions require fresh approval instead of resuming effects',
+    () {
+      final db = keyed(activePath, sourceKey);
+      try {
+        db.execute('''CREATE TABLE lm_v14_missions (
         id TEXT PRIMARY KEY, scope_json TEXT NOT NULL, due_at INTEGER NOT NULL,
         steps_json TEXT NOT NULL, state TEXT NOT NULL,
         next_step INTEGER NOT NULL DEFAULT 0)''');
-      for (final state in ['queued', 'running', 'awaitingPermission', 'succeeded']) {
-        db.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?)', [
-          state, '{"agentId":"a"}', 0, '[]', state, 0,
-        ]);
+        for (final state in [
+          'queued',
+          'running',
+          'awaitingPermission',
+          'succeeded',
+        ]) {
+          db.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?)', [
+            state,
+            '{"agentId":"a"}',
+            0,
+            '[]',
+            state,
+            0,
+          ]);
+        }
+      } finally {
+        db.close();
       }
-    } finally {
-      db.close();
-    }
-    export();
-    restore();
-    final restored = keyed(restoredPath, deviceKey);
-    final original = keyed(activePath, sourceKey);
-    try {
-      expect(
-        restored.select('SELECT state FROM lm_v14_missions').map((row) => row['state']),
-        everyElement('cancelled'),
-      );
-      expect(
-        original.select("SELECT state FROM lm_v14_missions WHERE id='queued'").single['state'],
-        'queued',
-      );
-    } finally {
-      restored.close();
-      original.close();
-    }
-  });
+      export();
+      restore();
+      final restored = keyed(restoredPath, deviceKey);
+      final original = keyed(activePath, sourceKey);
+      try {
+        expect(
+          restored
+              .select('SELECT state FROM lm_v14_missions')
+              .map((row) => row['state']),
+          everyElement('cancelled'),
+        );
+        expect(
+          original
+              .select("SELECT state FROM lm_v14_missions WHERE id='queued'")
+              .single['state'],
+          'queued',
+        );
+      } finally {
+        restored.close();
+        original.close();
+      }
+    },
+  );
 
   test('symbolic source, target and directory paths are refused', () {
     export();
-    final sourceLink = Link('${directory.path}/source-link.db')..createSync(backupPath);
+    final sourceLink = Link('${directory.path}/source-link.db')
+      ..createSync(backupPath);
     expect(() => restore(source: sourceLink.path), throwsStateError);
-    final targetLink = Link('${directory.path}/target-link.db')..createSync(activePath);
+    final targetLink = Link('${directory.path}/target-link.db')
+      ..createSync(activePath);
     expect(() => restore(destination: targetLink.path), throwsStateError);
-    final directoryLink = Link('${directory.path}/directory-link')..createSync(directory.path);
+    final directoryLink = Link('${directory.path}/directory-link')
+      ..createSync(directory.path);
     expect(
       () => restore(destination: '${directoryLink.path}/new.db'),
       throwsStateError,
@@ -271,19 +357,25 @@ void main() {
     restore(source: quoted);
     final restored = keyed(restoredPath, deviceKey);
     try {
-      expect(restored.select('SELECT count(*) AS n FROM agents').single['n'], 1);
+      expect(
+        restored.select('SELECT count(*) AS n FROM agents').single['n'],
+        1,
+      );
     } finally {
       restored.close();
     }
   });
 
-  test('failed export into a blocked directory preserves source and permits retry', () {
-    final blocker = Directory(backupPath)..createSync();
-    expect(export, throwsStateError);
-    expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
-    blocker.deleteSync();
-    export();
-    restore();
-    expect(File(restoredPath).existsSync(), isTrue);
-  });
+  test(
+    'failed export into a blocked directory preserves source and permits retry',
+    () {
+      final blocker = Directory(backupPath)..createSync();
+      expect(export, throwsStateError);
+      expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+      blocker.deleteSync();
+      export();
+      restore();
+      expect(File(restoredPath).existsSync(), isTrue);
+    },
+  );
 }

@@ -101,7 +101,8 @@ class MemoryStore implements MemoryRepository {
         ? sqlite3.open(path)
         : EncryptedMemoryDatabase.open(path, encryptionKey);
     try {
-      if ((db.select('PRAGMA user_version').first.values.first as int) > schemaVersion) {
+      if ((db.select('PRAGMA user_version').first.values.first as int) >
+          schemaVersion) {
         throw StateError('Version SQLite future : aucune migration autorisée.');
       }
       db.execute('PRAGMA foreign_keys = ON');
@@ -249,8 +250,7 @@ class MemoryStore implements MemoryRepository {
     final id = sha256
         .convert(utf8.encode('$agentId\n$scopedDigest'))
         .toString();
-    _db.execute('BEGIN IMMEDIATE');
-    try {
+    _transaction(() {
       _db.execute(
         'INSERT INTO documents(id,agent_id,name,digest,kind,created_at,project_id,world_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
         [
@@ -279,11 +279,7 @@ class MemoryStore implements MemoryRepository {
       } finally {
         insert.close();
       }
-      _db.execute('COMMIT');
-    } catch (_) {
-      _db.execute('ROLLBACK');
-      rethrow;
-    }
+    });
     return id;
   }
 

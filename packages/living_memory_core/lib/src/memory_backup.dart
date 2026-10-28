@@ -74,7 +74,10 @@ class MemoryBackup {
 
   static void _sidecars(String path, {required bool mustBeAbsent}) {
     for (final suffix in ['-wal', '-shm', '-journal']) {
-      final type = FileSystemEntity.typeSync('$path$suffix', followLinks: false);
+      final type = FileSystemEntity.typeSync(
+        '$path$suffix',
+        followLinks: false,
+      );
       if (type == FileSystemEntityType.link ||
           (mustBeAbsent && type != FileSystemEntityType.notFound)) {
         throw StateError('Fichier de transfert occupé.');
@@ -100,7 +103,8 @@ class MemoryBackup {
   }
 
   static int _validate(Database db, String profile, int dimension) {
-    final version = db.select('PRAGMA user_version').single.values.single as int;
+    final version =
+        db.select('PRAGMA user_version').single.values.single as int;
     if (version < 4 || version > 5) {
       throw StateError('Version de mémoire incompatible.');
     }
@@ -160,7 +164,9 @@ class MemoryBackup {
       // Exclusive creation protects an existing destination from replacement.
       final file = File(to)..createSync(exclusive: true);
       ownedTarget = file;
-      source.execute('ATTACH DATABASE ? AS transfer KEY "x\'$targetKey\'"', [to]);
+      source.execute('ATTACH DATABASE ? AS transfer KEY "x\'$targetKey\'"', [
+        to,
+      ]);
       source.execute('PRAGMA transfer.synchronous=FULL');
       // One main-database read snapshot spans every table copied by the export.
       // The attached output commits before detach; main receives no writes.
@@ -180,9 +186,11 @@ class MemoryBackup {
       target = _open(to, targetKey);
       _validate(target, profile, dimension);
       if (restoring &&
-          target.select(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
-          ).isNotEmpty) {
+          target
+              .select(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
+              )
+              .isNotEmpty) {
         target.execute('BEGIN IMMEDIATE');
         try {
           target.execute("UPDATE lm_v14_missions SET state='cancelled'");
