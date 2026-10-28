@@ -8,6 +8,27 @@ Base : `32dfa547bf3ff63eec6fa5025c7641db45fc858e` de
 
 ## 1. Résultat attendu et limites de connaissance
 
+### Addendum validé par Tivini — reprise de L1
+
+La spécification est approuvée avec les réserves du message de Tivini : retrouver
+et réutiliser le CDC V1.0, L0 et L1 ; mémoire indépendante de la simulation ;
+pas de nouvelle validation pour les décisions déjà couvertes. Le constat initial
+d'absence de dépôt séparé ci-dessous est historique et ne justifie aucune recréation.
+Sources retrouvées : `Living_World_IA_Cahier_des_charges_v1_0.docx`
+(`libfile_c2f7c74c670881919ab80056bdbe9a94`) et `Living_World_AI_L0_Dossier.html`
+(`libfile_84f2200fe3908191a8f9fb81b7fc95e8`). L1 : branche
+`work/living-world-l1-observable`, SHA `5ca4ae5b08c5da6545276b252e39fdbf675430fe`.
+Historique fusionné dans la branche V1.4, sans modifier la branche L1.
+
+Les emplacements proposés plus bas sont ajustés : extraire le stockage canonique
+Dart dans `packages/living_memory_core`, garder les anciens imports via exports,
+implémenter `packages/living_world_memory` contre le `MemoryPort` L1 existant.
+Le core mémoire n'importe aucun package de simulation. World Core reste autoritaire
+et sans dépendance mémoire. L'observateur L1 distinct est conservé ; le raccordement
+initial peut aussi être hébergé dans l'application Memory avec sa clé privée,
+sans accéder au stockage de l'autre application. Aucun moteur de monde recréé.
+
+
 Étendre l'application existante avec une frontière de mémoire utilisable par
 Living World AI, des Tools contrôlés, des Skills déclaratifs, un client MCP et
 des missions persistantes. Conserver les données et les moteurs existants.

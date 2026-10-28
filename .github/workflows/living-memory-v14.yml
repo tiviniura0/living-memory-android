@@ -1,0 +1,49 @@
+name: Living Memory V1.4 contracts
+on:
+  push:
+    branches: ['work/living-memory-v1.4-extensions']
+    paths: ['packages/**', 'samples/litert/flutter/**', '.github/workflows/living-memory-v14.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: living-memory-v14-contracts
+  cancel-in-progress: true
+jobs:
+  contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: Prepare existing dependencies
+        working-directory: samples/litert/flutter
+        run: |
+          bash tool/flutter_litert/vendor.sh
+          bash tool/fetch_models.sh
+          flutter pub get
+      - name: V1.4 red or green contracts
+        working-directory: samples/litert/flutter
+        run: |
+          mkdir -p build/v14-evidence
+          set -o pipefail
+          failed=0
+          for test in test/living_memory/v14*_test.dart; do
+            flutter test "$test" --reporter expanded 2>&1 | tee "build/v14-evidence/$(basename "$test").log" || failed=1
+          done
+          exit "$failed"
+      - name: Preserve generated lockfile and evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: living-memory-v14-contracts-${{ github.sha }}
+          path: |
+            samples/litert/flutter/build/v14-evidence/
+            samples/litert/flutter/pubspec.lock
+          if-no-files-found: warn
