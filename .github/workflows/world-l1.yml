@@ -57,7 +57,8 @@ jobs:
         working-directory: apps/world_observer
         run: |
           set -euo pipefail
-          flutter build apk --release --target-platform android-arm64 --no-pub
+          flutter build apk --release --target-platform android-arm64
+          git diff --exit-code -- pubspec.lock
           build_tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$build_tools/apksigner" verify --verbose --print-certs build/app/outputs/flutter-apk/app-release.apk > ../../evidence/apk-signature.txt
           "$build_tools/aapt" dump badging build/app/outputs/flutter-apk/app-release.apk > ../../evidence/apk-badging.txt

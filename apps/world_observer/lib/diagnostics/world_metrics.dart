@@ -17,5 +17,15 @@ class WorldMetrics {
     if (samples.length > 1000) samples.removeAt(0);
   }
 
+  int lastFrameMicros = 0;
+  int lastSaveBytes = 0;
+  Map<String, Object> toJson() => {
+    'sampleCount': sampleCount,
+    'frameTimingAvailable': lastFrameMicros > 0,
+    'lastSaveBytes': lastSaveBytes,
+    'samples': samples
+        .map((s) => Map<String, num>.unmodifiable(s))
+        .toList(growable: false),
+  };
   int get sampleCount => samples.length;
 }

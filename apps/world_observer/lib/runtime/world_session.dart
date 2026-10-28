@@ -1,10 +1,14 @@
+import 'dart:convert';
+
 import 'package:agent_runtime/agent_runtime.dart';
 import 'package:world_persistence/world_persistence.dart';
 
 import 'world_loop.dart';
+import '../diagnostics/world_metrics.dart';
 
 // One serialized host session owns persistence and activation of imported worlds.
 class WorldSession {
+  final metrics = WorldMetrics();
   WorldCore core;
   LocalAgentRunner runner;
   final CheckpointStore store;
@@ -35,9 +39,19 @@ class WorldSession {
 
   void advance(Duration elapsed) {
     _loop.setSpeed(speed);
+    final watch = Stopwatch()..start();
     final count = _loop.advance(elapsed);
+    watch.stop();
     effectiveSpeed = _loop.effectiveSpeed;
     if (count > 0) {
+      final state = core.snapshot().state;
+      metrics.add(
+        tickMicros: watch.elapsedMicroseconds ~/ count,
+        frameMicros: metrics.lastFrameMicros,
+        agents: state.agents.length,
+        actions: (state.data['pendingActions'] as List).length,
+        saveBytes: metrics.lastSaveBytes,
+      );
       publish();
       final tick = core.snapshot().state.tick;
       if (tick - _lastAutosaveTick >= 200) {
@@ -61,6 +75,9 @@ class WorldSession {
     final snapshot = core.snapshot();
     try {
       await store.save(snapshot);
+      metrics.lastSaveBytes = utf8
+          .encode(WorldCodec.encode(snapshot.state))
+          .length;
       saveStatus = 'Sauvegardé · tick ${snapshot.state.tick}';
       publish();
       return true;

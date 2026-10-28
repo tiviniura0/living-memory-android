@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/scheduler.dart';
 
@@ -40,6 +41,7 @@ class _WorldAppState extends State<WorldApp>
         );
     controller.addListener(_update);
     WidgetsBinding.instance.addObserver(this);
+    SchedulerBinding.instance.addTimingsCallback(_onFrameTimings);
     _ticker = createTicker((elapsed) {
       final last = _lastElapsed;
       if (last == null) {
@@ -52,6 +54,12 @@ class _WorldAppState extends State<WorldApp>
         controller.advance(delta);
       }
     })..start();
+  }
+
+  void _onFrameTimings(List<FrameTiming> timings) {
+    if (timings.isNotEmpty)
+      controller.session.metrics.lastFrameMicros =
+          timings.last.totalSpan.inMicroseconds;
   }
 
   @override
@@ -77,6 +85,7 @@ class _WorldAppState extends State<WorldApp>
 
   @override
   void dispose() {
+    SchedulerBinding.instance.removeTimingsCallback(_onFrameTimings);
     WidgetsBinding.instance.removeObserver(this);
     _ticker.dispose();
     controller.removeListener(_update);
@@ -265,6 +274,10 @@ class _WorldAppState extends State<WorldApp>
                                 onPressed: () => _transfer(context),
                                 child: const Text('Import / export'),
                               ),
+                              TextButton(
+                                onPressed: () => _diagnostics(context),
+                                child: const Text('Diagnostics'),
+                              ),
                             ],
                           ),
                         ),
@@ -284,6 +297,28 @@ class _WorldAppState extends State<WorldApp>
           ),
         );
       },
+    ),
+  );
+  Future<void> _diagnostics(BuildContext context) => showDialog<void>(
+    context: context,
+    builder: (dialog) => AlertDialog(
+      title: const Text('Diagnostics du monde'),
+      content: SizedBox(
+        width: 600,
+        height: MediaQuery.sizeOf(context).height * .5,
+        child: SingleChildScrollView(
+          child: SelectableText(
+            const JsonEncoder.withIndent('  ')
+                .convert(controller.session.metrics.toJson()),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(dialog),
+          child: const Text('Fermer'),
+        ),
+      ],
     ),
   );
   Future<void> _settings(BuildContext context) async {

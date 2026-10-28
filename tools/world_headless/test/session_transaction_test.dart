@@ -25,6 +25,18 @@ class FaultFiles extends FileOps {
 }
 
 void main() {
+  test('host_records_real_tick_diagnostics', () {
+    final c = WorldCore(WorldFactory.create('w', WorldConfig(), 5));
+    final s = WorldSession(
+      c,
+      LocalAgentRunner(c),
+      CheckpointStore(Directory('unused-metrics')),
+    );
+    s.advance(const Duration(seconds: 1));
+    expect(s.metrics.sampleCount, 1);
+    expect(s.metrics.samples.single['agents'], 5);
+    expect(s.metrics.samples.single['tickMicros'], greaterThanOrEqualTo(0));
+  });
   late Directory directory;
   late FaultFiles files;
   late WorldSession session;
