@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: living-memory-${{ github.ref }}
+  group: living-memory-${{ github.sha }}
   cancel-in-progress: true
 
 jobs:

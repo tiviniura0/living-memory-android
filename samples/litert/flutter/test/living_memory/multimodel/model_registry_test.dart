@@ -87,4 +87,34 @@ void main() {
       expect(registry.models['e4b']!.maxTokens, 4096);
     },
   );
+  test(
+    'remove deletes only the chosen private copy and persists removal',
+    () async {
+      final source = File('${dir.path}/source.litertlm')
+        ..writeAsStringSync('data');
+      final registry = ModelRegistry(Directory('${dir.path}/registry'));
+      await registry.register('e2b', source.path, model(source.path));
+      await registry.register('e4b', source.path, model(source.path));
+      final path = (registry.models['e2b']!.source as LocalModelSource).path;
+      await registry.remove('e2b');
+      expect(await File(path).exists(), isFalse);
+      expect(await source.exists(), isTrue);
+      expect(await registry.verify('e4b'), isTrue);
+      final reopened = ModelRegistry(registry.directory);
+      await reopened.load();
+      expect(reopened.models.keys, ['e4b']);
+    },
+  );
+  test('verify rejects a private path replaced by a symbolic link', () async {
+    final source = File('${dir.path}/source.litertlm')
+      ..writeAsStringSync('data');
+    final registry = ModelRegistry(Directory('${dir.path}/registry'));
+    await registry.register('e2b', source.path, model(source.path));
+    final path = (registry.models['e2b']!.source as LocalModelSource).path;
+    await File(path).delete();
+    await Link(path).create(source.path);
+    expect(await registry.verify('e2b'), isFalse);
+    await expectLater(registry.remove('e2b'), throwsFormatException);
+    expect(await source.exists(), isTrue);
+  });
 }
