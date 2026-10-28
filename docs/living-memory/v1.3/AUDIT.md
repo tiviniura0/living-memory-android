@@ -27,8 +27,8 @@ qui requièrent matériel/poids ne sont pas lancés par `flutter test`.
 ## Modifications V1.3
 
 - `AssistantSession` : adaptateur ChatProvider/ImageAnalysisProvider sur
-  ConversationRepository. Nouvelle conversation sans outils pour chaque
-  opération ; sorties vides, interrompues ou sans terminal rejetées. Scope
+  ConversationRepository. Nouvelle conversation native sans outils pour chaque
+  opération, alimentée par l’historique borné du scope courant ; sorties vides, interrompues ou sans terminal rejetées. Scope
   attaché à la sortie ; descriptions visuelles dérivées avec empreinte PNG.
 - Route mémoire : discussion/rédaction, passages de l’agent/projet courant,
   image choisie explicitement, dictée et lecture par services existants.
@@ -112,3 +112,23 @@ Sources primaires :
 La présence d’une version concernée n’est pas la preuve d’une exploitation
 possible dans cette application. L’objectif est de retirer ces versions connues,
 puis de vérifier le graphe et le build, sans mise à jour générale des plugins.
+
+## Revue de l’intégration et corrections vérifiables
+
+Une seconde revue indépendante en lecture seule a identifié deux défauts,
+reproduits avant correction dans le run 40635699791 : absence d’écoute des
+interruptions audio (deux dictées bloquées et TTS non annulée), et acceptation
+d’un bloc WAV annonçant plus de données que le fichier. Les adaptateurs écoutent
+maintenant les interruptions pendant capture/lecture et attendent l’arrêt de la
+session audio ; les fichiers WAV importés ont une validation stricte des blocs.
+Le décodeur Google partagé reste inchangé pour les parcours historiques.
+
+Continuité du chat : les six derniers messages de la session courante sont
+proposés au modèle (chaque texte borné à 1 200 caractères Unicode). Les
+checkpoints de compaction/reset sont respectés ; les plus anciens éléments et
+les passages sont retirés si le budget de contexte l’exige. Ce contexte est
+présenté comme donnée non fiable, jamais comme preuve de vérification.
+Les modèles continuent de s’ouvrir sans historique natif partagé entre agents.
+
+Tests matériels non exécutés : tous les résultats logiciels gardent les doubles
+de l’inférence, des entrées/sorties audio et des événements du système.

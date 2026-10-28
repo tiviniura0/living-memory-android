@@ -346,6 +346,17 @@ class _MemoryScreenState extends State<MemoryScreen>
           'texte': _hits[i].text,
         },
     ];
+    final manager = _lifecycle;
+    final session =
+        manager.sessions().firstOrNull?.id ?? manager.startSession();
+    final checkpoint = manager.checkpoints(session).lastOrNull;
+    final history = <Map<String, String>>[
+      if (checkpoint != null && checkpoint.summary.isNotEmpty)
+        {'role': 'checkpoint-utilisateur', 'texte': checkpoint.summary},
+      for (final message in manager.messages(session))
+        if (message.ordinal > (checkpoint?.throughOrdinal ?? 0))
+          {'role': message.role, 'texte': message.text},
+    ];
     final result = await _withModel(
       ModelTask.question(instruction, sourceCount: passages.length),
       (_) => AssistantSession(widget.conversation).generate(
@@ -354,15 +365,13 @@ class _MemoryScreenState extends State<MemoryScreen>
         draft: draft,
         image: png,
         passages: passages,
+        history: history,
         cancelled: () => _closed || _cancelled,
       ),
     );
     if (_closed || _cancelled || result.scopeKey != _scope.key) return;
     _output = result;
     _answer = result.text;
-    final manager = _lifecycle;
-    final session =
-        manager.sessions().firstOrNull?.id ?? manager.startSession();
     manager.append(session, 'user', instruction);
     manager.append(session, 'assistant', result.text);
     if (manager.needsCompaction(session)) manager.compact(session);

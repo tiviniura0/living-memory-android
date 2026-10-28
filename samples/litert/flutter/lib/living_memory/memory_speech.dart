@@ -38,6 +38,7 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
   CaptureHandle? _capture;
   PlaybackHandle? _playback;
   VoiceTurn? _turn;
+  Future<void>? _interrupting;
   Completer<void>? _finish;
   bool _cancelled = false;
   bool _busy = false;
@@ -56,6 +57,9 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
     _busy = true;
     _cancelled = false;
     final finish = _finish = Completer<void>();
+    final interruptions = audio.interruptions.listen((_) {
+      unawaited(cancel());
+    });
     try {
       _value(await audio.requestMicAccess());
       _check();
@@ -79,6 +83,7 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
       }
       return await transcribe(utterance.pcm);
     } finally {
+      await interruptions.cancel();
       await _capture?.cancel();
       _capture = null;
       _finish = null;
@@ -116,6 +121,7 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
               wav.length) {
         throw const FormatException('WAV incomplet ou supérieur à 2 Mio.');
       }
+      _validateWavChunks(wav);
       final pcm = pcm16FromWav(wav);
       if (pcm.isEmpty || pcm.length.isOdd || pcm.length > 960000) {
         throw const FormatException(
@@ -137,6 +143,10 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
     _busy = true;
     _cancelled = false;
     var complete = false;
+    _interrupting = null;
+    final interruptions = audio.interruptions.listen((_) {
+      unawaited(cancel());
+    });
     try {
       _value(await audio.activate());
       _check();
@@ -186,9 +196,15 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
       await _playback!.drained;
       _check();
     } finally {
+      await interruptions.cancel();
+      final turn = _turn;
+      if (turn != null && (!complete || _cancelled)) {
+        await (_interrupting ??= turn.interrupt());
+      }
       await _playback?.stop();
       _playback = null;
       _turn = null;
+      _interrupting = null;
       await audio.deactivate();
       _busy = false;
     }
@@ -198,8 +214,40 @@ class MemorySpeech implements SpeechToTextProvider, TextToSpeechProvider {
   Future<void> cancel() async {
     _cancelled = true;
     finishCapture();
-    await _capture?.cancel();
-    await _playback?.stop();
-    await _turn?.interrupt();
+    final capture = _capture;
+    final playback = _playback;
+    final turn = _turn;
+    final stopping = turn == null ? null : (_interrupting ??= turn.interrupt());
+    await capture?.cancel();
+    await playback?.stop();
+    await stopping;
+  }
+}
+
+// The shared Google decoder intentionally tolerates truncated data; imports
+// from arbitrary providers require full chunk boundaries before using it.
+void _validateWavChunks(Uint8List wav) {
+  final view = ByteData.sublistView(wav);
+  var offset = 12;
+  var dataChunks = 0;
+  var formatChunks = 0;
+  while (offset < wav.length) {
+    if (offset + 8 > wav.length) {
+      throw const FormatException('En-tête de bloc WAV tronqué.');
+    }
+    final id = String.fromCharCodes(wav, offset, offset + 4);
+    final size = view.getUint32(offset + 4, Endian.little);
+    final end = offset + 8 + size;
+    if (end > wav.length) throw const FormatException('Bloc WAV tronqué.');
+    if (id == 'fmt ' && (size < 16 || ++formatChunks > 1)) {
+      throw const FormatException('Format WAV ambigu.');
+    }
+    if (id == 'data' && (size.isOdd || ++dataChunks > 1)) {
+      throw const FormatException('Données WAV ambiguës ou incomplètes.');
+    }
+    offset = end + (size & 1);
+    if (offset > wav.length) {
+      throw const FormatException('Alignement WAV tronqué.');
+    }
   }
 }

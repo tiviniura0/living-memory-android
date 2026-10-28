@@ -93,6 +93,28 @@ void main() {
       expect(store.documents('personal'), hasLength(1));
       expect(store.documents('personal').single.kind, 'assistant-draft');
       expect(store.documents('other'), isEmpty);
+      final agentSelector = find.byType(DropdownButtonFormField<String>);
+      await tester.ensureVisible(agentSelector);
+      await tester.tap(agentSelector);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Zzz autre agent').last);
+      await tester.pumpAndSettle();
+      expect(find.text('Conserver la production'), findsNothing);
+      await tester.enterText(find.byType(TextField), 'Salut');
+      await tester.ensureVisible(find.text('Discuter'));
+      await tester.tap(find.text('Discuter'));
+      for (var n = 0; n < 30 && chat.prompts.length < 2; n++) {
+        await tester.pump(const Duration(milliseconds: 10));
+      }
+      expect(chat.prompts, hasLength(2));
+      chat.emit('Réponse de l’autre agent.');
+      final finishedOther = chat.finish();
+      await tester.pumpAndSettle();
+      await finishedOther;
+      expect(chat.prompts.last, contains('OTHER-SECRET-99'));
+      expect(chat.prompts.last, isNot(contains('SCOPE-ONLY-42')));
+      expect(chat.prompts.last, isNot(contains('Bonjour Tivini.')));
+      expect(store.documents('other'), isEmpty);
       store.close();
       await tester.pumpWidget(const SizedBox());
       await tester.pump();

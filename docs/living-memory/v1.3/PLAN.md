@@ -57,3 +57,15 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
 - Revue baseline indépendante : copies de modèles non bornées corrigées ;
   conservation des copies de réponses en sessions documentée ; téléchargements
   HTTPS choisis par utilisateur conservés (pas de liste blanche d’hôtes).
+
+- Revue de l’intégration indépendante : interruption OS non écoutée et WAV
+  tronqué toléré par le décodeur partagé. Tests ajoutés avant correction : run
+  40635699791 montre exactement quatre échecs comportementaux (123 autres
+  tests ciblés passent), analyse sans problème. Correction : abonnement aux
+  interruptions, arrêt/drainage avant réutilisation, validation stricte des blocs
+  WAV à l’import seulement. Le décodeur Google partagé reste inchangé.
+- Continuité de session : run 40635905050 constate l’absence du marqueur de
+  la session courante dans le prompt. Réutilisation du ContextLifecycleManager
+  existant, six messages récents bornés, respect des checkpoints et du scope.
+- Audit Maven baseline : deux avis OSV ; contraintes ciblées Guava/OkHttp et
+  contrôle des versions résolues, sans mise à jour générale des dépendances.

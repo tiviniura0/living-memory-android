@@ -1,0 +1,15 @@
+{
+  "commit_sha": "936c9b1972cf915590d48c2ff6a28e2112b14d6b",
+  "embedding_model_sha256": "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+  "hardware_tested": false,
+  "apk_bytes": 897913600,
+  "abis": [
+    "arm64-v8a"
+  ],
+  "embedding_model_bytes": 484622336,
+  "certificate_sha256": "b3572aae45328cb24ede9a24344b836247bc2fdbe10c258fe2bae491957804bc",
+  "v1_certificate_matches": false,
+  "workflow_run_id": 40633319051,
+  "artifact_id": 12793016895,
+  "apk_sha256": "e4d6a1b8b18634615ff348d9b167c8de63b9e28e55fe01b4689d400f9a79329d"
+}

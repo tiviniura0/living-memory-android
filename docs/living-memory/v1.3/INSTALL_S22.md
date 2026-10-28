@@ -48,6 +48,7 @@ NPU sans bundle et matériel compatibles.
 | Image | Choisir une photo fictive, analyser ; annulation du sélecteur ne crée rien ; modèle sans vision : erreur explicite | non exécuté |
 | Provenance | Conserver description : source marquée IA et hash PNG ; l’image originale n’est pas archivée | non exécuté |
 | Dictée | Refuser puis accorder micro ; dicter en français, terminer ; relire texte avant recherche/enregistrement | non exécuté |
+| WAV | Importer un WAV PCM16 mono 16 kHz de moins de 30 s ; fichier mal formé, compressé ou trop long refusé ; relire la transcription | non exécuté |
 | TTS | Lire réponse puis arrêter ; vérifier sortie, volume, absence de lecture en arrière-plan ; qualité française à noter | non exécuté |
 | Annulation | Arrêter pendant ouverture, génération, dictée ; aucune sortie partielle enregistrée comme source | non exécuté |
 | Hors ligne | Une fois modèles installés, activer mode avion : texte, RAG, image, dictée et lecture ; noter chaque parcours séparément | non exécuté |
