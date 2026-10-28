@@ -54,8 +54,9 @@ void main() {
         personal.append(personalSession, 'user', 'SCOPE-ONLY-42');
         if (resetCase != 'none') {
           personal.resetActiveContext(personalSession);
-          if (resetCase == 'later')
+          if (resetCase == 'later') {
             personal.append(personalSession, 'user', 'NEW-ACTIVE-57');
+          }
           personal.compact(personalSession);
         }
         final other = ContextLifecycleManager(
@@ -89,8 +90,9 @@ void main() {
               ? contains('SCOPE-ONLY-42')
               : isNot(contains('SCOPE-ONLY-42')),
         );
-        if (resetCase == 'later')
+        if (resetCase == 'later') {
           expect(chat.prompts.single, contains('NEW-ACTIVE-57'));
+        }
         expect(chat.prompts.single, isNot(contains('OTHER-SECRET-99')));
         final store = MemoryStore.open(
           '${dir.path}/living-memory-v1.db',

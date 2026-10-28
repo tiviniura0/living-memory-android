@@ -153,3 +153,13 @@ Les quatre tests audio rouges de la revue passent dans le run 40636347827 ;
 le seul échec restant de ce run concerne un sélecteur hors écran dans le nouveau
 test widget (ListView virtualisée). Son déplacement simulé est corrigé ; aucune
 assertion de produit n’est retirée. Le run final doit confirmer la suite entière.
+
+## Réinitialisation et archives
+
+La revue du rappel a constaté qu’un résumé de navigation V1.2 peut contenir des
+messages d’avant une réinitialisation. Les tests reset→compacter et
+reset→nouveaux messages→compacter ont échoué avant correction (40636987109).
+L’inférence respecte maintenant la frontière du dernier reset et ignore ces
+résumés lorsqu’un reset existe. Les archives et le comportement historique de
+navigation/compaction ne sont pas effacés ou réécrits. Une réinitialisation du
+contexte actif n’est pas la suppression des documents ou décisions permanentes.

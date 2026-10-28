@@ -349,12 +349,22 @@ class _MemoryScreenState extends State<MemoryScreen>
     final manager = _lifecycle;
     final session =
         manager.sessions().firstOrNull?.id ?? manager.startSession();
-    final checkpoint = manager.checkpoints(session).lastOrNull;
+    final checkpoints = manager.checkpoints(session);
+    final checkpoint = checkpoints.lastOrNull;
+    final latestReset = checkpoints
+        .where((item) => item.kind == 'reset')
+        .lastOrNull;
+    // V1.2 compaction summaries are navigation aids over the archive. They
+    // may include pre-reset messages; never restore those into active inference.
+    final afterOrdinal =
+        latestReset?.throughOrdinal ?? checkpoint?.throughOrdinal ?? 0;
     final history = <Map<String, String>>[
-      if (checkpoint != null && checkpoint.summary.isNotEmpty)
+      if (latestReset == null &&
+          checkpoint != null &&
+          checkpoint.summary.isNotEmpty)
         {'role': 'checkpoint-utilisateur', 'texte': checkpoint.summary},
       for (final message in manager.messages(session))
-        if (message.ordinal > (checkpoint?.throughOrdinal ?? 0))
+        if (message.ordinal > afterOrdinal)
           {'role': message.role, 'texte': message.text},
     ];
     final result = await _withModel(

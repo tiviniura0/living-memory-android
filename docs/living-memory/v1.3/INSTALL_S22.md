@@ -51,7 +51,7 @@ NPU sans bundle et matériel compatibles.
 | WAV | Importer un WAV PCM16 mono 16 kHz de moins de 30 s ; fichier mal formé, compressé ou trop long refusé ; relire la transcription | non exécuté |
 | TTS | Lire réponse puis arrêter ; vérifier sortie, volume, absence de lecture en arrière-plan ; qualité française à noter | non exécuté |
 | Annulation | Arrêter pendant ouverture, génération, dictée ; aucune sortie partielle enregistrée comme source | non exécuté |
-| Hors ligne | Une fois modèles installés, activer mode avion : texte, RAG, image, dictée et lecture ; noter chaque parcours séparément | non exécuté |
+| Hors ligne | Une fois modèles installés, activer mode avion et couper aussi Wi-Fi/données mobiles : texte, RAG, image, dictée et lecture ; noter chaque parcours séparément | non exécuté |
 | Modèles | Import, hash attendu faux, annulation, manque d’espace, suppression du slot ; fichier d’origine conservé | non exécuté |
 | Suppression | Source et souvenirs dérivés supprimés ; anciennes réponses de sessions restent, conformément au message UI | non exécuté |
 | Pression mémoire | E2B puis E4B/Auto ; relever échec, RAM, latence et température ; ne pas confondre absence de crash et validation prolongée | non exécuté |
@@ -60,3 +60,28 @@ Noter pour chaque essai : date, commit/APK hash, certificat, Android/One UI,
 SoC, modèle exact/hash/backend, espace libre initial, durée et résultat observé.
 N’inscrire aucune mesure estimée comme résultat réel. Conserver les logs sans
 texte personnel. Ne pas fusionner vers une branche stable avant cette validation.
+
+## Relevés facultatifs via ADB
+
+L’identifiant applicatif est `com.google.ai.edge.examples.litert_edge_demos`.
+Pour retrouver l’APK installé :
+
+```bash
+adb shell pm path com.google.ai.edge.examples.litert_edge_demos
+```
+
+Récupérer le chemin `base.apk` indiqué avec `adb pull`, puis comparer les
+empreintes de certificat avec `apksigner verify --print-certs` sur les deux APK.
+Si elles diffèrent, conserver l’installation contenant les données et suspendre
+la mise à jour. Un build signé avec sa clé d’origine sera nécessaire.
+
+Pour les essais de charge, conserver les sorties horodatées après chaque modèle :
+
+```bash
+adb shell dumpsys meminfo com.google.ai.edge.examples.litert_edge_demos
+adb shell dumpsys thermalservice
+```
+
+Ces commandes donnent des observations système à interpréter selon le téléphone ;
+elles ne remplacent pas un test prolongé. Ne pas publier de dumps contenant des
+informations personnelles.

@@ -77,3 +77,13 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
   retirées via fusion Android ; gate testé rouge sur ces permissions, vert sur
   le source corrigé. Les composants WorkManager protégés par permission système
   sont autorisés explicitement. Validation du manifeste final en CI.
+
+- Revue du nouveau rappel de session : la compaction de navigation V1.2 peut
+  inclure les archives d’avant reset. Deux tests UI rouges (reset immédiat puis
+  compaction, et messages ultérieurs puis compaction) : run 40636987109.
+- Décision : préserver la compaction/navigation et les décisions explicites
+  V1.2 (test existant qui marque une ancienne décision après reset). Le nouveau
+  rappel d’inférence ignore les résumés d’archive dès qu’un reset existe et ne
+  reprend que les messages postérieurs au dernier reset. Archives intactes.
+  Coût : après reset, le rappel conversationnel se limite aux messages récents ;
+  les documents et décisions permanentes restent accessibles par le RAG.
