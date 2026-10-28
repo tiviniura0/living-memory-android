@@ -1,0 +1,89 @@
+00:00 +0: loading test/needs_test.dart
+00:00 +0: metabolism_after_40_ticks
+00:00 +0 -1: metabolism_after_40_ticks [E]
+  Expected: <61>
+    Actual: <60>
+  
+  package:matcher            expect
+  test/needs_test.dart 6:70  main.<fn>
+  
+00:00 +0 -1: clamp_needs
+00:00 +0 -2: clamp_needs [E]
+  Expected: <100>
+    Actual: <60>
+  
+  package:matcher            expect
+  test/needs_test.dart 7:80  main.<fn>
+  
+00:00 +0 -2: rest_recovers_four_after_40
+00:00 +0 -3: rest_recovers_four_after_40 [E]
+  Expected: ActionStatus:<ActionStatus.pending>
+    Actual: ActionStatus:<ActionStatus.rejected>
+  
+  package:matcher            expect
+  test/needs_test.dart 8:62  main.<fn>
+  
+00:00 +0 -3: two_agents_last_food_once
+00:00 +0 -4: two_agents_last_food_once [E]
+  Expected: 'unavailable_resource'
+    Actual: 'invalid_arguments'
+     Which: is different.
+            Expected: unavailabl ...
+              Actual: invalid_ar ...
+                      ^
+             Differ at offset 0
+  
+  package:matcher             expect
+  test/needs_test.dart 9:223  main.<fn>
+  
+00:00 +0 -4: consume_without_food_rejected
+00:00 +0 -5: consume_without_food_rejected [E]
+  Expected: 'insufficient_inventory'
+    Actual: 'invalid_arguments'
+     Which: is different.
+            Expected: insufficient ...
+              Actual: invalid_argu ...
+                        ^
+             Differ at offset 2
+  
+  package:matcher             expect
+  test/needs_test.dart 10:64  main.<fn>
+  
+00:00 +0 -5: busy_actor_rejected
+00:00 +0 -6: busy_actor_rejected [E]
+  Expected: 'actor_busy'
+    Actual: 'ok'
+     Which: is different.
+            Expected: actor_busy ...
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher              expect
+  test/needs_test.dart 11:122  main.<fn>
+  
+00:00 +0 -6: gather_then_consume
+00:00 +0 -7: gather_then_consume [E]
+  Expected: <1>
+    Actual: <0>
+  
+  package:matcher              expect
+  test/needs_test.dart 12:132  main.<fn>
+  
+00:00 +0 -7: deleted_resource_late_action_rejected
+00:00 +0 -8: deleted_resource_late_action_rejected [E]
+  Expected: 'unavailable_resource'
+    Actual: 'invalid_arguments'
+     Which: is different.
+            Expected: unavailabl ...
+              Actual: invalid_ar ...
+                      ^
+             Differ at offset 0
+  
+  package:matcher             expect
+  test/needs_test.dart 13:98  main.<fn>
+  
+00:00 +0 -8: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

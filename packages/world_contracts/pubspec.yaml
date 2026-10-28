@@ -1,0 +1,10 @@
+name: world_contracts
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  crypto: 3.0.6
+  collection: 1.19.1
+dev_dependencies:
+  test: 1.26.3

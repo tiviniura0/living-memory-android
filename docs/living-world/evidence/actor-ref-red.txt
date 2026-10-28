@@ -1,0 +1,16 @@
+00:00 +0: loading test/import_validation_test.dart
+00:00 +0: action_reference_must_belong_to_actor
+00:00 +0 -1: action_reference_must_belong_to_actor [E]
+  Expected: throws <Instance of 'FormatException'>
+    Actual: <Closure: () => WorldState>
+     Which: returned <Instance of 'WorldState'>
+  
+  package:matcher                         expect
+  test/import_validation_test.dart 8:283  main.<fn>
+  
+00:00 +0 -1: orphan_reservation_rejected
+00:00 +1 -1: snapshot_cannot_be_mutated
+00:00 +2 -1: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

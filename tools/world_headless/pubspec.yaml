@@ -1,0 +1,15 @@
+name: world_headless
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  world_contracts:
+    path: ../../packages/world_contracts
+  agent_runtime:
+    path: ../../packages/agent_runtime
+  world_persistence:
+    path: ../../packages/world_persistence
+  crypto: 3.0.6
+dev_dependencies:
+  test: 1.26.3

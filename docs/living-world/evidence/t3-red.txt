@@ -1,0 +1,92 @@
+00:00 +0: loading test/command_test.dart
+00:00 +0: route_avoids_obstacle
+00:00 +0 -1: route_avoids_obstacle [E]
+  Bad state: No element
+  dart:core                     List.last
+  test/command_test.dart 6:215  main.<fn>
+  
+00:00 +0 -1: unreachable_returns_null
+00:00 +0 -2: unreachable_returns_null [E]
+  Expected: null
+    Actual: []
+  
+  package:matcher              expect
+  test/command_test.dart 7:38  main.<fn>
+  
+00:00 +0 -2: move_advances_one_cell_per_tick
+00:00 +0 -3: move_advances_one_cell_per_tick [E]
+  Expected: <Instance of 'GridPos'>
+    Actual: <Instance of 'GridPos'>
+  
+  package:matcher              expect
+  test/command_test.dart 8:93  main.<fn>
+  
+00:00 +0 -3: rejects_stale_revision
+00:00 +0 -4: rejects_stale_revision [E]
+  Expected: 'stale_revision'
+    Actual: 'ok'
+     Which: is different.
+            Expected: stale_revi ...
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher              expect
+  test/command_test.dart 9:57  main.<fn>
+  
+00:00 +0 -4: rejects_paused
+00:00 +0 -5: rejects_paused [E]
+  Expected: 'paused'
+    Actual: 'ok'
+     Which: is different.
+            Expected: paused
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher               expect
+  test/command_test.dart 10:66  main.<fn>
+  
+00:00 +0 -5: rejects_expired
+00:00 +0 -6: rejects_expired [E]
+  Expected: 'expired'
+    Actual: 'ok'
+     Which: is different.
+            Expected: expired
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher               expect
+  test/command_test.dart 11:59  main.<fn>
+  
+00:00 +0 -6: replay_has_no_second_effect
+00:00 +0 -7: replay_has_no_second_effect [E]
+  Expected: 'duplicate'
+    Actual: 'ok'
+     Which: is different.
+            Expected: duplicate
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher                expect
+  test/command_test.dart 12:116  main.<fn>
+  
+00:00 +0 -7: missing_actor_rejected
+00:00 +0 -8: missing_actor_rejected [E]
+  Expected: 'invalid_actor'
+    Actual: 'ok'
+     Which: is different.
+            Expected: invalid_ac ...
+              Actual: ok
+                      ^
+             Differ at offset 0
+  
+  package:matcher               expect
+  test/command_test.dart 13:57  main.<fn>
+  
+00:00 +0 -8: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

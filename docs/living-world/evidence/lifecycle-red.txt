@@ -1,0 +1,21 @@
+00:00 +0: loading test/lifecycle_logic_test.dart
+00:00 +0: background_save_and_pause_real_core_and_disk
+00:00 +0 -1: background_save_and_pause_real_core_and_disk [E]
+  Expected: true
+    Actual: <false>
+  
+  package:matcher                       expect
+  test/lifecycle_logic_test.dart 7:326  main.<fn>
+  
+00:00 +0 -1: resume_stays_paused_without_catchup
+00:00 +0 -2: resume_stays_paused_without_catchup [E]
+  Expected: true
+    Actual: <false>
+  
+  package:matcher                       expect
+  test/lifecycle_logic_test.dart 8:201  main.<fn>
+  
+00:00 +0 -2: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

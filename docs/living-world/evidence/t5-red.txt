@@ -1,0 +1,119 @@
+Resolving dependencies...
+Downloading packages...
++ _fe_analyzer_shared 91.0.0
++ analyzer 8.4.1
++ args 2.7.0
++ async 2.13.1
++ boolean_selector 2.1.2
++ cli_config 0.2.0
++ cli_util 0.6.0
++ collection 1.19.1
++ convert 3.1.2
++ coverage 1.16.0
++ crypto 3.0.6
++ ffi 2.2.0
++ file 7.0.1
++ frontend_server_client 4.2.0
++ glob 2.2.0
++ http_multi_server 3.2.3
++ http_parser 4.1.2
++ io 1.1.0
++ js 0.7.2
++ logging 1.3.0
++ matcher 0.12.17
++ meta 1.19.0
++ mime 2.1.0
++ node_preamble 2.0.2
++ package_config 2.2.0
++ path 1.9.1
++ pool 1.5.3
++ pub_semver 2.2.1
++ shelf 1.4.3
++ shelf_packages_handler 3.0.2
++ shelf_static 1.2.0
++ shelf_web_socket 3.0.0
++ source_map_stack_trace 2.1.2
++ source_maps 0.10.14
++ source_span 1.10.2
++ stack_trace 1.12.2
++ stream_channel 2.1.4
++ string_scanner 1.4.1
++ term_glyph 1.2.2
++ test 1.26.3
++ test_api 0.7.7
++ test_core 0.6.12
++ typed_data 1.4.0
++ vm_service 15.4.0
++ watcher 1.2.1
++ web 1.1.2
++ web_socket 1.0.1
++ web_socket_channel 3.0.3
++ webkit_inspection_protocol 1.2.1
++ world_contracts 0.1.0 from path ../world_contracts
++ world_core 0.1.0 from path ../world_core
++ yaml 3.1.4
+Changed 52 dependencies!
+00:00 +0: loading test/local_policy_test.dart
+00:00 +0: test/local_policy_test.dart: energy_urgent_before_hunger
+00:00 +0 -1: test/local_policy_test.dart: energy_urgent_before_hunger [E]
+  Expected: ActionKind:<ActionKind.rest>
+    Actual: <null>
+  
+  package:matcher                    expect
+  test/local_policy_test.dart 5:112  main.<fn>
+  
+00:00 +0 -1: test/local_policy_test.dart: hungry_seeks_food
+00:00 +0 -2: test/local_policy_test.dart: hungry_seeks_food [E]
+  Expected: ActionKind:<ActionKind.move>
+    Actual: <null>
+  
+  package:matcher                   expect
+  test/local_policy_test.dart 6:30  main.<fn>
+  
+00:00 +0 -2: test/local_policy_test.dart: no_secret_outside_perception
+00:00 +0 -3: test/local_policy_test.dart: no_secret_outside_perception [E]
+  Expected: empty
+    Actual: [Instance of 'ResourceState']
+  
+  package:matcher                    expect
+  test/local_policy_test.dart 7:131  main.<fn>
+  
+00:00 +0 -3: test/local_policy_test.dart: all_agents_get_turns
+00:00 +0 -4: test/local_policy_test.dart: all_agents_get_turns [E]
+  Expected: a value greater than or equal to <5>
+    Actual: <0>
+     Which: is not a value greater than or equal to <5>
+  
+  package:matcher                    expect
+  test/local_policy_test.dart 8:129  main.<fn>
+  
+00:00 +0 -4: test/local_policy_test.dart: batched_ticks_match_single_ticks
+00:00 +0 -5: test/local_policy_test.dart: batched_ticks_match_single_ticks [E]
+  Expected: <100>
+    Actual: <0>
+  
+  package:matcher                    expect
+  test/local_policy_test.dart 9:245  main.<fn>
+  
+00:00 +0 -5: test/local_policy_test.dart: restored_sequence_preserves_ids
+00:00 +1 -5: test/local_policy_test.dart: unreachable_waits_40_ticks
+00:00 +1 -6: test/local_policy_test.dart: unreachable_waits_40_ticks [E]
+  Expected: <40>
+    Actual: <0>
+  
+  package:matcher                     expect
+  test/local_policy_test.dart 11:168  main.<fn>
+  
+00:00 +1 -6: test/local_policy_test.dart: collect_consume_and_rest_observable
+00:00 +1 -7: test/local_policy_test.dart: collect_consume_and_rest_observable [E]
+  Expected: contains all of ['collected', 'consumed', 'rested']
+    Actual: MappedListIterable<WorldEvent, String>:[]
+     Which: has too few elements (0 < 3)
+  
+  package:matcher                     expect
+  test/local_policy_test.dart 12:206  main.<fn>
+  
+00:00 +1 -7: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

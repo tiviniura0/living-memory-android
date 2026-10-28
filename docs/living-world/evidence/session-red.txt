@@ -1,0 +1,42 @@
+00:00 +0: loading test/session_transaction_test.dart
+00:00 +0: failed_export_never_returns_stale_checkpoint
+00:00 +0 -1: failed_export_never_returns_stale_checkpoint [E]
+  Expected: throws <Instance of 'StateError'>
+    Actual: <Instance of 'Future<String>'>
+     Which: emitted '{"agents":[{"behaviorProfile":"local_v1","currentAction":null,"energy":80,"failureCount":0,"goal":"explorer","hunger":60,"id":"a1","inventoryFood":0,"name":"Habitant 1","nextDecisionTick":0,"position":{"x":0,"y":0}},{"behaviorProfile":"local_v1","currentAction":null,"energy":80,"failureCount":0,"goal":"explorer","hunger":60,"id":"a2","inventoryFood":0,"name":"Habitant 2","nextDecisionTick":0,"position":{"x":1,"y":0}},{"behaviorProfile":"local_v1","currentAction":null,"energy":80,"failureCount":0,"goal":"explorer","hunger":60,"id":"a3","inventoryFood":0,"name":"Habitant 3","nextDecisionTick":0,"position":{"x":2,"y":0}},{"behaviorProfile":"local_v1","currentAction":null,"energy":80,"failureCount":0,"goal":"explorer","hunger":60,"id":"a4","inventoryFood":0,"name":"Habitant 4","nextDecisionTick":0,"position":{"x":3,"y":0}},{"behaviorProfile":"local_v1","currentAction":null,"energy":80,"failureCount":0,"goal":"explorer","hunger":60,"id":"a5","inventoryFood":0,"name":"Habitant 5","nextDecisionTick":0,"position":{"x":4,"y":0}}],"appliedCommandIds":[],"blockedCells":[{"x":14,"y":8},{"x":45,"y":8},{"x":20,"y":9},{"x":24,"y":9},{"x":56,"y":9},{"x":8,"y":10},{"x":40,"y":10},{"x":9,"y":11},{"x":18,"y":11},{"x":32,"y":11},{"x":34,"y":12},{"x":47,"y":12},{"x":48,"y":12},{"x":11,"y":13},{"x":15,"y":13},{"x":18,"y":13},{"x":20,"y":13},{"x":21,"y":13},{"x":51,"y":13},{"x":17,"y":14},{"x":24,"y":14},{"x":57,"y":14},{"x":60,"y":14},{"x":61,"y":14},{"x":47,"y":15},{"x":60,"y":15},{"x":8,"y":16},{"x":11,"y":17},{"x":31,"y":17},{"x":49,"y":17},{"x":57,"y":17},{"x":17,"y":18},{"x":33,"y":18},{"x":38,"y":18},{"x":45,"y":18},{"x":52,"y":18},{"x":59,"y":20},{"x":42,"y":21},{"x":44,"y":21},{"x":62,"y":21},{"x":11,"y":22},{"x":12,"y":22},{"x":53,"y":22},{"x":10,"y":23},{"x":39,"y":23},{"x":59,"y":23},{"x":29,"y":24},{"x":58,"y":24},{"x":63,"y":24},{"x":53,"y":25},{"x":11,"y":26},{"x":28,"y":26},{"x":31,"y":26},{"x":26,"y":27},{"x":30,"y":27},{"x":20,"y":28},{"x":25,"y":28},{"x":34,"y":28},{"x":35,"y":28},{"x":37,"y":28},{"x":58,"y":28},{"x":61,"y":28},{"x":63,"y":28},{"x":12,"y":29},{"x":15,"y":29},{"x":22,"y":29},{"x":40,"y":29},{"x":45,"y":29},{"x":55,"y":30},{"x":19,"y":31},{"x":43,"y":31},{"x":46,"y":31},{"x":56,"y":31},{"x":20,"y":32},{"x":60,"y":32},{"x":62,"y":32},{"x":29,"y":33},{"x":38,"y":33},{"x":59,"y":33},{"x":59,"y":34},{"x":42,"y":36},{"x":56,"y":36},{"x":60,"y":36},{"x":58,"y":37},{"x":14,"y":38},{"x":17,"y":38},{"x":21,"y":38},{"x":33,"y":38},{"x":53,"y":38},{"x":48,"y":39},{"x":52,"y":39},{"x":59,"y":39},{"x":16,"y":40},{"x":28,"y":40},{"x":15,"y":41},{"x":19,"y":41},{"x":35,"y":41},{"x":42,"y":41},{"x":54,"y":41},{"x":58,"y":41},{"x":60,"y":41},{"x":34,"y":42},{"x":39,"y":42},{"x":53,"y":42},{"x":57,"y":42},{"x":8,"y":43},{"x":47,"y":43},{"x":55,"y":44},{"x":59,"y":44},{"x":63,"y":44},{"x":61,"y":45},{"x":20,"y":46},{"x":14,"y":47},{"x":21,"y":47},{"x":34,"y":47},{"x":58,"y":47},{"x":41,"y":48},{"x":58,"y":48},{"x":40,"y":49},{"x":45,"y":49},{"x":10,"y":50},{"x":19,"y":50},{"x":53,"y":50},{"x":63,"y":50},{"x":16,"y":51},{"x":22,"y":51},{"x":25,"y":51},{"x":47,"y":51},{"x":50,"y":51},{"x":22,"y":52},{"x":23,"y":52},{"x":35,"y":53},{"x":19,"y":54},{"x":52,"y":54},{"x":15,"y":55},{"x":23,"y":55},{"x":46,"y":55},{"x":49,"y":55},{"x":56,"y":55},{"x":63,"y":55},{"x":40,"y":56},{"x":41,"y":56},{"x":52,"y":56},{"x":12,"y":57},{"x":33,"y":57},{"x":34,"y":57},{"x":35,"y":57},{"x":43,"y":57},{"x":24,"y":58},{"x":48,"y":58},{"x":60,"y":58},{"x":35,"y":59},{"x":48,"y":59},{"x":39,"y":60},{"x":44,"y":60},{"x":48,"y":60},{"x":56,"y":60},{"x":60,"y":60},{"x":62,"y":60},{"x":63,"y":60},{"x":18,"y":61},{"x":51,"y":61},{"x":61,"y":61},{"x":19,"y":62},{"x":32,"y":62},{"x":34,"y":62},{"x":42,"y":62},{"x":57,"y":62},{"x":60,"y":62},{"x":21,"y":63},{"x":42,"y":63},{"x":46,"y":63},{"x":49,"y":63},{"x":54,"y":63}],"config":{"height":64,"populationMax":20,"rulesVersion":1,"schemaVersion":1,"seed":1,"width":64},"decisionSequence":0,"eventLog":[],"pendingActions":[],"resources":[{"food":100,"id":"food1","position":{"x":2,"y":0},"reservationAgentId":null,"reservationUntilTick":null}],"revision":0,"rngState":1973035883,"schedulerCursor":0,"tick":0,"worldId":"old"}'
+  
+  test/session_transaction_test.dart 14:120  main.<fn>
+  
+00:00 +0 -1: background_save_during_import_keeps_imported_world
+00:00 +0 -2: background_save_during_import_keeps_imported_world [E]
+  Expected: 'imported'
+    Actual: 'old'
+     Which: is different.
+            Expected: imported
+              Actual: old
+                      ^
+             Differ at offset 0
+  
+  package:matcher                            expect
+  test/session_transaction_test.dart 15:350  main.<fn>
+  
+00:00 +0 -2: lowered_cap_import_requires_and_uses_consent
+00:00 +0 -3: lowered_cap_import_requires_and_uses_consent [E]
+  Expected: <1>
+    Actual: <0>
+  
+  package:matcher                            expect
+  test/session_transaction_test.dart 16:330  main.<fn>
+  
+00:00 +0 -3: declined_cap_override_keeps_world
+00:00 +0 -4: declined_cap_override_keeps_world [E]
+  Expected: <1>
+    Actual: <0>
+  
+  package:matcher                            expect
+  test/session_transaction_test.dart 17:290  main.<fn>
+  
+00:00 +0 -4: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

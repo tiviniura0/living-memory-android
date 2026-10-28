@@ -1,0 +1,48 @@
+00:00 +0: loading test/world_codec_test.dart
+00:00 +0: test/world_codec_test.dart: roundtrip_schema1_preserves_state
+00:00 +0 -1: test/world_codec_test.dart: roundtrip_schema1_preserves_state [E]
+  Expected: <Instance of 'WorldState'>
+    Actual: <Instance of 'WorldState'>
+  
+  package:matcher                  expect
+  test/world_codec_test.dart 7:76  main.<fn>
+  
+00:00 +0 -1: test/world_codec_test.dart: rejects_future_version
+00:00 +0 -2: test/world_codec_test.dart: rejects_future_version [E]
+  Expected: throws <Instance of 'FormatException'>
+    Actual: <Closure: () => WorldState>
+     Which: returned <Instance of 'WorldState'>
+  
+  package:matcher                  expect
+  test/world_codec_test.dart 8:93  main.<fn>
+  
+00:00 +0 -2: test/world_codec_test.dart: rejects_duplicate_agents
+00:00 +0 -3: test/world_codec_test.dart: rejects_duplicate_agents [E]
+  Expected: throws <Instance of 'FormatException'>
+    Actual: <Closure: () => WorldState>
+     Which: returned <Instance of 'WorldState'>
+  
+  package:matcher                  expect
+  test/world_codec_test.dart 9:97  main.<fn>
+  
+00:00 +0 -3: test/world_codec_test.dart: rejects_unknown_command_kind
+00:00 +0 -4: test/world_codec_test.dart: rejects_unknown_command_kind [E]
+  Expected: throws <Instance of 'FormatException'>
+    Actual: <Closure: () => ActionProposal>
+     Which: returned <Instance of 'ActionProposal'>
+  
+  package:matcher                   expect
+  test/world_codec_test.dart 10:41  main.<fn>
+  
+00:00 +0 -4: test/world_codec_test.dart: memory_key_separates_worlds
+00:00 +0 -5: test/world_codec_test.dart: memory_key_separates_worlds [E]
+  Expected: not ''
+    Actual: ''
+  
+  package:matcher                   expect
+  test/world_codec_test.dart 11:40  main.<fn>
+  
+00:00 +0 -5: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.

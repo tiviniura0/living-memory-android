@@ -1,0 +1,135 @@
+{
+  "worldId": "world1",
+  "config": {
+    "schemaVersion": 1,
+    "rulesVersion": 1,
+    "seed": 1,
+    "width": 64,
+    "height": 64,
+    "populationMax": 20
+  },
+  "tick": 0,
+  "revision": 0,
+  "rngState": 1,
+  "agents": [
+    {
+      "id": "a1",
+      "name": "Habitant 1",
+      "position": {
+        "x": 1,
+        "y": 1
+      },
+      "hunger": 60,
+      "energy": 80,
+      "inventoryFood": 0,
+      "currentAction": null,
+      "goal": "explorer",
+      "failureCount": 0,
+      "nextDecisionTick": 0,
+      "behaviorProfile": "local_v1"
+    },
+    {
+      "id": "a2",
+      "name": "Habitant 2",
+      "position": {
+        "x": 1,
+        "y": 2
+      },
+      "hunger": 60,
+      "energy": 80,
+      "inventoryFood": 0,
+      "currentAction": null,
+      "goal": "explorer",
+      "failureCount": 0,
+      "nextDecisionTick": 0,
+      "behaviorProfile": "local_v1"
+    },
+    {
+      "id": "a3",
+      "name": "Habitant 3",
+      "position": {
+        "x": 1,
+        "y": 3
+      },
+      "hunger": 60,
+      "energy": 80,
+      "inventoryFood": 0,
+      "currentAction": null,
+      "goal": "explorer",
+      "failureCount": 0,
+      "nextDecisionTick": 0,
+      "behaviorProfile": "local_v1"
+    },
+    {
+      "id": "a4",
+      "name": "Habitant 4",
+      "position": {
+        "x": 1,
+        "y": 4
+      },
+      "hunger": 60,
+      "energy": 80,
+      "inventoryFood": 0,
+      "currentAction": null,
+      "goal": "explorer",
+      "failureCount": 0,
+      "nextDecisionTick": 0,
+      "behaviorProfile": "local_v1"
+    },
+    {
+      "id": "a5",
+      "name": "Habitant 5",
+      "position": {
+        "x": 1,
+        "y": 5
+      },
+      "hunger": 60,
+      "energy": 80,
+      "inventoryFood": 0,
+      "currentAction": null,
+      "goal": "explorer",
+      "failureCount": 0,
+      "nextDecisionTick": 0,
+      "behaviorProfile": "local_v1"
+    }
+  ],
+  "resources": [
+    {
+      "id": "food1",
+      "position": {
+        "x": 2,
+        "y": 1
+      },
+      "food": 1,
+      "reservationAgentId": null,
+      "reservationUntilTick": null
+    }
+  ],
+  "blockedCells": [
+    {
+      "x": 3,
+      "y": 1
+    },
+    {
+      "x": 4,
+      "y": 5
+    },
+    {
+      "x": 6,
+      "y": 5
+    },
+    {
+      "x": 5,
+      "y": 4
+    },
+    {
+      "x": 5,
+      "y": 6
+    }
+  ],
+  "appliedCommandIds": [],
+  "pendingActions": [],
+  "schedulerCursor": 0,
+  "decisionSequence": 0,
+  "eventLog": []
+}

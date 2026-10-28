@@ -1,0 +1,24 @@
+test_boundary_check_accepts_dart_core (test_world_boundaries.BoundaryTest.test_boundary_check_accepts_dart_core) ... ok
+test_boundary_check_detects_flutter_in_core (test_world_boundaries.BoundaryTest.test_boundary_check_detects_flutter_in_core) ... FAIL
+test_no_personal_permissions_in_world_manifest (test_world_boundaries.BoundaryTest.test_no_personal_permissions_in_world_manifest) ... FAIL
+
+======================================================================
+FAIL: test_boundary_check_detects_flutter_in_core (test_world_boundaries.BoundaryTest.test_boundary_check_detects_flutter_in_core)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/42c9b8649791/living-world/tests/test_world_boundaries.py", line 10, in test_boundary_check_detects_flutter_in_core
+    self.assertTrue(checker.check(folder))
+AssertionError: [] is not true
+
+======================================================================
+FAIL: test_no_personal_permissions_in_world_manifest (test_world_boundaries.BoundaryTest.test_no_personal_permissions_in_world_manifest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/42c9b8649791/living-world/tests/test_world_boundaries.py", line 20, in test_no_personal_permissions_in_world_manifest
+    self.assertTrue(checker.check(folder))
+AssertionError: [] is not true
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.002s
+
+FAILED (failures=2)

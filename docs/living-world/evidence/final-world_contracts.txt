@@ -1,0 +1,15 @@
+Analyzing world_contracts...
+
+   info - lib/src/world_types.dart:2:8 - The import of 'dart:collection' is unnecessary because all of the used elements are also provided by the import of 'package:collection/collection.dart'. Try removing the import directive. - unnecessary_import
+
+1 issue found.
+00:00 +0: loading test/import_validation_test.dart
+00:00 +0: test/import_validation_test.dart: action_reference_must_belong_to_actor
+00:00 +1: test/world_codec_test.dart: roundtrip_schema1_preserves_state
+00:00 +2: test/world_codec_test.dart: roundtrip_schema1_preserves_state
+00:00 +3: test/import_validation_test.dart: snapshot_cannot_be_mutated
+00:00 +4: test/world_codec_test.dart: rejects_future_version
+00:00 +5: test/world_codec_test.dart: rejects_duplicate_agents
+00:00 +6: test/world_codec_test.dart: rejects_unknown_command_kind
+00:00 +7: test/world_codec_test.dart: memory_key_separates_worlds
+00:00 +8: All tests passed!

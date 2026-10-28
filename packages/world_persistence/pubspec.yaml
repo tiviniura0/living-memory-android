@@ -1,0 +1,13 @@
+name: world_persistence
+version: 0.1.0
+publish_to: none
+environment:
+  sdk: ^3.13.3
+dependencies:
+  world_contracts:
+    path: ../world_contracts
+  crypto: 3.0.6
+dev_dependencies:
+  test: 1.26.3
+  agent_runtime:
+    path: ../agent_runtime

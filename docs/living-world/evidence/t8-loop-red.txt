@@ -1,0 +1,23 @@
+00:00 +0: loading test/world_loop_test.dart
+00:00 +0: max_8_ticks_per_frame
+00:00 +0 -1: max_8_ticks_per_frame [E]
+  Expected: <8>
+    Actual: <0>
+  
+  package:matcher                 expect
+  test/world_loop_test.dart 6:49  main.<fn>
+  
+00:00 +0 -1: pause_zero_tick
+00:00 +1 -1: resume_no_walltime_catchup
+00:00 +2 -1: reports_slow_actual_speed
+00:00 +2 -2: reports_slow_actual_speed [E]
+  Expected: <1>
+    Actual: <0.0>
+  
+  package:matcher                  expect
+  test/world_loop_test.dart 9:103  main.<fn>
+  
+00:00 +2 -2: Some tests failed.
+
+Consider enabling the flag chain-stack-traces to receive more detailed exceptions.
+For example, 'dart test --chain-stack-traces'.
