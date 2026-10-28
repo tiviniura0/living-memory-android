@@ -23,3 +23,10 @@ Base: b77ba4663e8bdd5d6fe54c8a939a99e456d66080. No stable branch writes.
 
 ## Ledger
 Baseline local: 7 Python Android/native dependency security tests pass. Flutter SDK absent initially; pinned 3.47.3 being prepared. No device connected. No APK or hardware success claimed.
+
+Progress (before final CI): independent source review complete; all reproduced Important findings implemented. Runtime head eeb4f42c. Red evidence: privacy 40650705154; model transport and export stage 40651513235; local model bound 40653527934; failed-deletion callback reproduced in the following security run. Full regression 40652615949 found signed-fragment and version metadata regressions; fixes retained their assertions.
+Ruling: native inline implementation on the explicitly requested isolated branch; no stable writes. CI is the safer alternative to blocked local Flutter, not a local execution workaround.
+Ruling: SQLCipher is mandatory for Android private-memory disk opens; desktop keeps its existing storage. No silent encryption fallback. Cost: lost Keystore/envelope requires recovery rather than opening a blank DB.
+Ruling: stable signing is prepared by a documented external-key procedure; no production key is generated, and experimental CI signing remains nonpersistent. Cost: incompatible installed certificate cannot be upgraded by this artifact.
+Ruling: callback-on-failed-deletion reclassified as an Important privacy/UI error; corrected after a red test.
+Deferred review strengthening: explicit hidden-rowid comparison during migration (not a demonstrated defect; indexed-table transfer and the historical-deletion FTS fixture verified instead). Actual Keystore corruption/reboot, power-loss and native Logcat checks remain hardware work, not simulated pass claims.

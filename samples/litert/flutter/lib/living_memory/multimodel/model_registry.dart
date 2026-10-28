@@ -207,8 +207,9 @@ class ModelRegistry implements ModelManager {
       final size = await file.length();
       if (size <= 0 ||
           size > kMaximumModelBytes ||
-          size != model.file!.sizeBytes)
+          size != model.file!.sizeBytes) {
         return false;
+      }
       return (await sha256.bind(file.openRead()).first).toString() ==
           model.file!.sha256;
     } on FileSystemException {
