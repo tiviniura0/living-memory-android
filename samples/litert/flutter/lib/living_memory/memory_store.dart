@@ -40,11 +40,44 @@ class MemoryHit {
   final double similarity;
 }
 
+/// UI-independent repository contract. Existing SQLite implementation and
+/// schema are retained for Living World AI adapters.
+abstract interface class MemoryRepository {
+  int get dimension;
+  void createAgent(String id, String name);
+  List<({String id, String name})> agents();
+  List<({String id, String name, String kind, int chunks})> documents(
+    String agentId, {
+    String projectId = '',
+    String worldId = '',
+  });
+  String addDocument({
+    required String agentId,
+    required String name,
+    required String digest,
+    required List<MemoryChunk> chunks,
+    required List<List<double>> vectors,
+    String kind = 'document',
+    String projectId = '',
+    String worldId = '',
+  });
+  List<MemoryHit> search(
+    String agentId,
+    List<double> vector, {
+    int topK = 3,
+    double minSimilarity = 0.65,
+    String projectId = '',
+    String worldId = '',
+  });
+  void deleteDocument(String agentId, String id);
+}
+
 /// Independent private database: never opens or migrates the demo's kb.db.
 /// All corpus reads/deletes require an agent. No global search API exists.
-class MemoryStore {
+class MemoryStore implements MemoryRepository {
   MemoryStore._(this._db, this.dimension);
   final Database _db;
+  @override
   final int dimension;
   bool _closed = false;
 
@@ -104,6 +137,7 @@ class MemoryStore {
     }
   }
 
+  @override
   void createAgent(String id, String name) {
     if (!RegExp(r'^[a-zA-Z0-9_-]{1,64}$').hasMatch(id) ||
         name.trim().isEmpty ||
@@ -118,11 +152,13 @@ class MemoryStore {
     ]);
   }
 
+  @override
   List<({String id, String name})> agents() => [
     for (final row in _db.select('SELECT id, name FROM agents ORDER BY name'))
       (id: row['id'] as String, name: row['name'] as String),
   ];
 
+  @override
   List<({String id, String name, String kind, int chunks})> documents(
     String agentId, {
     String projectId = '',
@@ -144,6 +180,7 @@ class MemoryStore {
 
   /// Vectors are prepared before the transaction. An interrupted import
   /// cannot leave a partially indexed document. No asynchronous work here.
+  @override
   String addDocument({
     required String agentId,
     required String name,
@@ -235,6 +272,7 @@ class MemoryStore {
     return id;
   }
 
+  @override
   List<MemoryHit> search(
     String agentId,
     List<double> vector, {
@@ -298,6 +336,7 @@ class MemoryStore {
     return hits;
   }
 
+  @override
   void deleteDocument(String agentId, String id) => _db.execute(
     'DELETE FROM documents WHERE agent_id=? AND id=?',
     [agentId, id],

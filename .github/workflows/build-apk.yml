@@ -56,6 +56,11 @@ jobs:
           bash tool/fetch_models.sh --check
       - name: Resolve locked dependencies
         run: flutter pub get --enforce-lockfile
+      - name: Android privacy source gates
+        run: |
+          mkdir -p build/evidence
+          set -o pipefail
+          python -m unittest discover -s tool -p test_android_security.py -v 2>&1 | tee build/evidence/android-security-source.log
       - name: Auto-memory focused contracts
         run: |
           mkdir -p build/evidence
@@ -81,6 +86,10 @@ jobs:
           mkdir -p build/evidence
           sha256sum build/app/outputs/flutter-apk/app-release.apk > build/evidence/APK-SHA256.txt
           (cd android && ./gradlew :app:dependencies --configuration releaseRuntimeClasspath) > build/evidence/android-dependencies.txt
+          merged=$(find build/app/intermediates/merged_manifests -path '*release*' -name AndroidManifest.xml | head -1)
+          test -n "$merged"
+          cp "$merged" build/evidence/merged-AndroidManifest.xml
+          ANDROID_MERGED_MANIFEST="$merged" python -m unittest discover -s tool -p test_android_security.py -v 2>&1 | tee build/evidence/android-security-merged.log
       - name: Verify built APK signature and contents
         run: |
           tools_version=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
@@ -113,8 +122,8 @@ jobs:
         if: always()
         run: |
           mkdir -p build/evidence
-          cp ../../../docs/living-memory/V1_2_VALIDATION.md build/evidence/validation-report.md
-          cp ../../../docs/living-memory/V1_2_S22_PROTOCOL.md build/evidence/S22-protocol.md
+          cp ../../../docs/living-memory/v1.3/AUDIT.md build/evidence/validation-report.md
+          cp ../../../docs/living-memory/v1.3/INSTALL_S22.md build/evidence/S22-protocol.md
           python3 - <<'PYREPORT'
           import os
           from pathlib import Path
@@ -143,7 +152,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: living-memory-v1.2-validation-${{ github.sha }}
+          name: living-memory-v1.3-validation-${{ github.sha }}
           path: samples/litert/flutter/build/evidence/
           if-no-files-found: warn
           retention-days: 30

@@ -9,17 +9,36 @@ import '../../data/repositories/chat_model/custom_chat_model_codec.dart';
 import '../../domain/models/chat_model.dart';
 import 'multi_model_engine.dart';
 
+abstract interface class ModelManager {
+  Map<String, CustomChatModel> get models;
+  ModelMode get mode;
+  Future<void> load();
+  Future<void> setMode(ModelMode mode);
+  Future<void> register(
+    String id,
+    String sourcePath,
+    CustomChatModel model, {
+    bool Function()? cancelled,
+  });
+  Future<bool> verify(String id);
+  Future<void> remove(String id);
+}
+
 /// Independent versioned manifest; never migrates or writes the memory database.
 /// Immutable private copies are outside ModelStore's single-file pruning area.
-class ModelRegistry {
-  ModelRegistry(this.directory);
+class ModelRegistry implements ModelManager {
+  ModelRegistry(this.directory, {this.freeBytes});
+  final Future<int?> Function()? freeBytes;
   final Directory directory;
   Map<String, CustomChatModel> _models = {};
+  @override
   Map<String, CustomChatModel> get models => Map.unmodifiable(_models);
   ModelMode _mode = ModelMode.auto;
+  @override
   ModelMode get mode => _mode;
   File get _manifest => File('${directory.path}/registry.json');
 
+  @override
   Future<void> load() async {
     if (!await _manifest.exists()) return;
     final json = jsonDecode(await _manifest.readAsString());
@@ -74,17 +93,26 @@ class ModelRegistry {
     _mode = mode;
   }
 
+  @override
   Future<void> setMode(ModelMode mode) => _save(_models, mode);
 
   /// Deliberate user action: source is already checked by ChatModelRepository.
   /// Hash proves copied-byte integrity, never model identity or semantic quality.
+  @override
   Future<void> register(
     String id,
     String sourcePath,
-    CustomChatModel model,
-  ) async {
+    CustomChatModel model, {
+    bool Function()? cancelled,
+  }) async {
     if (!const {'e2b', 'e4b'}.contains(id)) throw ArgumentError.value(id);
+    void check() {
+      if (cancelled?.call() ?? false) throw const ModelCancelled();
+    }
+
+    check();
     await directory.create(recursive: true);
+    final previous = _models[id];
     final name = '$id-${DateTime.now().microsecondsSinceEpoch}.litertlm';
     final file = File('${directory.absolute.path}/$name');
     final part = File('${file.path}.part');
@@ -95,16 +123,30 @@ class ModelRegistry {
       }
       final before = await source.stat();
       if (before.size <= 0) throw const FormatException('Modèle vide.');
+      final available = await freeBytes?.call();
+      check();
+      if (available != null && available < before.size + 64 * 1024 * 1024) {
+        throw const FileSystemException(
+          'Espace insuffisant pour la copie privée et la réserve de 64 Mio.',
+        );
+      }
       final sink = part.openWrite();
       try {
-        await sink.addStream(source.openRead());
+        await sink.addStream(
+          source.openRead().map((chunk) {
+            check();
+            return chunk;
+          }),
+        );
       } finally {
         await sink.close();
       }
       if (await part.length() != before.size) {
         throw const FormatException('Copie incomplète.');
       }
+      check();
       final digest = (await sha256.bind(part.openRead()).first).toString();
+      check();
       if (model.file?.sha256 case final expected? when expected != digest) {
         throw const FormatException(
           'Empreinte différente du modèle sélectionné.',
@@ -126,16 +168,31 @@ class ModelRegistry {
         ),
       );
       await _save({..._models, id: saved}, _mode);
+      // Only after the replacement is durable: never delete user source files.
+      if (previous != null && await _privateRegular(id, previous)) {
+        final old = File((previous.source as LocalModelSource).path);
+        try {
+          await old.delete();
+        } on FileSystemException {
+          /* safe orphan */
+        }
+      }
     } catch (_) {
       if (await part.exists()) await part.delete();
-      // An orphaned finished copy is harmless; never remove a registered file.
+      final current = _models[id]?.source;
+      if (!(current is LocalModelSource && current.path == file.path) &&
+          await file.exists()) {
+        await file.delete();
+      }
       rethrow;
     }
   }
 
+  @override
   Future<bool> verify(String id) async {
     final model = _models[id];
     if (model == null || model.source is! LocalModelSource) return false;
+    if (!await _privateRegular(id, model)) return false;
     final file = File((model.source as LocalModelSource).path);
     try {
       if (await file.length() != model.file!.sizeBytes) return false;
@@ -144,5 +201,42 @@ class ModelRegistry {
     } on FileSystemException {
       return false;
     }
+  }
+
+  Future<bool> _privateRegular(String id, CustomChatModel model) async {
+    final source = model.source;
+    if (source is! LocalModelSource) return false;
+    final path = p.normalize(source.path);
+    if (!RegExp('^$id-[0-9]+\\.litertlm\$').hasMatch(p.basename(path)) ||
+        !p.isWithin(p.normalize(directory.absolute.path), path)) {
+      return false;
+    }
+    if (await FileSystemEntity.type(path, followLinks: false) !=
+        FileSystemEntityType.file) {
+      return false;
+    }
+    try {
+      return p.isWithin(
+        await directory.resolveSymbolicLinks(),
+        await File(path).resolveSymbolicLinks(),
+      );
+    } on FileSystemException {
+      return false;
+    }
+  }
+
+  /// Called under the shared model lock after native unload, at user request.
+  @override
+  Future<void> remove(String id) async {
+    final model = _models[id];
+    if (model == null) return;
+    if (!await _privateRegular(id, model)) {
+      throw const FormatException(
+        'Suppression refusée : copie privée absente ou chemin non régulier.',
+      );
+    }
+    final file = File((model.source as LocalModelSource).path);
+    await _save(Map.of(_models)..remove(id), _mode);
+    await file.delete();
   }
 }

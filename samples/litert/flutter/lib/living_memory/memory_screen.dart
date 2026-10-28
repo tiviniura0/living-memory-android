@@ -11,12 +11,16 @@ import '../config/knowledge_config.dart';
 import '../config/model_catalog.dart';
 import '../data/repositories/chat_model_repository.dart';
 import '../data/repositories/conversation_repository.dart';
+import '../data/repositories/image_repository.dart';
+import '../domain/models/llm_image.dart';
 import '../data/services/knowledge/embedder_service.dart';
 import '../domain/models/assistant_event.dart';
 import '../domain/models/chat_model.dart';
 import '../domain/models/knowledge_query.dart';
 import '../domain/use_cases/chat_model_switcher.dart';
 import '../utils/result.dart';
+import 'assistant_session.dart';
+import 'memory_speech.dart';
 import 'auto_memory_engine.dart';
 import 'auto_memory_panel.dart';
 import 'context_lifecycle_manager.dart';
@@ -61,7 +65,11 @@ class MemoryScreen extends StatefulWidget {
     this.chatModels,
     this.modelSwitcher,
     this.openModels,
+    this.images,
+    this.speech,
   });
+  final ImageRepository? images;
+  final MemorySpeech? speech;
   final ChatModelRepository? chatModels;
   final ChatModelSwitcher? modelSwitcher;
   final VoidCallback? openModels;
@@ -71,7 +79,8 @@ class MemoryScreen extends StatefulWidget {
   State<MemoryScreen> createState() => _MemoryScreenState();
 }
 
-class _MemoryScreenState extends State<MemoryScreen> {
+class _MemoryScreenState extends State<MemoryScreen>
+    with WidgetsBindingObserver {
   static const _channel = MethodChannel('living_memory/documents');
   final _question = TextEditingController();
   MemoryStore? _store;
@@ -85,6 +94,10 @@ class _MemoryScreenState extends State<MemoryScreen> {
   );
   String _status = 'Ouverture de la mémoire locale…';
   String _answer = '';
+  AssistantOutput? _output;
+  bool _recording = false;
+  bool _speaking = false;
+  MemoryScope get _scope => MemoryScope(agentId: _agent, projectId: _project);
   List<MemoryHit> _hits = [];
   bool _busy = false;
   bool _closed = false;
@@ -95,6 +108,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     unawaited(_run(_open));
   }
 
@@ -113,6 +127,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
       if (widget.chatModels != null && widget.modelSwitcher != null) {
         final registry = ModelRegistry(
           Directory('${dir.path}/living-memory-models-v1'),
+          freeBytes: Platform.isAndroid
+              ? () => _channel.invokeMethod<int>('availableModelBytes')
+              : null,
         );
         await registry.load();
         if (_closed) return;
@@ -153,7 +170,12 @@ class _MemoryScreenState extends State<MemoryScreen> {
     }
   }
 
-  Future<void> _index(String name, List<String> pages, String kind) async {
+  Future<void> _index(
+    String name,
+    List<String> pages,
+    String kind, {
+    bool extract = true,
+  }) async {
     final agent = _agent;
     final chunks = chunkPages(pages);
     final vectors = <List<double>>[];
@@ -182,7 +204,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
       projectId: _project,
     );
     _status = 'Import terminé : ${chunks.length} passages. Doublons ignorés.';
-    if (_store!.autoMemoryEnabled(agent)) {
+    if (extract && _store!.autoMemoryEnabled(agent)) {
       try {
         await _extractMemories(documentId);
       } catch (e) {
@@ -240,7 +262,12 @@ class _MemoryScreenState extends State<MemoryScreen> {
       if (plan is! CustomChatPlan) {
         throw StateError('Choisis et applique un modèle dans Modèles.');
       }
-      await _registry!.register(id, plan.path, plan.model);
+      await _registry!.register(
+        id,
+        plan.path,
+        plan.model,
+        cancelled: () => _closed || _cancelled,
+      );
       if (_closed) return;
       _status =
           '${id.toUpperCase()} enregistré. Copie privée et empreinte conservées.';
@@ -255,6 +282,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
             'Arrêt demandé. Les sources déjà importées sont conservées.',
       );
     }
+    await widget.speech?.cancel();
     await widget.conversation.stop();
   }
 
@@ -273,6 +301,181 @@ class _MemoryScreenState extends State<MemoryScreen> {
     );
   }
 
+  Future<void> _assistant({bool draft = false, bool image = false}) async {
+    final scope = _scope;
+    _output = null;
+    _answer = '';
+    _hits = [];
+    var instruction = _question.text.trim();
+    Uint8List? png;
+    if (image) {
+      final repository = widget.images;
+      if (repository == null)
+        throw StateError('Sélecteur d’image indisponible.');
+      final picked = _value(await repository.pick(ImageSourceKind.gallery));
+      if (picked == null || _closed || _cancelled) return;
+      png = picked.png;
+      if (instruction.isEmpty)
+        instruction =
+            'Décris cette image et distingue les observations des déductions.';
+    }
+    if (instruction.isEmpty)
+      throw const FormatException('Écris une instruction.');
+    if (utf8.encode(instruction).length <= kKbMaxTextQueryUtf8Bytes) {
+      final vector = _value(
+        await widget.embedder.embedQuery(KnowledgeQuery.text(instruction)),
+      );
+      if (_closed || _cancelled) return;
+      _hits = ReliabilityEngine(_store!).retrieve(
+        _agent,
+        instruction,
+        vector,
+        minSimilarity: _threshold,
+        projectId: _project,
+      );
+    }
+    final passages = [
+      for (var i = 0; i < _hits.length; i++)
+        <String, Object?>{
+          'n': i + 1,
+          'source': _hits[i].name,
+          'page': _hits[i].page,
+          'texte': _hits[i].text,
+        },
+    ];
+    final result = await _withModel(
+      ModelTask.question(instruction, sourceCount: passages.length),
+      (_) => AssistantSession(widget.conversation).generate(
+        scope,
+        instruction,
+        draft: draft,
+        image: png,
+        passages: passages,
+        cancelled: () => _closed || _cancelled,
+      ),
+    );
+    if (_closed || _cancelled || result.scopeKey != _scope.key) return;
+    _output = result;
+    _answer = result.text;
+    final manager = _lifecycle;
+    final session =
+        manager.sessions().firstOrNull?.id ?? manager.startSession();
+    manager.append(session, 'user', instruction);
+    manager.append(session, 'assistant', result.text);
+    if (manager.needsCompaction(session)) manager.compact(session);
+    _status =
+        '${result.sourceLabel}. Vérifie le texte avant de le conserver. Historique limité à cet agent/projet.';
+  }
+
+  Future<void> _rememberOutput() async {
+    final output = _output;
+    if (output == null || output.scopeKey != _scope.key)
+      throw StateError('Production d’une autre portée refusée.');
+    await _index(
+      output.sourceLabel,
+      ['${output.sourceLabel}\n${output.text}'],
+      output.kind,
+      extract: false,
+    );
+  }
+
+  Future<void> _dictate() async {
+    _output = null;
+    _answer = '';
+    final scope = _scope;
+    try {
+      final text = await widget.speech!.record(
+        onRecording: () {
+          if (WidgetsBinding.instance.lifecycleState != null &&
+              WidgetsBinding.instance.lifecycleState !=
+                  AppLifecycleState.resumed) {
+            unawaited(widget.speech!.cancel());
+          } else if (!_closed) {
+            setState(() {
+              _recording = true;
+              _status = 'Dictée locale • 30 secondes maximum';
+            });
+          }
+        },
+      );
+      if (_closed || _cancelled || scope.key != _scope.key) return;
+      _question.text = text;
+      _answer = text;
+      _output = AssistantOutput(
+        scope.key,
+        text,
+        'audio-transcript',
+        'Transcription Whisper fr non vérifiée • microphone • ${DateTime.now().toUtc().toIso8601String()}',
+      );
+      _status = 'Relis la transcription. Utilise-la comme question ou conserve-la explicitement. Enregistrement non conservé.';
+    } finally {
+      if (!_closed) setState(() => _recording = false);
+    }
+  }
+
+  Future<void> _importAudio() async {
+    final scope = _scope;
+    _output = null;
+    _answer = '';
+    final file = await _channel.invokeMapMethod<String, dynamic>('pickAudio');
+    if (file == null || _closed || _cancelled) return;
+    final bytes = file['bytes'] as Uint8List;
+    final text = await widget.speech!.transcribeFile(bytes);
+    if (_closed || _cancelled || scope.key != _scope.key) return;
+    _question.text = text;
+    _answer = text;
+    _output = AssistantOutput(
+      scope.key,
+      text,
+      'audio-transcript',
+      'Transcription Whisper fr non vérifiée • ${file['name']} • WAV SHA-256 ${sha256.convert(bytes)}',
+    );
+    _status = 'Relis la transcription avant de la conserver. Fichier original non copié dans la mémoire.';
+  }
+
+  Future<void> _speak() async {
+    _speaking = true;
+    try {
+      await widget.speech!.speak(_answer);
+    } finally {
+      _speaking = false;
+    }
+  }
+
+  Future<void> _removeModel(String id) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Supprimer la copie privée ${id.toUpperCase()} ?'),
+        content: const Text(
+          'Le fichier importé d’origine et les mémoires seront conservés.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Annuler'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Supprimer'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || _closed || _cancelled) return;
+    await widget.modelSwitcher!.exclusive((ops) async {
+      _value(await ops.unload());
+      await _registry!.remove(id);
+    });
+    _status = 'Copie privée $id supprimée.';
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if ((_recording || _speaking) && state != AppLifecycleState.resumed)
+      unawaited(_cancel());
+  }
+
   Future<void> _ask({required bool generate}) async {
     final question = _question.text.trim();
     if (question.isEmpty) throw const FormatException('Écris une question.');
@@ -282,6 +485,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
       );
     }
     _answer = '';
+    _output = null;
     _hits = [];
     final vector = _value(
       await widget.embedder.embedQuery(KnowledgeQuery.text(question)),
@@ -421,12 +625,15 @@ class _MemoryScreenState extends State<MemoryScreen> {
     _project = '';
     _hits = [];
     _answer = '';
+    _output = null;
     _status = 'Mémoire individuelle créée.';
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _closed = true;
+    if (_busy) unawaited(widget.speech?.cancel());
     if (_busy) unawaited(widget.conversation.stop());
     final store = _store;
     if (_active case final task?) {
@@ -449,7 +656,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
     return PopScope(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(title: const Text('Living Memory V1.2 • local')),
+        appBar: AppBar(title: const Text('Living Memory V1.3 • expérimental')),
         body: ListView(
           padding: const EdgeInsets.all(16),
           children: [
@@ -467,6 +674,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                   _models!.mode = mode;
                 }),
                 openModels: widget.openModels ?? () {},
+                remove: (id) => _run(() => _removeModel(id)),
               ),
             if (store != null) ...[
               const SizedBox(height: 16),
@@ -494,6 +702,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                                   _project = '';
                                   _hits = [];
                                   _answer = '';
+                                  _output = null;
                                   _status = 'Agent changé. Nouvelle question sans historique partagé.';
                                 });
                               }
@@ -525,6 +734,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                         _project = project.trim();
                         _hits = [];
                         _answer = '';
+                        _output = null;
                       })
                     : null,
               ),
@@ -552,7 +762,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
               maxLines: 3,
               decoration: const InputDecoration(
                 border: OutlineInputBorder(),
-                labelText: 'Question sur les sources de cet agent',
+                labelText: 'Question ou instruction pour cet agent',
               ),
             ),
             const SizedBox(height: 8),
@@ -581,8 +791,51 @@ class _MemoryScreenState extends State<MemoryScreen> {
                       : null,
                   child: const Text('Répondre avec Gemma'),
                 ),
+                OutlinedButton(
+                  onPressed: enabled ? () => _run(() => _assistant()) : null,
+                  child: const Text('Discuter'),
+                ),
+                OutlinedButton(
+                  onPressed: enabled
+                      ? () => _run(() => _assistant(draft: true))
+                      : null,
+                  child: const Text('Rédiger'),
+                ),
+                if (widget.images != null)
+                  OutlinedButton(
+                    onPressed: enabled
+                        ? () => _run(() => _assistant(image: true))
+                        : null,
+                    child: const Text('Analyser une image'),
+                  ),
+                if (widget.speech != null)
+                  OutlinedButton(
+                    onPressed: enabled ? () => _run(_dictate) : null,
+                    child: const Text('Dicter'),
+                  ),
+                if (widget.speech != null && Platform.isAndroid)
+                  OutlinedButton(
+                    onPressed: enabled ? () => _run(_importAudio) : null,
+                    child: const Text('Importer un WAV'),
+                  ),
+
+                if (widget.speech != null && _answer.isNotEmpty)
+                  OutlinedButton(
+                    onPressed: enabled ? () => _run(_speak) : null,
+                    child: const Text('Lire la réponse'),
+                  ),
+                if (_output != null)
+                  OutlinedButton(
+                    onPressed: enabled ? () => _run(_rememberOutput) : null,
+                    child: const Text('Conserver la production'),
+                  ),
               ],
             ),
+            if (_recording)
+              TextButton(
+                onPressed: widget.speech?.finishCapture,
+                child: const Text('Terminer la dictée'),
+              ),
             if (_busy)
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 8),
@@ -648,7 +901,9 @@ class _MemoryScreenState extends State<MemoryScreen> {
                               context: context,
                               builder: (context) => AlertDialog(
                                 title: const Text('Supprimer cette source ?'),
-                                content: Text(doc.name),
+                                content: Text(
+                                  '${doc.name}\nLes copies déjà présentes dans l’historique des sessions restent conservées.',
+                                ),
                                 actions: [
                                   TextButton(
                                     onPressed: () =>
@@ -668,6 +923,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
                                 store.deleteDocument(_agent, doc.id);
                                 _hits = [];
                                 _answer = '';
+                                _output = null;
                               });
                             }
                           }
@@ -679,7 +935,7 @@ class _MemoryScreenState extends State<MemoryScreen> {
             const Text(
               'Limites V1 : 16 Mio / 200 pages PDF, 10 000 passages par agent. '
               'Stockage privé Android, non chiffré par l’application. '
-              'Les démos caméra/voix restent disponibles séparément.',
+              'Les productions IA et transcriptions doivent être vérifiées. Les images et enregistrements ne sont pas conservés ; seuls les textes explicitement enregistrés sont indexés.',
             ),
           ],
         ),

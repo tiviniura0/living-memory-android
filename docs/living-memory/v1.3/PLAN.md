@@ -46,3 +46,14 @@ sans effacement d’un chemin externe ; données conservées si signature diffé
   preuves légères 12770606152 ; run vérifié completed/success via API GitHub.
 - SDK Flutter absent initialement ; récupération du tag épinglé 3.47.3.
 - Graphify absent : cartographie par lectures, rg et tests ; pas de graphe inventé.
+
+- Tests rouges observés dans les journaux Actions : 40633680412 (AssistantSession
+  absent et remove absent), 40633822012 (MemorySpeech absent ; correction d’un
+  nom erroné de fake RecordingSynth dans le test), 40634189333 (bouton Discuter
+  absent), 40634641194 (contrats stockage/langue/WAV absents).
+- Contrôle Python Android : usesCleartextTraffic absent → échec constaté, puis
+  propriété false → 3 tests verts ; ajout du contrôle debuggable ensuite.
+- Mise en œuvre native SAF WAV bornée ; validation appareil non exécutée.
+- Revue baseline indépendante : copies de modèles non bornées corrigées ;
+  conservation des copies de réponses en sessions documentée ; téléchargements
+  HTTPS choisis par utilisateur conservés (pas de liste blanche d’hôtes).

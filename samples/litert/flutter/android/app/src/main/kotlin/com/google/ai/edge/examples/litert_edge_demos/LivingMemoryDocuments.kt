@@ -21,19 +21,23 @@ class LivingMemoryDocuments(private val activity: Activity) : MethodChannel.Meth
     private val worker = Executors.newSingleThreadExecutor()
     private var pending: MethodChannel.Result? = null
     private var modelPick = false
+    private var audioPick = false
     private var closed = false
     private val modelDir get() = File(activity.cacheDir, "living-memory-model-import").apply { mkdirs() }
 
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
+        if (call.method == "availableModelBytes") { result.success(activity.filesDir.usableSpace); return }
         if (call.method == "modelCache") { result.success(modelDir.absolutePath); return }
-        if (call.method != "pickDocument" && call.method != "pickModel") { result.notImplemented(); return }
+        if (call.method != "pickDocument" && call.method != "pickModel" && call.method != "pickAudio") { result.notImplemented(); return }
         if (closed || pending != null) { result.error("BUSY", "Un import est déjà en cours.", null); return }
         modelPick = call.method == "pickModel"
+        audioPick = call.method == "pickAudio"
         pending = result
         val intent = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
             addCategory(Intent.CATEGORY_OPENABLE)
             type = "*/*"
-            if (!modelPick) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/plain", "application/pdf"))
+            if (audioPick) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/wav", "audio/x-wav", "audio/wave"))
+            else if (!modelPick) putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("text/plain", "application/pdf"))
         }
         try { activity.startActivityForResult(intent, REQUEST) }
         catch (e: Exception) { pending = null; result.error("PICKER", e.message, null) }
@@ -47,10 +51,11 @@ class LivingMemoryDocuments(private val activity: Activity) : MethodChannel.Meth
             pending = null; reply.success(null); return true
         }
         val model = modelPick
+        val audio = audioPick
         worker.execute {
             var error: Exception? = null
             var value: Any? = null
-            try { value = if (model) copyModel(uri) else extractDocument(uri) }
+            try { value = if (model) copyModel(uri) else if (audio) readAudio(uri) else extractDocument(uri) }
             catch (e: Exception) { error = e }
             activity.runOnUiThread {
                 if (!closed && pending === reply) {
@@ -93,6 +98,24 @@ class LivingMemoryDocuments(private val activity: Activity) : MethodChannel.Meth
             } ?: throw IllegalArgumentException("Fichier illisible.")
             return target.absolutePath
         } catch (e: Exception) { target.delete(); throw e }
+    }
+
+    /** Bounded WAV only; Dart validates 16 kHz mono PCM16 and <=30 s. No cache file. */
+    private fun readAudio(uri: Uri): Map<String, Any> {
+        val filename = name(uri)
+        require(filename.endsWith(".wav", ignoreCase = true)) { "Choisis un fichier WAV PCM16 mono 16 kHz." }
+        val raw = ByteArrayOutputStream()
+        activity.contentResolver.openInputStream(uri)?.use { input ->
+            val buffer = ByteArray(65536)
+            var total = 0
+            while (true) {
+                val n = input.read(buffer); if (n < 0) break
+                total += n
+                require(total <= 2 * 1024 * 1024) { "Audio supérieur à 2 Mio." }
+                raw.write(buffer, 0, n)
+            }
+        } ?: throw IllegalArgumentException("Fichier audio illisible.")
+        return mapOf("name" to filename, "bytes" to raw.toByteArray())
     }
 
     private fun extractDocument(uri: Uri): Map<String, Any> {

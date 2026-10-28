@@ -12,6 +12,7 @@ class ModelPanel extends StatelessWidget {
     required this.register,
     required this.selectMode,
     required this.openModels,
+    this.remove,
   });
   final ModelRegistry registry;
   final MultiModelEngine engine;
@@ -19,6 +20,7 @@ class ModelPanel extends StatelessWidget {
   final void Function(String id) register;
   final void Function(ModelMode mode) selectMode;
   final VoidCallback openModels;
+  final void Function(String id)? remove;
 
   @override
   Widget build(BuildContext context) => Card(
@@ -28,7 +30,7 @@ class ModelPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Moteur local • V1.2',
+            'Moteur local • V1.3',
             style: TextStyle(fontWeight: FontWeight.bold),
           ),
           DropdownButtonFormField<ModelMode>(
@@ -59,6 +61,16 @@ class ModelPanel extends StatelessWidget {
           for (final id in ['e2b', 'e4b'])
             Text(
               '$id : ${registry.models[id]?.displayName ?? 'non enregistré'}',
+            ),
+          if (remove != null)
+            Wrap(
+              children: [
+                for (final id in registry.models.keys)
+                  TextButton(
+                    onPressed: busy ? null : () => remove!(id),
+                    child: Text('Supprimer la copie $id'),
+                  ),
+              ],
             ),
           Semantics(liveRegion: true, child: Text('État : ${engine.status}')),
           if (engine.lastUsed != null)

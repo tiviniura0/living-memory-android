@@ -36,6 +36,7 @@
     <application
         android:label="Living Memory"
         android:allowBackup="false"
+        android:usesCleartextTraffic="false"
         android:fullBackupContent="false"
         android:dataExtractionRules="@xml/memory_data_extraction_rules"
         android:name="${applicationName}"

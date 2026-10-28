@@ -136,9 +136,15 @@ class SpeechRepository {
   /// question after its reply (the transcript job). Waits for a recognizer
   /// switch in progress; fails ([SpeechNotReadyException]) when none is
   /// loaded or when [expected] is not the active one.
-  Future<Result<String>> transcribe(Uint8List pcm, {ModelId? expected}) async {
+  Future<Result<String>> transcribe(
+    Uint8List pcm, {
+    ModelId? expected,
+    String? language,
+  }) async {
     try {
-      return Result.ok(await _stt.transcribe(pcm, expected: expected));
+      return Result.ok(
+        await _stt.transcribe(pcm, expected: expected, language: language),
+      );
     } catch (e) {
       return Result.error(asException(e));
     }

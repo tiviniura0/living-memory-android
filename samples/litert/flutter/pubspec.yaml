@@ -15,7 +15,7 @@
 name: litert_edge_demos
 description: "On-device AI demos: a multimodal voice chat with skills and a live camera assistant, on LiteRT."
 publish_to: 'none'
-version: 1.2.0+3
+version: 1.3.0+4
 
 environment:
   sdk: ^3.13.3

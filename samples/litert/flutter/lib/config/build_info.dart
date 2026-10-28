@@ -20,7 +20,7 @@ import '../domain/models/hardware_profile.dart' show BuildInfo;
 
 /// `version:` in pubspec.yaml. test/config/build_info_test.dart keeps it
 /// honest (no package_info_plus for one string).
-const kAppVersion = '1.2.0+3';
+const kAppVersion = '1.3.0+4';
 
 /// Resolved versions of the packages that decide where the models run, as in
 /// pubspec.lock (checked by test/config/build_info_test.dart: a `pub upgrade`

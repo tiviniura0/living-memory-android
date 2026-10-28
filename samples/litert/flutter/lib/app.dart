@@ -40,6 +40,7 @@ import 'domain/use_cases/camera_turn_responder.dart';
 import 'domain/use_cases/chat_turn_responder.dart';
 import 'domain/use_cases/voice_assistant.dart';
 import 'living_memory/memory_screen.dart';
+import 'living_memory/memory_speech.dart';
 import 'ui/core/app_foreground.dart';
 import 'ui/core/debug_overlay.dart';
 import 'ui/features/home/view_models/home_view_model.dart';
@@ -193,6 +194,12 @@ class _AppState extends State<App> {
             child: const SetupScreen(),
           ),
           Routes.memory: (context) => MemoryScreen(
+            images: context.read(),
+            speech: MemorySpeech(
+              speech: context.read(),
+              audio: context.read(),
+              activateStt: deps.activateStt,
+            ),
             embedder: deps.memoryEmbedder,
             conversation: deps.conversation,
             chatModels: deps.chatModels,

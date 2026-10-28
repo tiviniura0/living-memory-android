@@ -282,7 +282,11 @@ class SttService {
   /// failed before releasing the old model leaves it loaded, and serving a
   /// Demo 1 question with moonshine (English only, 5 s cut) would be a
   /// silent fallback. The identity is checked at use time for that reason.
-  Future<String> transcribe(Uint8List pcm, {ModelId? expected}) async {
+  Future<String> transcribe(
+    Uint8List pcm, {
+    ModelId? expected,
+    String? language,
+  }) async {
     while (_loading > 0) {
       await _ops.idle;
     }
@@ -299,7 +303,7 @@ class SttService {
     }
     _transcribing++;
     try {
-      return await recognizer.transcribe(pcm);
+      return await recognizer.transcribe(pcm, language: language);
     } finally {
       if (--_transcribing == 0) {
         final idle = _idle;
