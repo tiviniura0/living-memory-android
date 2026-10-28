@@ -6,8 +6,10 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/config/knowledge_config.dart';
 import 'package:litert_edge_demos/data/services/knowledge/embedder_service.dart';
 import 'package:litert_edge_demos/domain/models/knowledge_query.dart';
+import 'package:litert_edge_demos/living_memory/context_lifecycle_manager.dart';
 import 'package:litert_edge_demos/living_memory/memory_screen.dart';
 import 'package:litert_edge_demos/living_memory/memory_store.dart';
+import 'package:litert_edge_demos/living_memory/module_contracts.dart';
 import 'package:litert_edge_demos/utils/result.dart';
 
 import '../fakes/fake_conversation_repository.dart';
@@ -36,6 +38,24 @@ void main() {
         channel,
         (_) async => dir.path,
       );
+      final seed = MemoryStore.open(
+        '${dir.path}/living-memory-v1.db',
+        profile: kKbEmbeddingProfileId,
+        dimension: kKbEmbeddingDimension,
+      );
+      seed.createAgent('personal', 'Ma mémoire');
+      seed.createAgent('other', 'Zzz autre agent');
+      final personal = ContextLifecycleManager(
+        seed,
+        const MemoryScope(agentId: 'personal'),
+      );
+      personal.append(personal.startSession(), 'user', 'SCOPE-ONLY-42');
+      final other = ContextLifecycleManager(
+        seed,
+        const MemoryScope(agentId: 'other'),
+      );
+      other.append(other.startSession(), 'user', 'OTHER-SECRET-99');
+      seed.close();
       final chat = FakeConversationRepository();
       await tester.pumpWidget(
         MaterialApp(
@@ -55,6 +75,8 @@ void main() {
       await tester.pumpAndSettle();
       await finish;
       expect(find.text('Bonjour Tivini.'), findsWidgets);
+      expect(chat.prompts.single, contains('SCOPE-ONLY-42'));
+      expect(chat.prompts.single, isNot(contains('OTHER-SECRET-99')));
       final store = MemoryStore.open(
         '${dir.path}/living-memory-v1.db',
         profile: kKbEmbeddingProfileId,
