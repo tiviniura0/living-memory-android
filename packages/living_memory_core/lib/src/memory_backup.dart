@@ -5,6 +5,7 @@ import 'dart:math';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'memory_store.dart';
+import 'module_contracts.dart';
 
 /// Independent encrypted transfers. The caller supplies an unwrapped database
 /// key; this API never accesses or exports Android Keystore material.
@@ -338,22 +339,32 @@ class MemoryBackup {
       source.close();
       source = null;
       target = _open(to, targetKey);
-      _validate(target, profile, dimension);
-      if (restoring &&
-          target
-              .select(
-                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
-              )
-              .isNotEmpty) {
+      final targetVersion = _validate(target, profile, dimension);
+      if (restoring) {
         target.execute('BEGIN IMMEDIATE');
         try {
-          target.execute("UPDATE lm_v14_missions SET state='cancelled'");
-          if (target
-              .select(
-                "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
-              )
-              .isNotEmpty) {
-            throw StateError('Neutralisation des missions invalide.');
+          if (targetVersion >= 5) {
+            // Generic permission contract: no simulation dependency in core.
+            target.execute(
+              'DELETE FROM lm_v14_records WHERE namespace LIKE ?',
+              ['${permissionRecordNamespacePrefix}%'],
+            );
+            if (target.select(
+              'SELECT 1 FROM lm_v14_records WHERE namespace LIKE ? LIMIT 1',
+              ['${permissionRecordNamespacePrefix}%'],
+            ).isNotEmpty) {
+              throw StateError('Neutralisation des droits invalide.');
+            }
+          }
+          if (target.select(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
+          ).isNotEmpty) {
+            target.execute("UPDATE lm_v14_missions SET state='cancelled'");
+            if (target.select(
+              "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
+            ).isNotEmpty) {
+              throw StateError('Neutralisation des missions invalide.');
+            }
           }
           target.execute('COMMIT');
         } catch (_) {

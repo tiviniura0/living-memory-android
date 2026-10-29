@@ -58,6 +58,14 @@ jobs:
           (cd tools/world_headless && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded && dart run bin/world_headless.dart --fixture ../../fixtures/world/l1_world.json --ticks 10000 --out "$evidence/headless.json") 2>&1 | tee "$evidence/world-headless.log"
           python3 -m unittest discover -s tests -p test_world_boundaries.py -v
           python3 scripts/check_world_boundaries.py
+      - name: Extracted module analysis
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/samples/litert/flutter/build/v14-evidence"
+          for package in living_memory_core living_memory_extensions living_world_memory; do
+            (cd packages/$package && dart pub get --offline && dart analyze) 2>&1 | tee "$evidence/$package-analysis.log"
+          done
       - name: Preserve generated lockfile and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

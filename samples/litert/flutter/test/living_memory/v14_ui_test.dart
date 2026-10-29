@@ -8,10 +8,18 @@ import 'package:litert_edge_demos/living_memory/world_memory_panel.dart';
 import 'package:living_memory_core/living_memory_core.dart';
 
 // Real checkpoint File I/O needs the real event loop, outside fake frame time.
-Future<void> settleStorage(WidgetTester tester) async {
+Future<void> settleStorage(WidgetTester tester, {Finder? readyButton}) async {
+  await tester.pump();
+  bool pending() {
+    if (readyButton != null) {
+      return !tester.any(readyButton) ||
+          tester.widget<ButtonStyleButton>(readyButton).onPressed == null;
+    }
+    return tester.any(find.byType(LinearProgressIndicator));
+  }
   await tester.runAsync(() async {
     final deadline = DateTime.now().add(const Duration(seconds: 10));
-    while (tester.any(find.byType(LinearProgressIndicator))) {
+    while (pending()) {
       if (DateTime.now().isAfter(deadline)) {
         throw StateError('Storage did not settle');
       }
@@ -45,7 +53,7 @@ void main() {
           ),
         ),
       );
-      await settleStorage(tester);
+      await settleStorage(tester, readyButton: find.widgetWithText(FilledButton, 'Mémoriser pour A'));
       expect(find.textContaining('Règles locales'), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('world-note')),
@@ -66,7 +74,11 @@ void main() {
             .map((t) => t.data)
             .join(' | '),
       );
-      await tester.scrollUntilVisible(find.textContaining('Souvenir privé enregistré'), 120, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        find.textContaining('Souvenir privé enregistré'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         find.textContaining('Souvenir privé enregistré'),
         findsOneWidget,
@@ -78,12 +90,20 @@ void main() {
       await tester.ensureVisible(find.text('Partager avec B'));
       await tester.tap(find.text('Partager avec B'));
       await settleStorage(tester);
-      await tester.scrollUntilVisible(find.textContaining('Publication explicite'), 120, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        find.textContaining('Publication explicite'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('Publication explicite'), findsOneWidget);
       await tester.ensureVisible(find.text('Consulter B'));
       await tester.tap(find.text('Consulter B'));
       await settleStorage(tester);
-      await tester.scrollUntilVisible(find.textContaining('shared_declaration'), 120, scrollable: find.byType(Scrollable).first);
+      await tester.scrollUntilVisible(
+        find.textContaining('shared_declaration'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('shared_declaration'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -114,17 +134,10 @@ void main() {
           home: ExtensionsPanel(
             store: store,
             scope: const MemoryScope(agentId: 'a'),
-            loadSkill: () async => '---\nname: memory-scope\ndescription: Read permitted memory.\n---\nRead only approved scoped sources.',
-            loadPlugin: () async => {
-              'version': 1,
-              'id': 'local-memory',
-              'revision': '1',
-              'tools': ['memory.read'],
-            },
           ),
         ),
       );
-      await settleStorage(tester);
+      await settleStorage(tester, readyButton: find.widgetWithText(OutlinedButton, 'Approuver ce Skill'));
       await tester.enterText(
         find.byKey(const Key('extension-query')),
         'zirconium',

@@ -56,9 +56,9 @@ continue. PC/VPS : contrats et packages portables préparés ; aucun serveur,
 synchronisation ou déploiement. Une révocation retire l'accès futur, pas une
 copie déjà citée. Les limites logiques du sandbox utilisateur Android demeurent.
 
-L'export/restauration est une API testée à valider, sans remplacement automatique
-de la base active ni export de Keystore. L'activation d'un espace restauré et
-l'interface SAF dédiée restent non livrées dans ce jalon ; préserver l'application
+L'export/restauration conserve la base active et n'exporte pas Keystore.
+Le parcours SAF dédié est raccordé ; ses tests CI restent en cours. L'activation
+d'un espace restauré reste non livrée dans ce jalon ; préserver l'application
 installée et la clé de récupération. Le transfert atomique d'un ensemble complet
 monde+mémoire entre appareils reste un lot futur, pas un export mémoire seul.
 

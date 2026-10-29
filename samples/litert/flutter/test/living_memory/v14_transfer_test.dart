@@ -120,16 +120,25 @@ void main() {
     },
   );
 
-  test('trusted active database OS alias is canonicalized before transfer', () async {
-    final alias = Link('${directory.path}/os-alias')..createSync(directory.path);
-    final aliased = MemoryTransfer(
-      databasePath: '${alias.path}/active.db', deviceKey: deviceKey, channel: channel,
-    );
-    expect(await aliased.exportEncrypted(), matches(RegExp(r'^[0-9a-f]{64}$')));
-    expect(savedPath, isNotNull);
-    expect(staging.listSync(), isEmpty);
-    expect(store.searchText('a', 'PRIVATE_TRANSFER_FIXTURE'), hasLength(1));
-  });
+  test(
+    'trusted active database OS alias is canonicalized before transfer',
+    () async {
+      final alias = Link('${directory.path}/os-alias')
+        ..createSync(directory.path);
+      final aliased = MemoryTransfer(
+        databasePath: '${alias.path}/active.db',
+        deviceKey: deviceKey,
+        channel: channel,
+      );
+      expect(
+        await aliased.exportEncrypted(),
+        matches(RegExp(r'^[0-9a-f]{64}$')),
+      );
+      expect(savedPath, isNotNull);
+      expect(staging.listSync(), isEmpty);
+      expect(store.searchText('a', 'PRIVATE_TRANSFER_FIXTURE'), hasLength(1));
+    },
+  );
 
   test(
     'cancelled save removes encrypted staging and returns no recovery key',
@@ -226,7 +235,9 @@ void main() {
         keys.any((text) => RegExp(r'^[0-9a-f]{64}$').hasMatch(text.data ?? '')),
         isTrue,
       );
-      expect(clipboard, isEmpty);
+      // Flutter checks whether selection actions are available; no key or
+      // clipboard contents may be read or written implicitly.
+      expect(clipboard.map((call) => call.method), everyElement('Clipboard.hasStrings'));
       expect(
         find.textContaining('Ne pas enregistrer cette clé avec'),
         findsOneWidget,

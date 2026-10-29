@@ -39,3 +39,24 @@ simple limitation matérielle.
   diagnostic ajouté (compte de reçus et textes visibles), aucune réussite présumée.
 
 Revue finale du diff complet, parcours SAF et compilation encore requis.
+
+## Revue finale indépendante
+
+Une nouvelle revue en lecture seule du diff de mission depuis le merge L1,
+head7b128f2d puis delta SAF2d7a9bbe, a vérifié extraction, ACL/reçus concurrents,
+grants, timeout, reprise missions, MCP, Skill et hôtes Android.
+
+Constat important neuf : les ACL de publication World survivraient à un restore.
+Régression ajoutée en2d7a9bbe avant correction. Le contrat de stockage des droits
+sera séparé en namespace générique permission.* ; la restauration retire les
+autorisations de sa copie sans toucher aux sources ni au checkpoint actif.
+
+L'observation provisoire d'une clé Keystore liée au chemin a été vérifiée et
+retirée : le contrat réel utilise une enveloppe singleton par application.
+Point mineur conservé : validation/création des participants du constructeur
+World séquentielle ; un paramètre hôte invalide tardif peut laisser un agent vide.
+Cet accès n'est pas exposé à un modèle ou à une entrée serveur.
+
+SAF : racine cache canonique corrigée après test source rouge ; le service
+répliquant les alias OS reste couvert par une nouvelle régression CI. Les tests
+source Kotlin ne sont pas une preuve de sélecteur Android sur appareil.

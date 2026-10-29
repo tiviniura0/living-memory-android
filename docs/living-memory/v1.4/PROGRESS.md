@@ -116,3 +116,17 @@ Run40755565977 / job123053428142 terminé en échec attendu : dépendances histo
 - Revue fraîche : droits de partage persistants à neutraliser lors de restore ;
   nouveau test export/restore World publié avant correction. Sources et reçus
   doivent rester, source active inchangée, réapprobation explicite nécessaire.
+
+### Derniers rouges et correctifs de revue
+
+Run40813104637 /2d7a9bbe : UI World et extensions2/2 verts ; sauvegarde22/22,
+extensions17/17, extraction2/2, migrations1/1, fiabilité7/7 restent verts.
+SAF7/9 : alias OS rouge attendu et assertion clipboard trop large (uniquement
+hasStrings interrogé par Flutter, pas d'écriture). World8/9 : restauration rend
+encore le partage actif, rouge sécurité confirmé. SuitesL1 et10000ticks verts.
+
+Correctifs en validation : racine de source hôte canonique ; autorisations
+persistantes sous namespace réservé permission.* supprimées uniquement dans la
+copie restaurée. Core sans import World/Flutter ; source active, souvenirs et
+reçus de provenance conservés. Le test exige une nouvelle publication pour B.
+Branches revérifiées : main0f95b7eb, source32dfa547 et World5ca4ae5b inchangés.

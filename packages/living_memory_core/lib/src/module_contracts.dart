@@ -1,5 +1,9 @@
 import 'dart:convert';
 
+/// Reserved persistent authorizations. Restores discard these records while
+/// preserving sources and receipts; trusted hosts must obtain fresh approval.
+const permissionRecordNamespacePrefix = 'permission.';
+
 /// Namespace, not authentication. The Android application sandbox remains the
 /// security boundary until an authenticated external API is implemented.
 class MemoryScope {

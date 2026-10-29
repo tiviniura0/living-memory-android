@@ -775,7 +775,8 @@ class _MemoryScreenState extends State<MemoryScreen>
             ),
             if (Platform.isAndroid)
               OutlinedButton(
-                onPressed: enabled && _databasePath != null && _databaseKey != null
+                onPressed:
+                    enabled && _databasePath != null && _databaseKey != null
                     ? () async {
                         await Navigator.of(context).push<void>(
                           MaterialPageRoute<void>(
