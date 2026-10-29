@@ -154,3 +154,12 @@ y608 hors viewport600 après ajout des entréesV1.4. Aucune compilation ni APK
 produit. Correction ciblée des tests : stabiliser le clavier après saisie et
 rendre le défilement effectif par frame avant clic. Assertions de conversations,
 isolation, sauvegarde explicite et annulation conservées intégralement.
+
+### Régressions complètes et métadonnées
+
+Run40815219600 /3075ad34 : les5tests historiques corrigés et la suite mémoire
+208/208 passent. Format et analyse sans issue. Suite Flutter complète :
+3120 réussis,15ignorés,1échec : build_info_test attend1.4.0+6 du pubspec mais
+kAppVersion indiquait encore1.3.1+5. Constante de diagnostic alignée ; assertion
+historique conservée. Aucun APK produit par ce run, compilation correctement
+bloquée. Contrats V1.4/L1 du même commit : run40815219604 entièrement vert.
