@@ -746,7 +746,7 @@ class _MemoryScreenState extends State<MemoryScreen>
             OutlinedButton(
               onPressed: enabled ? () async {
                 await Navigator.of(context).push<void>(MaterialPageRoute<void>(
-                  builder: (_) => ExtensionsPanel(store: store!, scope: _scope),
+                  builder: (_) => ExtensionsPanel(store: store, scope: _scope),
                 ));
               } : null,
               child: const Text('Extensions et missions locales'),

@@ -52,7 +52,8 @@ void main() {
       await tester.ensureVisible(find.text('Mémoriser pour A'));
     await tester.tap(find.text('Mémoriser pour A'));
       await settleStorage(tester);
-      expect(find.textContaining('Souvenir privé enregistré'), findsOneWidget);
+      expect(store.extensionDatabase.select("SELECT count(*) AS n FROM lm_v14_records WHERE namespace='world.event'").single['n'], 1, reason: tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).join(' | '));
+      expect(find.textContaining('Souvenir privé enregistré'), findsOneWidget, reason: tester.widgetList<Text>(find.byType(Text)).map((t) => t.data).join(' | '));
       await tester.ensureVisible(find.text('Partager avec B'));
     await tester.tap(find.text('Partager avec B'));
       await settleStorage(tester);

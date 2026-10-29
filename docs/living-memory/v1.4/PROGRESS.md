@@ -90,3 +90,11 @@ Run40755565977 / job123053428142 terminé en échec attendu : dépendances histo
 - Pubspec.lock applicatif généré par CI importé : uniquement huit dépendances path ajoutées, aucun changement de version externe par rapport à V1.3.1.
 - Revue indépendante T1–T4 : six constats importants, tracés dans REVIEW.md. Les nouvelles régressions couvrent schéma incomplet, callbacks dépassant le délai et courses entre adaptateurs.
 - L'hôte monde réutilise WorldFactory/WorldCore/SimulationRunner/CheckpointStore/WorldViewport L1 ; pas de règles ni carte réécrites. Il bloque l'avance tant que le checkpoint courant n'est pas acquitté par la mémoire.
+
+### Revue et preuves ciblées suivantes
+
+- Run40759820726 : sauvegarde20/20, extensions16/16, extraction2/2, migrations1/1 et fiabilité7/7 verts. Le test nouvellement ajouté de rôle query était rouge ; corrigé par embedQuery distinct en fd12d729.
+- Run40811435881 / fd12d729 : adaptateur World8/8, extraction2/2, migrations1/1 et fiabilité7/7 verts. Reproductions rouges : trigger/vue inattendus acceptés (20pass2fail), espaces vides transformés en noms réservés (extensions16pass1fail et widget). UI World : assertion de confirmation privée encore à diagnostiquer.
+- Corrections suivantes : allowlist du schéma SQL canonique et postcondition missions désactivées ; espaces bruts vides/Unicode conservés ; retrait d'une assertion non-null superflue signalée par analyse.
+- Contrôles locaux : frontières World3tests, sécurité native/source7tests, signature5tests passent. Flutter reste vérifié exclusivement en CI avec SDK épinglé.
+- Aucun résultat APK ni matériel acquis à ce stade. Le parcours SAF du plan est en cours de raccordement ; aucune activation destructrice d'une base restaurée.

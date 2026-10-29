@@ -152,6 +152,22 @@ class MemoryBackup {
     );
     try {
       final expected = reference.extensionDatabase;
+      final allowedObjects = <String, String>{};
+      for (final object in expected.select(
+        'SELECT type,name,tbl_name FROM sqlite_master',
+      )) {
+        if (version == 4 && object['tbl_name'] == 'lm_v14_records') continue;
+        allowedObjects[object['name'] as String] = object['type'] as String;
+      }
+      // Missions are the sole optional persistent extension table. No imported
+      // trigger or view may run during cancellation or future memory writes.
+      allowedObjects['lm_v14_missions'] = 'table';
+      allowedObjects['sqlite_autoindex_lm_v14_missions_1'] = 'index';
+      for (final object in db.select('SELECT type,name FROM sqlite_master')) {
+        if (allowedObjects[object['name']] != object['type']) {
+          throw StateError('Objet de schéma mémoire inconnu.');
+        }
+      }
       final objects = expected.select(
         "SELECT type,name,tbl_name,sql FROM sqlite_master "
         "WHERE type IN ('table','index','trigger') AND name NOT LIKE 'sqlite_%'",
@@ -219,6 +235,9 @@ class MemoryBackup {
           for (final column in db.select('PRAGMA table_info(lm_v14_missions)'))
             column['name'] as String: column,
         };
+        if (columns.length != 7) {
+          throw StateError('Colonnes de missions incompatibles.');
+        }
         for (final column in {
           'id': 'TEXT',
           'agent_id': 'TEXT',
@@ -314,6 +333,11 @@ class MemoryBackup {
         target.execute('BEGIN IMMEDIATE');
         try {
           target.execute("UPDATE lm_v14_missions SET state='cancelled'");
+          if (target.select(
+            "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
+          ).isNotEmpty) {
+            throw StateError('Neutralisation des missions invalide.');
+          }
           target.execute('COMMIT');
         } catch (_) {
           target.execute('ROLLBACK');

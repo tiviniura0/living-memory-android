@@ -41,8 +41,11 @@ final class ExtensionScope {
     required this.worldId,
   }) {
     if (userId != 'local') throw const ExtensionDenied();
-    for (final value in [agentId, projectId, worldId]) {
-      _id(value);
+    _id(agentId);
+    for (final value in [projectId, worldId]) {
+      if (value.length > 100 || value.contains('\u0000')) {
+        throw const FormatException('Invalid namespace');
+      }
     }
   }
   final String userId, agentId, projectId, worldId;

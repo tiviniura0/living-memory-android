@@ -40,8 +40,8 @@ class _ExtensionsPanelState extends State<ExtensionsPanel> {
   void initState() {
     super.initState();
     _scope = ext.ExtensionScope(userId:widget.scope.userId,agentId:widget.scope.agentId,
-      projectId:widget.scope.projectId.isEmpty ? 'personal' : widget.scope.projectId,
-      worldId:widget.scope.worldId.isEmpty ? 'no-world' : widget.scope.worldId);
+      projectId:widget.scope.projectId,
+      worldId:widget.scope.worldId);
     _queue = ext.MissionQueue(widget.store.extensionDatabase);
     _tools = ext.ToolRegistry(security:_security);
     unawaited(_load());

@@ -2,7 +2,7 @@ name: Living Memory V1.4 contracts
 on:
   push:
     branches: ['work/living-memory-v1.4-extensions']
-    paths: ['packages/**', 'samples/litert/flutter/**', '.github/workflows/living-memory-v14.yml']
+    paths: ['packages/**', 'apps/**', 'tools/world_headless/**', 'samples/litert/flutter/**', '.github/workflows/living-memory-v14.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -46,6 +46,18 @@ jobs:
           dart format ../../../packages/living_memory_core ../../../packages/living_world_memory ../../../packages/living_memory_extensions lib/living_memory test/living_memory/v14*_test.dart
           git -C ../../.. diff -- packages/living_memory_core packages/living_world_memory packages/living_memory_extensions samples/litert/flutter/lib/living_memory samples/litert/flutter/test/living_memory > build/v14-evidence/format.patch
           flutter analyze > build/v14-evidence/analyze.log 2>&1
+      - name: World L1 portable regressions
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/samples/litert/flutter/build/v14-evidence"
+          for package in world_contracts world_core agent_runtime world_persistence; do
+            (cd packages/$package && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded) 2>&1 | tee "$evidence/$package.log"
+          done
+          (cd apps/world_observer && flutter pub get --enforce-lockfile && flutter analyze && flutter test --reporter expanded) 2>&1 | tee "$evidence/world-observer.log"
+          (cd tools/world_headless && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded && dart run bin/world_headless.dart --fixture ../../fixtures/world/l1_world.json --ticks 10000 --out "$evidence/headless.json") 2>&1 | tee "$evidence/world-headless.log"
+          python3 -m unittest discover -s tests -p test_world_boundaries.py -v
+          python3 scripts/check_world_boundaries.py
       - name: Preserve generated lockfile and evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
