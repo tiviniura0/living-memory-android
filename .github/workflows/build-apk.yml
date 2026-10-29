@@ -3,13 +3,17 @@ name: Living Memory Android APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, 'work/living-memory-local-rag', 'work/living-memory-v1.1-auto-memory', 'work/living-memory-v1.2-multimodel', 'work/living-memory-v1.3-google-integration', 'work/living-memory-v1.3.1-security']
+    branches: [main, 'work/living-memory-local-rag', 'work/living-memory-v1.1-auto-memory', 'work/living-memory-v1.2-multimodel', 'work/living-memory-v1.3-google-integration', 'work/living-memory-v1.3.1-security', 'work/living-memory-v1.4-extensions']
     paths:
       - 'samples/litert/flutter/**'
+      - 'packages/**'
+      - 'apps/world_observer/lib/**'
       - '.github/workflows/build-apk.yml'
   pull_request:
     paths:
       - 'samples/litert/flutter/**'
+      - 'packages/**'
+      - 'apps/world_observer/lib/**'
       - '.github/workflows/build-apk.yml'
 
 permissions:
@@ -62,6 +66,7 @@ jobs:
           mkdir -p build/evidence
           set -o pipefail
           python -m unittest discover -s tool -p test_android_security.py -v 2>&1 | tee build/evidence/android-security-source.log
+          python -m unittest discover -s tool -p test_memory_transfer_native.py -v 2>&1 | tee build/evidence/memory-transfer-source.log
       - name: V1.3.1 security contracts
         run: |
           failed=0
@@ -79,9 +84,9 @@ jobs:
       - name: Check auto-memory source formatting
         if: ${{ !cancelled() }}
         run: |
-          dart format lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
-          git diff -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart > build/evidence/dart-format.patch
-          git diff --exit-code -- lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
+          dart format ../../../packages/living_memory_core ../../../packages/living_world_memory ../../../packages/living_memory_extensions lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
+          git diff -- ../../../packages/living_memory_core ../../../packages/living_world_memory ../../../packages/living_memory_extensions lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart > build/evidence/dart-format.patch
+          git diff --exit-code -- ../../../packages/living_memory_core ../../../packages/living_world_memory ../../../packages/living_memory_extensions lib/living_memory test/living_memory lib/app.dart lib/data/repositories/chat_model_repository.dart test/data/repositories/chat_model_repository_test.dart lib/data/services/llm/llm_service.dart lib/data/repositories/model_repository.dart lib/domain/use_cases/chat_model_switcher.dart test/data/services/llm/llm_service_test.dart test/domain/use_cases/chat_model_switcher_test.dart
       - name: Analyze
         if: ${{ !cancelled() }}
         run: flutter analyze
@@ -130,10 +135,13 @@ jobs:
               with z.open('assets/flutter_assets/assets/models/embeddinggemma-2-740m.litertlm') as model:
                   model_sha=hashlib.file_digest(model, 'sha256').hexdigest()
               assert model_sha==lock[3], (model_sha, lock[3])
+          badging=Path('build/evidence/apk-badging.txt').read_text()
+          assert "package: name='com.google.ai.edge.examples.litert_edge_demos'" in badging, 'Wrong applicationId'
+          assert "versionCode='6'" in badging and "versionName='1.4.0'" in badging, 'Wrong V1.4 version'
           signature=Path('build/evidence/apk-signature.txt').read_text()
           cert=certificate_sha256(signature)
           previous='cc90f8b4d170d0410025bab5ba3af71567fd6ecbd420c411230043c7389dc487'
-          metadata={'commit_sha':os.environ['GITHUB_SHA'],'embedding_model_sha256':model_sha,'hardware_tested':False,'signing_mode':'experimental-debug-not-stable','sqlcipher_libraries_sha256':cipher_hashes,'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
+          metadata={'version_name':'1.4.0','version_code':6,'application_id':'com.google.ai.edge.examples.litert_edge_demos','commit_sha':os.environ['GITHUB_SHA'],'embedding_model_sha256':model_sha,'hardware_tested':False,'signing_mode':'experimental-debug-not-stable','sqlcipher_libraries_sha256':cipher_hashes,'apk_bytes':apk.stat().st_size,'abis':abis,'embedding_model_bytes':size,
                     'certificate_sha256':cert,'v1_certificate_matches':cert==previous}
           Path('build/evidence/apk-metadata.json').write_text(json.dumps(metadata,indent=2))
           print(json.dumps(metadata,indent=2))
@@ -142,8 +150,11 @@ jobs:
         if: always()
         run: |
           mkdir -p build/evidence
-          cp ../../../docs/living-memory/v1.3.1/AUDIT.md build/evidence/validation-report.md
-          cp ../../../docs/living-memory/v1.3.1/INSTALL_S22.md build/evidence/S22-protocol.md
+          cp ../../../docs/living-memory/v1.4/REPORT.md build/evidence/validation-report.md
+          cp ../../../docs/living-memory/v1.3.1/AUDIT.md build/evidence/reused-v1.3.1-audit.md
+          cp ../../../docs/living-memory/v1.4/INSTALL_S22.md build/evidence/S22-protocol.md
+          cp ../../../docs/living-memory/v1.4/BUILD.md build/evidence/build-procedure.md
+          cp ../../../docs/living-memory/v1.4/REVIEW.md build/evidence/code-review.md
           cp ../../../docs/living-memory/v1.3.1/SIGNING.md build/evidence/signing-procedure.md
           cp ../../../docs/living-memory/v1.3.1/STORAGE.md build/evidence/storage-strategy.md
           python3 - <<'PYREPORT'
@@ -174,7 +185,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: living-memory-v1.3-validation-${{ github.sha }}
+          name: living-memory-v1.4-validation-${{ github.sha }}
           path: samples/litert/flutter/build/evidence/
           if-no-files-found: warn
           retention-days: 30

@@ -17,6 +17,7 @@ Future<void> settleStorage(WidgetTester tester, {Finder? readyButton}) async {
     }
     return tester.any(find.byType(LinearProgressIndicator));
   }
+
   await tester.runAsync(() async {
     final deadline = DateTime.now().add(const Duration(seconds: 10));
     while (pending()) {
@@ -53,7 +54,10 @@ void main() {
           ),
         ),
       );
-      await settleStorage(tester, readyButton: find.widgetWithText(FilledButton, 'Mémoriser pour A'));
+      await settleStorage(
+        tester,
+        readyButton: find.widgetWithText(FilledButton, 'Mémoriser pour A'),
+      );
       expect(find.textContaining('Règles locales'), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('world-note')),
@@ -137,15 +141,25 @@ void main() {
           ),
         ),
       );
-      await settleStorage(tester, readyButton: find.widgetWithText(OutlinedButton, 'Approuver ce Skill'));
+      await settleStorage(
+        tester,
+        readyButton: find.widgetWithText(OutlinedButton, 'Approuver ce Skill'),
+      );
       await tester.enterText(
         find.byKey(const Key('extension-query')),
         'zirconium',
       );
+      await tester.ensureVisible(find.text('Approuver ce Skill'));
       await tester.tap(find.text('Approuver ce Skill'));
       await settleStorage(tester);
+      await tester.ensureVisible(find.text('Autoriser cette lecture'));
       await tester.tap(find.text('Autoriser cette lecture'));
       await settleStorage(tester);
+      await tester.scrollUntilVisible(
+        find.textContaining('ZR42'),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.textContaining('ZR42'), findsOneWidget);
       await tester.ensureVisible(find.text('Planifier cette lecture'));
       await tester.tap(find.text('Planifier cette lecture'));

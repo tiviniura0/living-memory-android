@@ -788,7 +788,7 @@ class _MemoryScreenState extends State<MemoryScreen>
                         );
                       }
                     : null,
-                child: const Text('Sauvegarde chiffrée et vérification'),
+                child: const Text('Sauvegarde de la mémoire personnelle'),
               ),
             if (_registry != null && _models != null)
               ModelPanel(

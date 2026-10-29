@@ -237,7 +237,10 @@ void main() {
       );
       // Flutter checks whether selection actions are available; no key or
       // clipboard contents may be read or written implicitly.
-      expect(clipboard.map((call) => call.method), everyElement('Clipboard.hasStrings'));
+      expect(
+        clipboard.map((call) => call.method),
+        everyElement('Clipboard.hasStrings'),
+      );
       expect(
         find.textContaining('Ne pas enregistrer cette clé avec'),
         findsOneWidget,

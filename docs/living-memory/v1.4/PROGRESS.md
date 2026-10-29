@@ -1,7 +1,7 @@
 # Living Memory V1.4 — journal et feuille de route
 
-Statut : spécification validée par Tivini avec reprise obligatoire de L0/L1 ; plan écrit et TDD engagé.
-Aucune fonctionnalité V1.4 ni nouvel APK livré à ce stade.
+Statut courant : intégration réalisée, régressions de sécurité corrigées et modules analysés ; validation complète et nouvel APK encore en cours.
+Les entrées ci-dessous conservent les résultats observés à chaque étape, sans attribuer les preuves V1.3.1 à V1.4.
 
 ## Reprise sans recréation
 
@@ -40,11 +40,11 @@ ne sont pas attribués à V1.4. Aucun appareil utilisé.
 - [x] 1. Vérifier dépôt/source/run, lire audits réutilisables et repérer les modules.
 - [x] 2. Revoir et approuver la [spécification proposée](../../superpowers/specs/2026-10-28-living-memory-v1.4-design.md).
 - [x] 3. Plan `writing-plans` écrit ; poursuite autorisée par Tivini sans nouvelle validation des choix couverts.
-- [ ] 4. TDD : migration additive et adaptateur mémoire/monde intégré.
-- [ ] 5. TDD : politique de permissions, outils, Skills existants, plugins et MCP.
-- [ ] 6. TDD : missions, file persistante, annulation et reprise explicite.
-- [ ] 7. Tester deux agents, souvenirs privés, publications et reopen SQLCipher.
-- [ ] 8. Export/restauration et signature compatible ; protocole de préservation des installations.
+- [x] 4. TDD : migration additive et adaptateur mémoire/monde intégré.
+- [x] 5. TDD : politique de permissions, outils, Skills existants, plugins et MCP.
+- [x] 6. TDD : missions, file persistante, annulation et reprise explicite.
+- [x] 7. Tester deux agents, souvenirs privés, publications et reopen SQLCipher.
+- [x] 8. Export/restauration et signature compatible ; protocole de préservation des installations.
 - [ ] 9. Revue indépendante, corrections, régressions, analyse et compilation APK ARM64.
 - [ ] 10. Rapport de preuves au commit exact, artefacts, limites et protocole S22.
 
@@ -130,3 +130,17 @@ persistantes sous namespace réservé permission.* supprimées uniquement dans l
 copie restaurée. Core sans import World/Flutter ; source active, souvenirs et
 reçus de provenance conservés. Le test exige une nouvelle publication pour B.
 Branches revérifiées : main0f95b7eb, source32dfa547 et World5ca4ae5b inchangés.
+
+### Modules verts et lancement de validation finale
+
+Run40813983620 /e06e251f : backup22, extensions17, extraction2, transfert9,
+World9 (y compris réapprobation après restore), migration1 et fiabilité7 verts.
+Analyse Flutter sans issue ; analyses des3packages extraits et suitesL1 vertes.
+UI World passe ; l'unique assertion restante lit une sortie de page lazy après
+chargement du vrai Skill/JSON embarqué, corrigée par défilement explicite.
+Aucune donnée ou assertion fonctionnelle supprimée. Format officiel CI appliqué.
+
+La chaîne APK V1.4 est activée ensuite sur la branche isolée : elle impose
+sécurité réutilisée, suite mémoire, format/analyse et suite Flutter complète
+avant compilation ; contrôle applicationId/version6/1.4.0, ABI et signature.
+Aucun succès APK anticipé. Aucun appareil ou simulateur utilisé.

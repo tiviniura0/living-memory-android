@@ -356,13 +356,17 @@ class MemoryBackup {
               throw StateError('Neutralisation des droits invalide.');
             }
           }
-          if (target.select(
-            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
-          ).isNotEmpty) {
+          if (target
+              .select(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='lm_v14_missions'",
+              )
+              .isNotEmpty) {
             target.execute("UPDATE lm_v14_missions SET state='cancelled'");
-            if (target.select(
-              "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
-            ).isNotEmpty) {
+            if (target
+                .select(
+                  "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
+                )
+                .isNotEmpty) {
               throw StateError('Neutralisation des missions invalide.');
             }
           }

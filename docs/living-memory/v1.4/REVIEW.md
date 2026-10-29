@@ -60,3 +60,9 @@ Cet accès n'est pas exposé à un modèle ou à une entrée serveur.
 SAF : racine cache canonique corrigée après test source rouge ; le service
 répliquant les alias OS reste couvert par une nouvelle régression CI. Les tests
 source Kotlin ne sont pas une preuve de sélecteur Android sur appareil.
+
+Relecture du dernier delta e06e251f : aucun nouveau défaut important ou critique
+confirmé. Les cinq accès ACL World utilisent le namespace réservé ; purge des
+droits et annulation des missions atomiques dans la cible. Canonisation des
+chemins hôte et maintien du confinement des imports vérifiés en lecture.
+La conclusion reste soumise au résultat CI des régressions correspondantes.

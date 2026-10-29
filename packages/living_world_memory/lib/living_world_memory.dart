@@ -268,7 +268,9 @@ class LivingWorldMemory implements MemoryPort {
       for (final r in own) (event: r, shared: false),
     ];
     // Apply explicit ACLs before fetching or scoring a source owned by another agent.
-    for (final share in _records('${permissionRecordNamespacePrefix}world.share.$worldId')) {
+    for (final share in _records(
+      '${permissionRecordNamespacePrefix}world.share.$worldId',
+    )) {
       if (!(share['recipients'] as List).contains(agent) ||
           share['owner'] == agent)
         continue;
@@ -383,18 +385,27 @@ class LivingWorldMemory implements MemoryPort {
         .firstOrNull;
     if (record == null)
       throw const FormatException('Source privée introuvable.');
-    _put('${permissionRecordNamespacePrefix}world.share.$worldId', _scope(agentId), sourceId, {
-      'sourceId': sourceId,
-      'owner': agentId,
-      'recipients': recipients.toList()..sort(),
-    });
+    _put(
+      '${permissionRecordNamespacePrefix}world.share.$worldId',
+      _scope(agentId),
+      sourceId,
+      {
+        'sourceId': sourceId,
+        'owner': agentId,
+        'recipients': recipients.toList()..sort(),
+      },
+    );
   });
   Future<void> revoke({required String agentId, required String sourceId}) =>
       _serial(() async {
         _member(worldId, agentId);
         store.extensionDatabase.execute(
           'DELETE FROM lm_v14_records WHERE namespace=? AND scope_key=? AND record_id=?',
-          ['${permissionRecordNamespacePrefix}world.share.$worldId', _scope(agentId).key, sourceId],
+          [
+            '${permissionRecordNamespacePrefix}world.share.$worldId',
+            _scope(agentId).key,
+            sourceId,
+          ],
         );
       });
   @override
@@ -414,7 +425,11 @@ class LivingWorldMemory implements MemoryPort {
       });
       store.extensionDatabase.execute(
         'DELETE FROM lm_v14_records WHERE namespace=? AND scope_key=? AND record_id=?',
-        ['${permissionRecordNamespacePrefix}world.share.$worldId', scope.key, id.memoryId],
+        [
+          '${permissionRecordNamespacePrefix}world.share.$worldId',
+          scope.key,
+          id.memoryId,
+        ],
       );
     });
   });
