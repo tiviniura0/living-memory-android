@@ -44,7 +44,7 @@ ne sont pas attribués à V1.4. Aucun appareil utilisé.
 - [x] 5. TDD : politique de permissions, outils, Skills existants, plugins et MCP.
 - [x] 6. TDD : missions, file persistante, annulation et reprise explicite.
 - [x] 7. Tester deux agents, souvenirs privés, publications et reopen SQLCipher.
-- [x] 8. Export/restauration et signature compatible ; protocole de préservation des installations.
+- [x] 8. Préparer export/restauration et signature stable ; protocole de préservation (certificat à comparer avant installation).
 - [ ] 9. Revue indépendante, corrections, régressions, analyse et compilation APK ARM64.
 - [ ] 10. Rapport de preuves au commit exact, artefacts, limites et protocole S22.
 
@@ -144,3 +144,13 @@ La chaîne APK V1.4 est activée ensuite sur la branche isolée : elle impose
 sécurité réutilisée, suite mémoire, format/analyse et suite Flutter complète
 avant compilation ; contrôle applicationId/version6/1.4.0, ABI et signature.
 Aucun succès APK anticipé. Aucun appareil ou simulateur utilisé.
+
+### Régression historique d'interface reproduite
+
+Run APK40814704409 /45e395a : contrats sécuritéV1.3.1 verts (2,8,6,4,74),
+mais suite mémoire203pass5fail. Les5échecs sont les3cas assistant_screen et
+2cas cancellation : journaux hit-test montrent les cibles Discuter/Gemma à
+y608 hors viewport600 après ajout des entréesV1.4. Aucune compilation ni APK
+produit. Correction ciblée des tests : stabiliser le clavier après saisie et
+rendre le défilement effectif par frame avant clic. Assertions de conversations,
+isolation, sauvegarde explicite et annulation conservées intégralement.

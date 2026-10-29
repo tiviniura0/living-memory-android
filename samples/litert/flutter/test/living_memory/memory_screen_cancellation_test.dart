@@ -75,10 +75,13 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.enterText(find.byType(TextField), 'Question');
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Répondre avec Gemma'));
+      await tester.pump();
       await tester.tap(find.text('Répondre avec Gemma'));
       await tester.pump();
       await tester.ensureVisible(find.text('Arrêter'));
+      await tester.pump();
       await tester.tap(find.text('Arrêter'));
       await tester.pump();
       gate.complete();

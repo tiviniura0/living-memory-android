@@ -73,7 +73,9 @@ void main() {
         );
         await tester.pumpAndSettle();
         await tester.enterText(find.byType(TextField), 'Bonjour');
+        await tester.pumpAndSettle();
         await tester.ensureVisible(find.text('Discuter'));
+        await tester.pump();
         await tester.tap(find.text('Discuter'));
         for (var n = 0; n < 30 && chat.prompts.isEmpty; n++) {
           await tester.pump(const Duration(milliseconds: 10));
@@ -115,6 +117,7 @@ void main() {
           reason: 'no implicit durable source from AI output',
         );
         await tester.ensureVisible(find.text('Conserver la production'));
+        await tester.pump();
         await tester.tap(find.text('Conserver la production'));
         await tester.pumpAndSettle();
         expect(store.documents('personal'), hasLength(1));
@@ -137,7 +140,9 @@ void main() {
         );
         expect(find.text('Conserver la production'), findsNothing);
         await tester.enterText(find.byType(TextField), 'Salut');
+        await tester.pumpAndSettle();
         await tester.ensureVisible(find.text('Discuter'));
+        await tester.pump();
         await tester.tap(find.text('Discuter'));
         for (var n = 0; n < 30 && chat.prompts.length < 2; n++) {
           await tester.pump(const Duration(milliseconds: 10));
