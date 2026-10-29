@@ -17,8 +17,9 @@ import 'memory_key.dart';
 /// A host for the existing L1 modules, with its own memory file. No access to
 /// another Android application's storage and no copy of simulation rules.
 class WorldMemoryScreen extends StatefulWidget {
-  const WorldMemoryScreen({super.key, required this.embed});
+  const WorldMemoryScreen({super.key, required this.embed, this.embedQuery});
   final Future<List<double>> Function(String) embed;
+  final Future<List<double>> Function(String)? embedQuery;
   @override
   State<WorldMemoryScreen> createState() => _WorldMemoryScreenState();
 }
@@ -47,13 +48,14 @@ class _WorldMemoryScreenState extends State<WorldMemoryScreen> {
   @override
   Widget build(BuildContext context) => _store == null
       ? Scaffold(appBar: AppBar(title: const Text('Living World · mémoire')), body: Center(child: Text(_status)))
-      : WorldMemoryPanel(store: _store!, embed: widget.embed, directory: _directory!);
+      : WorldMemoryPanel(store: _store!, embed: widget.embed, embedQuery: widget.embedQuery, directory: _directory!);
 }
 
 class WorldMemoryPanel extends StatefulWidget {
-  const WorldMemoryPanel({super.key, required this.store, required this.embed, required this.directory});
+  const WorldMemoryPanel({super.key, required this.store, required this.embed, required this.directory, this.embedQuery});
   final MemoryStore store;
   final Future<List<double>> Function(String) embed;
+  final Future<List<double>> Function(String)? embedQuery;
   final Directory directory;
   @override
   State<WorldMemoryPanel> createState() => _WorldMemoryPanelState();
@@ -83,7 +85,7 @@ class _WorldMemoryPanelState extends State<WorldMemoryPanel> {
       if (!mounted) { return; }
       _controller = WorldController(core, LocalAgentRunner(core), checkpoint)..setPaused(true);
       _memory = LivingWorldMemory(store: widget.store, worldId: core.snapshot().state.worldId,
-        agentIds: core.snapshot().state.agents.map((a) => a.id).toSet(), embed: widget.embed);
+        agentIds: core.snapshot().state.agents.map((a) => a.id).toSet(), embed: widget.embed, embedQuery:widget.embedQuery);
       // Retry the committed snapshot before allowing another tick. A failure
       // pins this checkpoint in the host; it never advances past unacked work.
       await _sync();

@@ -1,10 +1,24 @@
 import 'dart:io';
+import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:litert_edge_demos/living_memory/extensions_panel.dart';
 import 'package:litert_edge_demos/living_memory/world_memory_panel.dart';
 import 'package:living_memory_core/living_memory_core.dart';
+
+// Real checkpoint File I/O needs the real event loop, outside fake frame time.
+Future<void> settleStorage(WidgetTester tester) async {
+  await tester.runAsync(() async {
+    final deadline = DateTime.now().add(const Duration(seconds:10));
+    while (tester.any(find.byType(LinearProgressIndicator))) {
+      if (DateTime.now().isAfter(deadline)) { throw StateError('Storage did not settle'); }
+      await Future<void>.delayed(const Duration(milliseconds:1));
+      await tester.pump();
+    }
+  });
+  await tester.pumpAndSettle();
+}
 
 void main() {
   testWidgets(
@@ -29,7 +43,7 @@ void main() {
           ),
         ),
       );
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('Règles locales'), findsOneWidget);
       await tester.enterText(
         find.byKey(const Key('world-note')),
@@ -37,15 +51,15 @@ void main() {
       );
       await tester.ensureVisible(find.text('Mémoriser pour A'));
     await tester.tap(find.text('Mémoriser pour A'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('Souvenir privé enregistré'), findsOneWidget);
       await tester.ensureVisible(find.text('Partager avec B'));
     await tester.tap(find.text('Partager avec B'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('Publication explicite'), findsOneWidget);
       await tester.ensureVisible(find.text('Consulter B'));
     await tester.tap(find.text('Consulter B'));
-      await tester.pumpAndSettle();
+      await settleStorage(tester);
       expect(find.textContaining('shared_declaration'), findsOneWidget);
       await tester.pumpWidget(const SizedBox.shrink());
     },
@@ -57,16 +71,19 @@ void main() {
     await tester.pumpWidget(MaterialApp(home:ExtensionsPanel(store:store,scope:const MemoryScope(agentId:'a'),
       loadSkill:() async => '---\nname: memory-scope\ndescription: Read permitted memory.\n---\nRead only approved scoped sources.',
       loadPlugin:() async => {'version':1,'id':'local-memory','revision':'1','tools':['memory.read']})));
-    await tester.pumpAndSettle();
+    await settleStorage(tester);
     await tester.enterText(find.byKey(const Key('extension-query')),'zirconium');
-    await tester.tap(find.text('Approuver ce Skill')); await tester.pumpAndSettle();
-    await tester.tap(find.text('Autoriser cette lecture')); await tester.pumpAndSettle();
+    await tester.tap(find.text('Approuver ce Skill')); await settleStorage(tester);
+    await tester.tap(find.text('Autoriser cette lecture')); await settleStorage(tester);
     expect(find.textContaining('ZR42'),findsOneWidget);
     await tester.ensureVisible(find.text('Planifier cette lecture'));
-    await tester.tap(find.text('Planifier cette lecture')); await tester.pumpAndSettle();
+    await tester.tap(find.text('Planifier cette lecture')); await settleStorage(tester);
     expect(find.textContaining('queued'),findsOneWidget);
+    final encodedScope = store.extensionDatabase.select('SELECT scope_json FROM lm_v14_missions').single['scope_json'] as String;
+    expect(jsonDecode(encodedScope),containsPair('projectId',''));
+    expect(jsonDecode(encodedScope),containsPair('worldId',''));
     await tester.ensureVisible(find.text('Autoriser les lectures planifiées'));
-    await tester.tap(find.text('Autoriser les lectures planifiées')); await tester.pumpAndSettle();
+    await tester.tap(find.text('Autoriser les lectures planifiées')); await settleStorage(tester);
     expect(find.textContaining('succeeded'),findsOneWidget);
     await tester.pumpWidget(const SizedBox.shrink());
   });

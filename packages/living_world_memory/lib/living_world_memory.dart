@@ -15,6 +15,7 @@ class LivingWorldMemory implements MemoryPort {
     required this.worldId,
     required Set<String> agentIds,
     required this.embed,
+    this.embedQuery,
   }) : agentIds = Set.unmodifiable(agentIds) {
     _id(worldId);
     if (agentIds.isEmpty || agentIds.length > 1000)
@@ -36,6 +37,7 @@ class LivingWorldMemory implements MemoryPort {
   final String worldId;
   final Set<String> agentIds;
   final Future<List<double>> Function(String text) embed;
+  final Future<List<double>> Function(String text)? embedQuery;
   Future<void> _tail = Future.value();
 
   Future<T> _serial<T>(Future<T> Function() action) {
@@ -273,7 +275,7 @@ class LivingWorldMemory implements MemoryPort {
           candidates.add((event: r, shared: true));
       }
     }
-    final vector = await embed(text);
+    final vector = await (embedQuery ?? embed)(text);
     if (vector.length != store.dimension ||
         vector.any((v) => !v.isFinite) ||
         vector.every((v) => v == 0))

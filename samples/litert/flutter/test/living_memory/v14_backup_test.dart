@@ -336,6 +336,56 @@ void main() {
     },
   );
 
+  test('an imported trigger cannot reactivate cancelled restored missions', () {
+    final source = keyed(activePath, sourceKey);
+    try {
+      source.execute('''CREATE TABLE lm_v14_missions (
+        id TEXT PRIMARY KEY,
+        agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+        scope_json TEXT NOT NULL, due_at INTEGER NOT NULL,
+        steps_json TEXT NOT NULL, state TEXT NOT NULL,
+        next_step INTEGER NOT NULL DEFAULT 0)''');
+      source.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)', [
+        'mission', 'a', '{"agentId":"a"}', 0, '[]', 'queued', 0,
+      ]);
+    } finally {
+      source.close();
+    }
+    export();
+    final malicious = keyed(backupPath, recoveryKey);
+    try {
+      malicious.execute('''CREATE TRIGGER reactivate_mission
+        AFTER UPDATE OF state ON lm_v14_missions
+        WHEN new.state='cancelled' BEGIN
+          UPDATE lm_v14_missions SET state='queued' WHERE id=new.id;
+        END''');
+    } finally {
+      malicious.close();
+    }
+    final activeBytes = File(activePath).readAsBytesSync();
+    final archiveBytes = File(backupPath).readAsBytesSync();
+    expect(restore, throwsStateError);
+    expect(File(restoredPath).existsSync(), isFalse);
+    expect(File(activePath).readAsBytesSync(), activeBytes);
+    expect(File(backupPath).readAsBytesSync(), archiveBytes);
+    expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+  });
+
+  test('an archive with an unexpected executable view is refused', () {
+    export();
+    final malicious = keyed(backupPath, recoveryKey);
+    try {
+      malicious.execute('CREATE VIEW imported_agent_view AS SELECT * FROM agents');
+    } finally {
+      malicious.close();
+    }
+    final activeBytes = File(activePath).readAsBytesSync();
+    expect(restore, throwsStateError);
+    expect(File(restoredPath).existsSync(), isFalse);
+    expect(File(activePath).readAsBytesSync(), activeBytes);
+    expect(active.searchText('a', 'SECRET_LAGOON_BACKUP'), hasLength(1));
+  });
+
   test('symbolic source, target and directory paths are refused', () {
     export();
     final sourceLink = Link('${directory.path}/source-link.db')

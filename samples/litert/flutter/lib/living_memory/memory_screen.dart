@@ -738,7 +738,7 @@ class _MemoryScreenState extends State<MemoryScreen>
             OutlinedButton(
               onPressed: enabled ? () async {
                 await Navigator.of(context).push<void>(MaterialPageRoute(
-                  builder: (_) => WorldMemoryScreen(embed: _embedMemory),
+                  builder: (_) => WorldMemoryScreen(embed: _embedMemory, embedQuery:(text) async => _value(await widget.embedder.embedQuery(KnowledgeQuery.text(text)))),
                 ));
               } : null,
               child: const Text('Ouvrir Living World et sa mémoire'),

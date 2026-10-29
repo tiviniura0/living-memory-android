@@ -28,6 +28,15 @@ ExtensionRequest _request(
 );
 
 void main() {
+  test('scope preserves empty and Unicode namespaces without reserved name collision', () {
+    final general = ExtensionScope(agentId:'a',projectId:'',worldId:'');
+    final named = ExtensionScope(agentId:'a',projectId:'personal',worldId:'no-world');
+    final french = ExtensionScope(agentId:'a',projectId:'Projet école',worldId:'');
+    expect(general.key,isNot(named.key));
+    expect(jsonDecode(general.key),containsPair('projectId',''));
+    expect(jsonDecode(french.key),containsPair('projectId','Projet école'));
+  });
+
   group('permission boundary', () {
     test(
       'one use approval executes frozen arguments and refuses replay',
