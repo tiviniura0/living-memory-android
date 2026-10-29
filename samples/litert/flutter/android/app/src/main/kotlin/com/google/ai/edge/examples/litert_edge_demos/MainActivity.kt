@@ -18,6 +18,7 @@ import io.flutter.embedding.android.FlutterActivity
 
 class MainActivity : FlutterActivity() {
     private var documents: LivingMemoryDocuments? = null
+    private var transfer: LivingMemoryTransfer? = null
 
     override fun configureFlutterEngine(flutterEngine: io.flutter.embedding.engine.FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -26,16 +27,22 @@ class MainActivity : FlutterActivity() {
         documents = LivingMemoryDocuments(this)
         io.flutter.plugin.common.MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
             "living_memory/documents").setMethodCallHandler(documents)
+        transfer = LivingMemoryTransfer(this)
+        io.flutter.plugin.common.MethodChannel(flutterEngine.dartExecutor.binaryMessenger,
+            "living_memory/transfer").setMethodCallHandler(transfer)
     }
 
     @Deprecated("Android activity result compatibility")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: android.content.Intent?) {
-        if (documents?.onActivityResult(requestCode, resultCode, data) != true) {
+        if (documents?.onActivityResult(requestCode, resultCode, data) != true &&
+            transfer?.onActivityResult(requestCode, resultCode, data) != true) {
             super.onActivityResult(requestCode, resultCode, data)
         }
     }
 
     override fun onDestroy() {
+        transfer?.close()
+        transfer = null
         documents?.close()
         documents = null
         super.onDestroy()

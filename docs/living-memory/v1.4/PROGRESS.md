@@ -98,3 +98,21 @@ Run40755565977 / job123053428142 terminé en échec attendu : dépendances histo
 - Corrections suivantes : allowlist du schéma SQL canonique et postcondition missions désactivées ; espaces bruts vides/Unicode conservés ; retrait d'une assertion non-null superflue signalée par analyse.
 - Contrôles locaux : frontières World3tests, sécurité native/source7tests, signature5tests passent. Flutter reste vérifié exclusivement en CI avec SDK épinglé.
 - Aucun résultat APK ni matériel acquis à ce stade. Le parcours SAF du plan est en cours de raccordement ; aucune activation destructrice d'une base restaurée.
+
+### Preuves L1 et régressions finales
+
+- Run40812031178 /7b128f2d : sauvegarde22/22, extensions17/17, extraction2/2,
+  World8/8, migrations1/1 et fiabilité7/7 verts. Le widget extensions passe.
+- Suites L1 réutilisées : contracts8, core23, runtime8, persistence8,
+  observateur10, headless16 ; analyses et frontières passent.
+- Scénario10000ticks : invariants=true, SHA256
+  05e332f0c6b5f5b4c1950ef0fe769f98d65c1f8550090ca152272782536acde5.
+- UI World : la nouvelle assertion SQLite confirme un reçu écrit ; seul le texte
+  de confirmation sortait de la ListView construite. Le test défile maintenant
+  vers le résultat au lieu de supposer sa présence dans le viewport.
+- SAF : rouge réel fichiers service/panel absents dans ce run ;8tests initiaux.
+  Implémentation ajoutée ensuite, gates source natifs4/4. Un9e test reproduit
+  les alias des chemins OS Android avant correction du service.
+- Revue fraîche : droits de partage persistants à neutraliser lors de restore ;
+  nouveau test export/restore World publié avant correction. Sources et reçus
+  doivent rester, source active inchangée, réapprobation explicite nécessaire.

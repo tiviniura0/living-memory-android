@@ -172,8 +172,11 @@ class LivingWorldMemory implements MemoryPort {
         ['world.event', scope.key, eventId],
       );
       if (concurrent.isNotEmpty) {
-        final receipt = jsonDecode(concurrent.single['payload'] as String) as Map<String,dynamic>;
-        if (receipt['digest'] != digest) throw const FormatException('Événement déjà lié à un autre contenu.');
+        final receipt = jsonDecode(
+          concurrent.single['payload'] as String,
+        ) as Map<String, dynamic>;
+        if (receipt['digest'] != digest)
+          throw const FormatException('Événement déjà lié à un autre contenu.');
         source = receipt['sourceId'] as String;
         alreadyPresent = true;
         return;
@@ -188,15 +191,17 @@ class LivingWorldMemory implements MemoryPort {
         projectId: scope.projectId,
         worldId: worldId,
       );
-      final receipt = <String,dynamic>{
+      final receipt = <String, dynamic>{
         ...d,
         'digest': digest,
         'sourceId': source,
         'writtenAtUtc': DateTime.now().toUtc().toIso8601String(),
         'deleted': false,
       };
-      store.extensionDatabase.execute('INSERT INTO lm_v14_records(namespace,scope_key,record_id,agent_id,payload) VALUES(?,?,?,?,?)',
-        ['world.event',scope.key,eventId,scope.agentId,jsonEncode(receipt)]);
+      store.extensionDatabase.execute(
+        'INSERT INTO lm_v14_records(namespace,scope_key,record_id,agent_id,payload) VALUES(?,?,?,?,?)',
+        ['world.event', scope.key, eventId, scope.agentId, jsonEncode(receipt)],
+      );
     });
     return MemoryAck({
       'eventId': eventId,
@@ -347,13 +352,18 @@ class LivingWorldMemory implements MemoryPort {
     return List.unmodifiable(output);
   });
 
-  bool _stillShared(Map<String,dynamic> event, String recipient) {
+  bool _stillShared(Map<String, dynamic> event, String recipient) {
     final rows = store.extensionDatabase.select(
       'SELECT payload FROM lm_v14_records WHERE namespace=? AND scope_key=? AND record_id=?',
-      ['world.share.$worldId',_scope(event['agentId'] as String).key,event['sourceId']],
+      [
+        'world.share.$worldId',
+        _scope(event['agentId'] as String).key,
+        event['sourceId'],
+      ],
     );
     if (rows.isEmpty) return false;
-    final share = jsonDecode(rows.single['payload'] as String) as Map<String,dynamic>;
+    final share =
+        jsonDecode(rows.single['payload'] as String) as Map<String, dynamic>;
     return (share['recipients'] as List).contains(recipient);
   }
 

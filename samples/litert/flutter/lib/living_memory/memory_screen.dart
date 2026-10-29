@@ -22,6 +22,7 @@ import '../utils/result.dart';
 import 'assistant_session.dart';
 import 'auto_memory_engine.dart';
 import 'auto_memory_panel.dart';
+import 'backup_panel.dart';
 import 'context_lifecycle_manager.dart';
 import 'context_panel.dart';
 import 'extensions_panel.dart';
@@ -87,6 +88,8 @@ class _MemoryScreenState extends State<MemoryScreen>
   static const _channel = MethodChannel('living_memory/documents');
   final _question = TextEditingController();
   MemoryStore? _store;
+  String? _databasePath;
+  String? _databaseKey;
   ModelRegistry? _registry;
   MultiModelEngine? _models;
   String _agent = 'personal';
@@ -127,6 +130,8 @@ class _MemoryScreenState extends State<MemoryScreen>
       profile: kKbEmbeddingProfileId,
       dimension: kKbEmbeddingDimension,
     );
+    _databasePath = path;
+    _databaseKey = key;
     if (_store!.agents().isEmpty) _store!.createAgent('personal', 'Ma mémoire');
     _agent = _store!.agents().first.id;
     _status = 'Prêt. Importe un TXT/PDF ou ajoute une note.';
@@ -717,6 +722,7 @@ class _MemoryScreenState extends State<MemoryScreen>
     } else {
       store?.close();
     }
+    _databaseKey = null;
     _question.dispose();
     super.dispose();
   }
@@ -736,21 +742,53 @@ class _MemoryScreenState extends State<MemoryScreen>
               'Documents et réponses restent sur cet appareil.\nTXT UTF-8 et PDF texte • pas d’OCR',
             ),
             OutlinedButton(
-              onPressed: enabled ? () async {
-                await Navigator.of(context).push<void>(MaterialPageRoute(
-                  builder: (_) => WorldMemoryScreen(embed: _embedMemory, embedQuery:(text) async => _value(await widget.embedder.embedQuery(KnowledgeQuery.text(text)))),
-                ));
-              } : null,
+              onPressed: enabled
+                  ? () async {
+                      await Navigator.of(context).push<void>(
+                        MaterialPageRoute(
+                          builder: (_) => WorldMemoryScreen(
+                            embed: _embedMemory,
+                            embedQuery: (text) async => _value(
+                              await widget.embedder.embedQuery(
+                                KnowledgeQuery.text(text),
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    }
+                  : null,
               child: const Text('Ouvrir Living World et sa mémoire'),
             ),
             OutlinedButton(
-              onPressed: enabled ? () async {
-                await Navigator.of(context).push<void>(MaterialPageRoute<void>(
-                  builder: (_) => ExtensionsPanel(store: store, scope: _scope),
-                ));
-              } : null,
+              onPressed: enabled
+                  ? () async {
+                      await Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) =>
+                              ExtensionsPanel(store: store, scope: _scope),
+                        ),
+                      );
+                    }
+                  : null,
               child: const Text('Extensions et missions locales'),
             ),
+            if (Platform.isAndroid)
+              OutlinedButton(
+                onPressed: enabled && _databasePath != null && _databaseKey != null
+                    ? () async {
+                        await Navigator.of(context).push<void>(
+                          MaterialPageRoute<void>(
+                            builder: (_) => BackupPanel(
+                              databasePath: _databasePath!,
+                              deviceKey: _databaseKey!,
+                            ),
+                          ),
+                        );
+                      }
+                    : null,
+                child: const Text('Sauvegarde chiffrée et vérification'),
+              ),
             if (_registry != null && _models != null)
               ModelPanel(
                 registry: _registry!,

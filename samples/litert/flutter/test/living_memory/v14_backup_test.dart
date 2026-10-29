@@ -140,7 +140,9 @@ void main() {
     try {
       expect(forged.select('PRAGMA cipher_version'), isNotEmpty);
       forged.execute('PRAGMA key = "x\'$recoveryKey\'"');
-      forged.execute('CREATE TABLE profile(id INTEGER PRIMARY KEY, name TEXT, dimension INTEGER)');
+      forged.execute(
+        'CREATE TABLE profile(id INTEGER PRIMARY KEY, name TEXT, dimension INTEGER)',
+      );
       forged.execute("INSERT INTO profile VALUES(1, 'test', 2)");
       forged.execute('CREATE TABLE agents(id TEXT PRIMARY KEY, name TEXT)');
       forged.execute('CREATE TABLE documents(id TEXT PRIMARY KEY)');
@@ -162,7 +164,10 @@ void main() {
     ('missing session FTS trigger', 'DROP TRIGGER session_fts_insert'),
     ('missing source scope index', 'DROP INDEX documents_agent'),
     ('missing version five receipts', 'DROP TABLE lm_v14_records'),
-    ('renamed source content column', 'ALTER TABLE chunks RENAME COLUMN content TO unexpected'),
+    (
+      'renamed source content column',
+      'ALTER TABLE chunks RENAME COLUMN content TO unexpected',
+    ),
   ]) {
     test('restoration refuses a canonical schema with ${defect.$1}', () {
       export();
@@ -299,15 +304,10 @@ void main() {
           'awaitingPermission',
           'succeeded',
         ]) {
-          db.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)', [
-            state,
-            'a',
-            '{"agentId":"a"}',
-            0,
-            '[]',
-            state,
-            0,
-          ]);
+          db.execute(
+            'INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)',
+            [state, 'a', '{"agentId":"a"}', 0, '[]', state, 0],
+          );
         }
       } finally {
         db.close();
@@ -345,9 +345,10 @@ void main() {
         scope_json TEXT NOT NULL, due_at INTEGER NOT NULL,
         steps_json TEXT NOT NULL, state TEXT NOT NULL,
         next_step INTEGER NOT NULL DEFAULT 0)''');
-      source.execute('INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)', [
-        'mission', 'a', '{"agentId":"a"}', 0, '[]', 'queued', 0,
-      ]);
+      source.execute(
+        'INSERT INTO lm_v14_missions VALUES (?, ?, ?, ?, ?, ?, ?)',
+        ['mission', 'a', '{"agentId":"a"}', 0, '[]', 'queued', 0],
+      );
     } finally {
       source.close();
     }
@@ -375,7 +376,9 @@ void main() {
     export();
     final malicious = keyed(backupPath, recoveryKey);
     try {
-      malicious.execute('CREATE VIEW imported_agent_view AS SELECT * FROM agents');
+      malicious.execute(
+        'CREATE VIEW imported_agent_view AS SELECT * FROM agents',
+      );
     } finally {
       malicious.close();
     }

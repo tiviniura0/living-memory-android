@@ -219,7 +219,9 @@ final class ToolRegistry {
     // singleton host dispatcher occupied until the original effect settles.
     _inFlight = true;
     final effect = Future<Map<String, Object?>>.sync(() => tool.invoke(request))
-        .whenComplete(() { _inFlight = false; });
+        .whenComplete(() {
+          _inFlight = false;
+        });
     final result = frozenJson(await effect.timeout(timeout));
     if (utf8.encode(jsonEncode(result)).length > 1048576)
       throw const FormatException('Tool result too large');

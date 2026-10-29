@@ -29,7 +29,7 @@ class NativeTransferPolicy(unittest.TestCase):
 
     def test_native_transfer_owns_a_confined_private_staging_directory(self):
         source = self.source()
-        self.assertIn('activity.cacheDir', source)
+        self.assertIn('activity.cacheDir.canonicalFile', source)
         self.assertIn('living-memory-transfer', source)
         self.assertIn('canonicalFile', source)
         self.assertRegex(source, r'parentFile\s*==\s*')

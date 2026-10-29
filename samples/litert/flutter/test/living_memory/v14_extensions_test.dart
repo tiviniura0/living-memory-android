@@ -29,12 +29,20 @@ ExtensionRequest _request(
 
 void main() {
   test('scope preserves empty and Unicode namespaces without reserved name collision', () {
-    final general = ExtensionScope(agentId:'a',projectId:'',worldId:'');
-    final named = ExtensionScope(agentId:'a',projectId:'personal',worldId:'no-world');
-    final french = ExtensionScope(agentId:'a',projectId:'Projet école',worldId:'');
-    expect(general.key,isNot(named.key));
-    expect(jsonDecode(general.key),containsPair('projectId',''));
-    expect(jsonDecode(french.key),containsPair('projectId','Projet école'));
+    final general = ExtensionScope(agentId: 'a', projectId: '', worldId: '');
+    final named = ExtensionScope(
+      agentId: 'a',
+      projectId: 'personal',
+      worldId: 'no-world',
+    );
+    final french = ExtensionScope(
+      agentId: 'a',
+      projectId: 'Projet école',
+      worldId: '',
+    );
+    expect(general.key, isNot(named.key));
+    expect(jsonDecode(general.key), containsPair('projectId', ''));
+    expect(jsonDecode(french.key), containsPair('projectId', 'Projet école'));
   });
 
   group('permission boundary', () {
@@ -192,30 +200,52 @@ void main() {
       },
     );
 
-    test('timed out adapter keeps registry dispatch blocked until effect settles', () async {
-      final plugin = _plugin();
-      final security = SecurityManager(clock: () => _now);
-      final registry = ToolRegistry(security: security,
-        timeout: const Duration(milliseconds: 20));
-      final pending = Completer<Map<String, Object?>>();
-      var effects = 0;
-      registry.register(plugin: plugin, tool: 'memory.read', invoke: (_) {
-        effects++;
-        return effects == 1 ? pending.future : Future.value({'text': 'later'});
-      });
-      final request = _request(plugin);
-      String approve() => security.approve(request,
-        expiresAt: _now.add(const Duration(minutes: 1)));
-      final firstGrant = approve();
-      await expectLater(registry.invoke(request, firstGrant), throwsA(isA<TimeoutException>()));
-      await expectLater(registry.invoke(request, approve()), throwsA(isA<ExtensionDenied>()));
-      expect(effects, 1);
-      pending.complete({'text': 'late'});
-      await Future<void>.delayed(Duration.zero);
-      await expectLater(registry.invoke(request, firstGrant), throwsA(isA<ExtensionDenied>()));
-      expect(await registry.invoke(request, approve()), {'text': 'later'});
-      expect(effects, 2);
-    });
+    test(
+      'timed out adapter keeps registry dispatch blocked until effect settles',
+      () async {
+        final plugin = _plugin();
+        final security = SecurityManager(clock: () => _now);
+        final registry = ToolRegistry(
+          security: security,
+          timeout: const Duration(milliseconds: 20),
+        );
+        final pending = Completer<Map<String, Object?>>();
+        var effects = 0;
+        registry.register(
+          plugin: plugin,
+          tool: 'memory.read',
+          invoke: (_) {
+            effects++;
+            return effects == 1
+                ? pending.future
+                : Future.value({'text': 'later'});
+          },
+        );
+        final request = _request(plugin);
+        String approve() => security.approve(
+          request,
+          expiresAt: _now.add(const Duration(minutes: 1)),
+        );
+        final firstGrant = approve();
+        await expectLater(
+          registry.invoke(request, firstGrant),
+          throwsA(isA<TimeoutException>()),
+        );
+        await expectLater(
+          registry.invoke(request, approve()),
+          throwsA(isA<ExtensionDenied>()),
+        );
+        expect(effects, 1);
+        pending.complete({'text': 'late'});
+        await Future<void>.delayed(Duration.zero);
+        await expectLater(
+          registry.invoke(request, firstGrant),
+          throwsA(isA<ExtensionDenied>()),
+        );
+        expect(await registry.invoke(request, approve()), {'text': 'later'});
+        expect(effects, 2);
+      },
+    );
 
     test('manifest rejects executable fields and instruction snapshot grants no tool', () async {
       expect(
@@ -528,29 +558,45 @@ void main() {
       recoveryDb.close();
     });
 
-    test('timed out step blocks later dispatch until original effect settles', () async {
-      final queue = MissionQueue(db, clock: () => _now,
-        stepTimeout: const Duration(milliseconds: 20));
-      queue.enqueue(id: '1-timeout', scope: _scope, dueAt: _now, steps: [{}]);
-      queue.enqueue(id: '2-later', scope: _scope, dueAt: _now, steps: [{}]);
-      final pending = Completer<void>();
-      final effects = <String>[];
-      Future<void> execute(Mission mission, Map<String, Object?> step) async {
-        effects.add(mission.id);
-        if (mission.id == '1-timeout') await pending.future;
-      }
-      await queue.runDue(scope: _scope, execute: execute);
-      expect(queue.get('1-timeout', scope: _scope)!.state, MissionState.indeterminate);
-      expect(effects, ['1-timeout']);
-      await queue.runDue(scope: _scope, execute: execute);
-      expect(effects, ['1-timeout']);
-      pending.complete();
-      await Future<void>.delayed(Duration.zero);
-      await queue.runDue(scope: _scope, execute: execute);
-      expect(effects, ['1-timeout', '2-later']);
-      expect(queue.get('1-timeout', scope: _scope)!.state, MissionState.indeterminate);
-      expect(queue.get('2-later', scope: _scope)!.state, MissionState.succeeded);
-    });
+    test(
+      'timed out step blocks later dispatch until original effect settles',
+      () async {
+        final queue = MissionQueue(
+          db,
+          clock: () => _now,
+          stepTimeout: const Duration(milliseconds: 20),
+        );
+        queue.enqueue(id: '1-timeout', scope: _scope, dueAt: _now, steps: [{}]);
+        queue.enqueue(id: '2-later', scope: _scope, dueAt: _now, steps: [{}]);
+        final pending = Completer<void>();
+        final effects = <String>[];
+        Future<void> execute(Mission mission, Map<String, Object?> step) async {
+          effects.add(mission.id);
+          if (mission.id == '1-timeout') await pending.future;
+        }
+
+        await queue.runDue(scope: _scope, execute: execute);
+        expect(
+          queue.get('1-timeout', scope: _scope)!.state,
+          MissionState.indeterminate,
+        );
+        expect(effects, ['1-timeout']);
+        await queue.runDue(scope: _scope, execute: execute);
+        expect(effects, ['1-timeout']);
+        pending.complete();
+        await Future<void>.delayed(Duration.zero);
+        await queue.runDue(scope: _scope, execute: execute);
+        expect(effects, ['1-timeout', '2-later']);
+        expect(
+          queue.get('1-timeout', scope: _scope)!.state,
+          MissionState.indeterminate,
+        );
+        expect(
+          queue.get('2-later', scope: _scope)!.state,
+          MissionState.succeeded,
+        );
+      },
+    );
 
     test('uncertain effect is never automatically retried', () async {
       final queue = MissionQueue(db, clock: () => _now);

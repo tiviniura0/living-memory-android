@@ -5,10 +5,10 @@ Aucune validation matérielle ou réussite CI supposée par le reviewer.
 
 | Constat important | Régression / action | Statut courant |
 |---|---|---|
-| addDocument ouvre BEGIN dans le savepoint de l'ingestion | v14_world : première ingestion réelle ; rendre addDocument imbriquable | Rouge confirmé run40757101294 ; correction en validation |
-| Missions privées conservées après suppression d'agent | v14_package : suppression A, conservation B ; FK agent_id/cascade | Rouge confirmé run40757101294 ; correction en validation |
-| Restauration accepte un schéma chiffré incomplet | v14_backup : schéma forgé et objets requis manquants | Tests ajoutés, correction non déclarée |
-| Timeout laisse callback actif mais libère dispatch | v14_extensions : deux callbacks contrôlés par Completer | Tests ajoutés, correction non déclarée |
+| addDocument ouvre BEGIN dans le savepoint de l'ingestion | v14_world : première ingestion réelle ; rendre addDocument imbriquable | Rouge run40757101294 ; vert run40811435881 |
+| Missions privées conservées après suppression d'agent | v14_package : suppression A, conservation B ; FK agent_id/cascade | Rouge run40757101294 ; vert run40811435881 |
+| Restauration accepte un schéma chiffré incomplet | v14_backup : schéma forgé et objets requis manquants | Rouge run40758608307 ; vert run40759820726 |
+| Timeout laisse callback actif mais libère dispatch | v14_extensions : deux callbacks contrôlés par Completer | Rouge run40758608307 ; vert run40759820726 |
 | Révocation pendant embedding d'une autre instance | v14_world : ACL retirée avant émission du résultat | Test ajouté, correction non déclarée |
 | Conflit d'événement entre deux adaptateurs | v14_world : même ID, deux contenus concurrents | Test ajouté, correction non déclarée |
 
@@ -24,3 +24,18 @@ représenter fidèlement leur ancienne version en retirant les nouvelles tables.
 UI/T5, APK, S22 et conformité complète MCP hors sous-ensemble déclaré restent à
 vérifier séparément. Aucun constat de sécurité ci-dessus n'est reporté comme
 simple limitation matérielle.
+
+## Seconde revue ciblée
+
+- Query/document embedding : rouge run40759820726, callback query distinct,
+  vert run40811435881 (8tests World).
+- Schéma SQL supplémentaire : trigger réactivant une mission et vue inattendue,
+  rouges run40811435881. Allowlist canonique stricte et postcondition cancelled
+  ajoutées en7b128f2d, en cours de vérification.
+- Espaces vides : mapping UI vers personal/no-world reproduit rouge
+  run40811435881. Valeurs brutes vides et Unicode conservées en7b128f2d,
+  en cours de vérification.
+- Widget World : helper d'attente basé sur spinner dans ListView lazy suspect ;
+  diagnostic ajouté (compte de reçus et textes visibles), aucune réussite présumée.
+
+Revue finale du diff complet, parcours SAF et compilation encore requis.

@@ -62,7 +62,14 @@ final class MissionQueue {
       throw ArgumentError('Mission too large');
     _db.execute(
       'INSERT INTO lm_v14_missions(id,agent_id,scope_json,due_at,steps_json,state) VALUES(?,?,?,?,?,?)',
-      [id, scope.agentId, scope.key, dueAt.millisecondsSinceEpoch, encoded, 'queued'],
+      [
+        id,
+        scope.agentId,
+        scope.key,
+        dueAt.millisecondsSinceEpoch,
+        encoded,
+        'queued',
+      ],
     );
   }
 
@@ -116,10 +123,14 @@ final class MissionQueue {
           if (mission.state != MissionState.running) break;
           budget--;
           try {
-            final step = frozenJson(Map<String, Object?>.from(steps[index] as Map));
+            final step = frozenJson(
+              Map<String, Object?>.from(steps[index] as Map),
+            );
             _inFlight = true;
             final effect = Future<void>.sync(() => execute(mission, step))
-                .whenComplete(() { _inFlight = false; });
+                .whenComplete(() {
+                  _inFlight = false;
+                });
             await effect.timeout(stepTimeout);
           } on TimeoutException {
             _db.execute(

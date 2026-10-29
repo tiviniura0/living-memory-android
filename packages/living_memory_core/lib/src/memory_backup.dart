@@ -127,8 +127,7 @@ class MemoryBackup {
     return version;
   }
 
-  static String _identifier(String value) =>
-      '"${value.replaceAll('"', '""')}"';
+  static String _identifier(String value) => '"${value.replaceAll('"', '""')}"';
 
   static String _rows(ResultSet rows) =>
       jsonEncode(rows.map((row) => row.values.toList()).toList());
@@ -205,15 +204,24 @@ class MemoryBackup {
           // Include implicit UNIQUE/PK indexes as well as named indexes.
           for (final index in expected.select('PRAGMA index_list($quoted)')) {
             final indexName = index['name'] as String;
-            final found = db.select('PRAGMA index_list($quoted)').where(
-              (row) => row['name'] == indexName,
-            ).toList();
+            final found = db
+                .select('PRAGMA index_list($quoted)')
+                .where((row) => row['name'] == indexName)
+                .toList();
             if (found.length != 1 ||
                 found.single['unique'] != index['unique'] ||
                 found.single['origin'] != index['origin'] ||
                 found.single['partial'] != index['partial'] ||
-                _rows(db.select('PRAGMA index_xinfo(${_identifier(indexName)})')) !=
-                    _rows(expected.select('PRAGMA index_xinfo(${_identifier(indexName)})'))) {
+                _rows(
+                      db.select(
+                        'PRAGMA index_xinfo(${_identifier(indexName)})',
+                      ),
+                    ) !=
+                    _rows(
+                      expected.select(
+                        'PRAGMA index_xinfo(${_identifier(indexName)})',
+                      ),
+                    )) {
               throw StateError('Contraintes de mémoire incompatibles.');
             }
           }
@@ -250,14 +258,21 @@ class MemoryBackup {
           final actual = columns[column.key];
           if (actual == null ||
               (actual['type'] as String).toUpperCase() != column.value ||
-              (column.key == 'id' ? actual['pk'] != 1 : actual['notnull'] != 1)) {
+              (column.key == 'id'
+                  ? actual['pk'] != 1
+                  : actual['notnull'] != 1)) {
             throw StateError('Colonnes de missions incompatibles.');
           }
         }
-        if (!db.select('PRAGMA foreign_key_list(lm_v14_missions)').any(
-          (row) => row['table'] == 'agents' && row['from'] == 'agent_id' &&
-              row['to'] == 'id' && row['on_delete'] == 'CASCADE',
-        )) {
+        if (!db
+            .select('PRAGMA foreign_key_list(lm_v14_missions)')
+            .any(
+              (row) =>
+                  row['table'] == 'agents' &&
+                  row['from'] == 'agent_id' &&
+                  row['to'] == 'id' &&
+                  row['on_delete'] == 'CASCADE',
+            )) {
           throw StateError('Portée de missions incompatible.');
         }
       }
@@ -333,9 +348,11 @@ class MemoryBackup {
         target.execute('BEGIN IMMEDIATE');
         try {
           target.execute("UPDATE lm_v14_missions SET state='cancelled'");
-          if (target.select(
-            "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
-          ).isNotEmpty) {
+          if (target
+              .select(
+                "SELECT 1 FROM lm_v14_missions WHERE state IS NULL OR state<>'cancelled' LIMIT 1",
+              )
+              .isNotEmpty) {
             throw StateError('Neutralisation des missions invalide.');
           }
           target.execute('COMMIT');
