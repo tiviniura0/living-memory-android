@@ -1,0 +1,65 @@
+{
+  "source_commit": "a569a2cb434d5d58ac26bc049294353c20655ca1",
+  "version": "1.4.0+6",
+  "status": "success",
+  "work_branch": "work/living-memory-v1.4-extensions",
+  "apk": {
+    "version_name": "1.4.0",
+    "version_code": 6,
+    "application_id": "com.google.ai.edge.examples.litert_edge_demos",
+    "commit_sha": "a569a2cb434d5d58ac26bc049294353c20655ca1",
+    "embedding_model_sha256": "e7a8a2204b91e0f96e92960e84a09a89212e1633dcb7575a9bf3378b4df77f4c",
+    "hardware_tested": false,
+    "signing_mode": "experimental-debug-not-stable",
+    "sqlcipher_libraries_sha256": {
+      "lib/arm64-v8a/libsqlcipher.so": "8b11e8c4dc411e3cc1a42b8597ed0f1d2bfecac802f500b464133f9918ca50fe"
+    },
+    "apk_bytes": 901797479,
+    "abis": [
+      "arm64-v8a"
+    ],
+    "embedding_model_bytes": 484622336,
+    "certificate_sha256": "587abca8a6ab1af2cff0ab641a3f29f15a22f604e70be02240b15e5326399e0f",
+    "v1_certificate_matches": false
+  },
+  "apk_sha256": "415a197ad441206386a3aa83426e1f4f0cbb4a6a00c13df73e549dbd76a5c5c4",
+  "runs": {
+    "android": 40859640335,
+    "contracts": 40859640417
+  },
+  "tests": {
+    "flutter_passed": 3121,
+    "flutter_skipped": 15,
+    "memory_and_llm_passed": 208,
+    "v14_passed": 61,
+    "v14_with_migration_reliability_passed": 69,
+    "world_l1_passed": 73,
+    "world_boundary_passed": 3,
+    "python_source_and_signer_passed": 16,
+    "merged_manifest_checks_passed": 4
+  },
+  "world_headless": {
+    "ticks": 10000,
+    "invariants": true,
+    "state_sha256": "05e332f0c6b5f5b4c1950ef0fe769f98d65c1f8550090ca152272782536acde5"
+  },
+  "artifacts": {
+    "apk": {
+      "id": 12892006101,
+      "zip_bytes": 662166474,
+      "zip_sha256": "a275ed8c4bfdacedc8e588a93f7c66bbc6acb4eba43f578f2f7d29f874876576",
+      "expires_at": "2026-11-12T10:57:37Z"
+    },
+    "validation": {
+      "id": 12891921392,
+      "zip_sha256": "71b872c3e20fe60f592d22dce9e5bf390079d1592156c541b815358f332184e0"
+    },
+    "contracts": {
+      "id": 12891406506,
+      "zip_sha256": "eeee5624ac4c23916c45286edd32b447f6af5643cf384ecef708eb63c1f9b85e"
+    }
+  },
+  "hardware_tested": false,
+  "native_inference_tested": false,
+  "production_signing_key_created": false
+}

@@ -1,6 +1,6 @@
 # Living Memory V1.4 — journal et feuille de route
 
-Statut courant : intégration réalisée, régressions de sécurité corrigées et modules analysés ; validation complète et nouvel APK encore en cours.
+Statut courant : mission logicielle V1.4 livrée et vérifiée en CI ; APK ARM64 expérimental disponible. Essais matériels S22 non exécutés.
 Les entrées ci-dessous conservent les résultats observés à chaque étape, sans attribuer les preuves V1.3.1 à V1.4.
 
 ## Reprise sans recréation
@@ -45,8 +45,8 @@ ne sont pas attribués à V1.4. Aucun appareil utilisé.
 - [x] 6. TDD : missions, file persistante, annulation et reprise explicite.
 - [x] 7. Tester deux agents, souvenirs privés, publications et reopen SQLCipher.
 - [x] 8. Préparer export/restauration et signature stable ; protocole de préservation (certificat à comparer avant installation).
-- [ ] 9. Revue indépendante, corrections, régressions, analyse et compilation APK ARM64.
-- [ ] 10. Rapport de preuves au commit exact, artefacts, limites et protocole S22.
+- [x] 9. Revue indépendante, corrections, régressions, analyse et compilation APK ARM64.
+- [x] 10. Rapport de preuves au commit exact, artefacts, limites et protocole S22.
 
 ## Skills et contrôle de progression
 
@@ -163,3 +163,23 @@ Run40815219600 /3075ad34 : les5tests historiques corrigés et la suite mémoire
 kAppVersion indiquait encore1.3.1+5. Constante de diagnostic alignée ; assertion
 historique conservée. Aucun APK produit par ce run, compilation correctement
 bloquée. Contrats V1.4/L1 du même commit : run40815219604 entièrement vert.
+
+### Clôture vérifiée — source a569a2cb
+
+- Contrats40859640417 : succès ;61tests V1.4,69avec migration/fiabilité,
+  73tests L1, frontières et analyses verts. Headless10000ticks invariants=true,
+  même SHA05e332f0c6b5f5b4c1950ef0fe769f98d65c1f8550090ca152272782536acde5.
+- APK40859640335 : succès ;3121tests Flutter,15ignorés ;208tests mémoire/LLM,
+  format sans diff et analyse sans issue. Contrôles sécurité/source et manifeste
+  fusionné passent ; build release ARM64, signaturev2 et contenu vérifiés.
+- APK901797479octets, SHA415a197ad441206386a3aa83426e1f4f0cbb4a6a00c13df73e549dbd76a5c5c4.
+  Artefact12892006101 ; preuves légères12891921392 ; détails dans BUILD.json.
+- Signature debug expérimentale, pas de clé stable créée ; certificat
+  587abca8a6ab1af2cff0ab641a3f29f15a22f604e70be02240b15e5326399e0f.
+  Comparaison avec installation requise ; aucune désinstallation conseillée.
+- Revue finale sans défaut important/critique restant confirmé. Point mineur,
+  restrictions fonctionnelles et limites matérielles consignés dans REPORT.
+- État de référence CURRENT_STATE mis à jour pour reprise courte. Dernière
+  publication documentaire seulement ; source compilée et testée inchangée.
+- Branche isolée conservée selon la demande ; aucun merge stable ni nettoyage
+  destructif du workspace. Aucun appareil utilisé ou service payant provisionné.

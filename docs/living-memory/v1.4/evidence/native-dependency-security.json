@@ -1,0 +1,11 @@
+{
+  "findings": [],
+  "resolved_security_dependencies": {
+    "com.google.guava:guava": [
+      "33.7.2-android"
+    ],
+    "com.squareup.okhttp3:okhttp": [
+      "4.9.2"
+    ]
+  }
+}

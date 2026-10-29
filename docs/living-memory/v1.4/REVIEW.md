@@ -66,3 +66,11 @@ confirmé. Les cinq accès ACL World utilisent le namespace réservé ; purge de
 droits et annulation des missions atomiques dans la cible. Canonisation des
 chemins hôte et maintien du confinement des imports vérifiés en lecture.
 La conclusion reste soumise au résultat CI des régressions correspondantes.
+
+## Clôture sur source a569a2cb
+
+Runs40859640417 et40859640335 verts. Les régressions de chaque constat
+important passent, dont restauration des droits, alias OS, flux SAF simulé,
+isolation, reprise, courses et délais. Suite complète3121pass/15skip ;208tests
+mémoire/LLM. Aucun défaut important ou critique confirmé restant dans le diff
+revu. APK ARM64 contrôlé en CI ; aucune validation sur appareil.

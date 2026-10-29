@@ -1,0 +1,9 @@
+test_cleartext_explicitly_disabled (test_android_security.AndroidSecurity.test_cleartext_explicitly_disabled) ... ok
+test_exported_components_are_system_protected_and_no_broad_storage (test_android_security.AndroidSecurity.test_exported_components_are_system_protected_and_no_broad_storage) ... ok
+test_private_data_excluded_from_backup (test_android_security.AndroidSecurity.test_private_data_excluded_from_backup) ... ok
+test_release_not_debuggable (test_android_security.AndroidSecurity.test_release_not_debuggable) ... ok
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.003s
+
+OK

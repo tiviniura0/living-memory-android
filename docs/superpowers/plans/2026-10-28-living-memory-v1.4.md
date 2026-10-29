@@ -1,6 +1,6 @@
 # Living Memory V1.4 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax for tracking. Parallel work is limited to disjoint extension and backup modules; one fresh whole-branch reviewer at completion.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans. Steps use checkbox (`- [x]`) syntax for tracking. Parallel work is limited to disjoint extension and backup modules; one fresh whole-branch reviewer at completion.
 
 **Goal:** Relier réellement les modules L1 existants à la mémoire canonique et livrer les extensions Android V1.4 avec preuves.
 
@@ -50,11 +50,11 @@ publier intégralement dans le dépôt public. L1 est fusionné avec ses commits
 
 **Interfaces:** produire les mêmes `MemoryStore.open`, `MemoryChunk`, `AutoMemoryCandidate`, `MemoryScope` ; aucun changement de schéma à cette tâche.
 
-- [ ] Écrire `test/living_memory/v14_package_test.dart` : importer le nouveau package et l'ancien chemin, vérifier `identical` du type et ajout/recherche/reopen réel ; import manquant attendu rouge.
-- [ ] Exécuter la CI ciblée avant extraction ; conserver lien/log rouge.
-- [ ] Déplacer la source canonique (pas la recopier), ajouter wrappers export et dépendance path.
-- [ ] Vérifier tests ciblés puis suite mémoire historique ; vérifier aucun import world dans le core.
-- [ ] Commit `refactor: extract canonical memory core with compatibility exports`.
+- [x] Écrire `test/living_memory/v14_package_test.dart` : importer le nouveau package et l'ancien chemin, vérifier `identical` du type et ajout/recherche/reopen réel ; import manquant attendu rouge.
+- [x] Exécuter la CI ciblée avant extraction ; conserver lien/log rouge.
+- [x] Déplacer la source canonique (pas la recopier), ajouter wrappers export et dépendance path.
+- [x] Vérifier tests ciblés puis suite mémoire historique ; vérifier aucun import world dans le core.
+- [x] Commit `refactor: extract canonical memory core with compatibility exports`.
 
 ### Task 2: Adaptateur World L1 et mémoire persistante
 
@@ -62,10 +62,10 @@ publier intégralement dans le dépôt public. L1 est fusionné avec ses commits
 
 **Interfaces:** `LivingWorldMemory implements MemoryPort`, construit avec MemoryStore, embedding async et contexte hôte autorisé ; `ingest`, `recall`, `delete`, `health`. `ingestSnapshot(WorldSnapshot)` ne livre que `observedBy` et ne change jamais l'état WorldCore. SourceId et idempotence stockés avec provenance. Partage par publication à destinataires nommés ; pas de recherche globale.
 
-- [ ] Tests : même ID/contenu idempotent, conflit refusé, perception de A absente chez B, monde étranger refusé, deux agents qualifiés via memoryAgentKey, partage/révocation, suppression, reopen SQLCipher.
-- [ ] Test d'intégration : vrais WorldCore/SimulationRunner, sauvegarde CheckpointStore, ingestion après checkpoint, retry après reopen et souvenir cité consultable ; l'événement garde son tick et sa provenance simulée.
-- [ ] Exécuter rouge en CI ; implémenter migration additive 4→5 (tables d'extensions uniquement), refus version future avant écriture.
-- [ ] Exécuter vert et suites de migrations/FTS V1.3.1 ; commit `feat: connect existing world events to scoped persistent memory`.
+- [x] Tests : même ID/contenu idempotent, conflit refusé, perception de A absente chez B, monde étranger refusé, deux agents qualifiés via memoryAgentKey, partage/révocation, suppression, reopen SQLCipher.
+- [x] Test d'intégration : vrais WorldCore/SimulationRunner, sauvegarde CheckpointStore, ingestion après checkpoint, retry après reopen et souvenir cité consultable ; l'événement garde son tick et sa provenance simulée.
+- [x] Exécuter rouge en CI ; implémenter migration additive 4→5 (tables d'extensions uniquement), refus version future avant écriture.
+- [x] Exécuter vert et suites de migrations/FTS V1.3.1 ; commit `feat: connect existing world events to scoped persistent memory`.
 
 ### Task 3: Permissions, Tools, Skills, plugins, MCP et missions
 
@@ -73,11 +73,11 @@ publier intégralement dans le dépôt public. L1 est fusionné avec ses commits
 
 **Interfaces:** requête immuable versionnée ; gestionnaire local de grants opaque et consommable ; registre d'adaptateurs ; manifeste strict avec empreinte ; `McpClient` sortant avec transport injecté ; file `MissionQueue` persistante avec `runDue`, `cancel`, états bornés et reprise indeterminate.
 
-- [ ] Tests rouges : forgery/rejeu/expiration/scope/argument modifié, plugin changé, outil inconnu ; aucune I/O sur refus.
-- [ ] Tests rouges MCP avec serveur loopback : JSON/SSE, ids/protocole, réponse trop grosse, délai, redirection, endpoint non approuvé ; aucune requête sans configuration.
-- [ ] Tests missions : reopen, échéance, max8 étapes, annulation, crash running→indeterminate, effet incertain jamais rejoué.
-- [ ] Implémenter le minimum. SKILL.md reste instruction sans droit ; parser de l'app réutilisé, pas de chargement JS.
-- [ ] Tests verts puis commit `feat: add permission gated extensions and persistent missions`.
+- [x] Tests rouges : forgery/rejeu/expiration/scope/argument modifié, plugin changé, outil inconnu ; aucune I/O sur refus.
+- [x] Tests rouges MCP avec serveur loopback : JSON/SSE, ids/protocole, réponse trop grosse, délai, redirection, endpoint non approuvé ; aucune requête sans configuration.
+- [x] Tests missions : reopen, échéance, max8 étapes, annulation, crash running→indeterminate, effet incertain jamais rejoué.
+- [x] Implémenter le minimum. SKILL.md reste instruction sans droit ; parser de l'app réutilisé, pas de chargement JS.
+- [x] Tests verts puis commit `feat: add permission gated extensions and persistent missions`.
 
 ### Task 4: Export/restauration chiffrés et signature
 
@@ -85,10 +85,10 @@ publier intégralement dans le dépôt public. L1 est fusionné avec ses commits
 
 **Interfaces:** export SQLCipher vers fichier neuf avec clé de récupération aléatoire ; restore vers fichier séparé avec validation profil/schéma/intégrité. API ne remplace jamais la base active. Clé Keystore non exportée.
 
-- [ ] Tests rouges : roundtrip chiffré, mauvaise clé, troncature, collision de destination, schéma futur, source active inchangée et restauration permissions désactivées.
-- [ ] Implémenter avec source SQLCipher ouverte et transactions compatibles ; fermer toutes connexions temporaires sur erreur.
-- [ ] Tests verts et tests sécurité V1.3.1 ; garder le refus release sans signature externe et l'opt-in expérimental explicite.
-- [ ] Commit `feat: prepare verified encrypted memory transfers without replacing active data`.
+- [x] Tests rouges : roundtrip chiffré, mauvaise clé, troncature, collision de destination, schéma futur, source active inchangée et restauration permissions désactivées.
+- [x] Implémenter avec source SQLCipher ouverte et transactions compatibles ; fermer toutes connexions temporaires sur erreur.
+- [x] Tests verts et tests sécurité V1.3.1 ; garder le refus release sans signature externe et l'opt-in expérimental explicite.
+- [x] Commit `feat: prepare verified encrypted memory transfers without replacing active data`.
 
 ### Task 5: Branchement Android et parcours vérifiable
 
@@ -96,17 +96,27 @@ publier intégralement dans le dépôt public. L1 est fusionné avec ses commits
 
 **Interfaces:** hôte ouvre ses stores avec MemoryKey existant, embarque le core L1 sans copier sa logique, affiche mémoire privée/partagée par agent, gestes de publication/autorisation et missions. Aucun accès aux outils téléphone par les habitants.
 
-- [ ] Tests rouges : navigation, deux agents, souvenir partagé après geste, état de mission et erreurs explicites.
-- [ ] Raccorder aux services réels d'embedding/génération existants, avec mode de règle local clairement étiqueté si modèle absent. Aucun faux modèle fourni dans le produit.
-- [ ] Export/import via SAF avec clé séparée, validation sans activation destructive ; protocole de reprise documenté.
-- [ ] Tests verts, format/analyse ; commit `feat: expose integrated world memory and extension controls`.
+- [x] Tests rouges : navigation, deux agents, souvenir partagé après geste, état de mission et erreurs explicites.
+- [x] Raccorder aux services réels d'embedding/génération existants, avec mode de règle local clairement étiqueté si modèle absent. Aucun faux modèle fourni dans le produit.
+- [x] Export/import via SAF avec clé séparée, validation sans activation destructive ; protocole de reprise documenté.
+- [x] Tests verts, format/analyse ; commit `feat: expose integrated world memory and extension controls`.
 
 ### Task 6: Revue, régressions et livraison
 
 **Files:** workflows V1.4 et `docs/living-memory/v1.4/{REPORT,BUILD,REVIEW,INSTALL_S22}` + preuves légères.
 
-- [ ] Reviewer distinct en lecture seule sur diff V1.3.1→V1.4 ; corriger défauts critiques/importants par tests rouges→verts.
-- [ ] Tests packages + World L1 + sample complet, analyse, contrôles frontières/sécurité et lockfiles ; publier sorties avec SHA exact.
-- [ ] Compiler APK ARM64 ; contrôler ABI, manifeste fusionné, modèle EmbeddingGemma et signature/hash ; aucun succès annoncé pendant un run.
-- [ ] Rapport : commits canoniques GitHub, runs, artefacts, tests simulés/réels, limitations S22 et préservation d'installations.
-- [ ] Aucun merge stable ; livraison branche expérimentale seulement.
+- [x] Reviewer distinct en lecture seule sur diff V1.3.1→V1.4 ; corriger défauts critiques/importants par tests rouges→verts.
+- [x] Tests packages + World L1 + sample complet, analyse, contrôles frontières/sécurité et lockfiles ; publier sorties avec SHA exact.
+- [x] Compiler APK ARM64 ; contrôler ABI, manifeste fusionné, modèle EmbeddingGemma et signature/hash ; aucun succès annoncé pendant un run.
+- [x] Rapport : commits canoniques GitHub, runs, artefacts, tests simulés/réels, limitations S22 et préservation d'installations.
+- [x] Aucun merge stable ; livraison branche expérimentale seulement.
+
+
+## Clôture du plan
+
+Résultat logiciel validé au commit a569a2cb434d5d58ac26bc049294353c20655ca1.
+Preuves : docs/living-memory/v1.4/REPORT.md et BUILD.json ; runs40859640417
+et40859640335 réussis. Les coches indiquent la réalisation logicielle et ses
+vérifications CI, sans transformer les essais matériels non exécutés en succès.
+Signature stable préparée seulement ; clé externe d'origine nécessaire pour
+une mise à jour compatible. Branche isolée conservée, aucun merge stable.
