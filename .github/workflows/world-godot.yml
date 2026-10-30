@@ -45,7 +45,7 @@ jobs:
           cd packages/living_world_godot
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/channel-tests.log
-      - name: Build native RED scaffold for emulator
+      - name: Build native RED scaffold with aligned AndroidX runner
         run: |
           set -euo pipefail
           cd apps/world_observer

@@ -23,6 +23,11 @@ android {
 }
 flutter { source = "../.." }
 dependencies {
+    // Flutter integration_test brings runner 1.3.0 to debugRuntimeClasspath.
+    // Align both sides of AGP's consistent test dependency resolution.
+    debugImplementation("androidx.test:runner:1.6.2")
+    debugImplementation("androidx.test:core:1.6.1")
+    debugImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
     androidTestImplementation("androidx.test:core:1.6.1")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
