@@ -58,6 +58,13 @@ jobs:
           cd packages/living_world_godot
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/channel-tests.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-godot-channel-evidence-${{ github.sha }}
+          path: evidence/godot-task1/channel-tests.log
+          if-no-files-found: warn
+          retention-days: 14
       - name: Build official native host for x86_64 emulator
         run: |
           set -euo pipefail
