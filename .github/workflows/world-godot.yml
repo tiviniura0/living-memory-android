@@ -38,7 +38,7 @@ jobs:
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/observer-tests.log
           flutter analyze
-      - name: Flutter channel RED
+      - name: Flutter channel GREEN and surface RED
         continue-on-error: true
         run: |
           set -euo pipefail
