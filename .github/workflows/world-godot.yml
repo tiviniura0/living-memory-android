@@ -95,15 +95,17 @@ jobs:
           flutter build apk --debug --target-platform android-arm64 -t lib/godot_host_smoke.dart
           cd ../..
           apk=apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
+          mkdir -p evidence/godot-delivery
           python3 scripts/inspect_world_godot_apk.py "$apk" evidence/godot-task1/arm64-apk.json
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$tools/apksigner" verify --verbose --print-certs "$apk" > evidence/godot-task1/apk-signature.txt
           "$tools/aapt" dump badging "$apk" > evidence/godot-task1/apk-badging.txt
+          cp "$apk" evidence/godot-delivery/world-godot-task1-smoke-arm64.apk
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
           name: world-godot-task1-arm64-${{ github.sha }}
-          path: apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
+          path: evidence/godot-delivery/world-godot-task1-smoke-arm64.apk
           if-no-files-found: warn
           retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

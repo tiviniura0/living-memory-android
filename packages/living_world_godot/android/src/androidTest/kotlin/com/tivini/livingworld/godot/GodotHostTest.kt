@@ -45,6 +45,12 @@ class GodotHostTest {
         val ready = event(events, "ready")
         assertTrue("Engine version must come from Engine.get_version_info()", (ready["version"] as String).startsWith("4.5.1"))
         assertEquals("LivingWorldRender", ready["singleton"])
+        android.os.SystemClock.sleep(500)
+        val image = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
+        assertNotNull(image)
+        java.io.File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "godot-ready.png").outputStream().use {
+            image!!.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
+        }
         ui { host.probe("android-scene-roundtrip") }
         assertEquals("android-scene-roundtrip", event(events, "probe")["nonce"])
     }
@@ -86,7 +92,15 @@ class GodotHostTest {
                 host.getView().layoutParams = FrameLayout.LayoutParams(420, 300)
                 activity.requestedOrientation = orientation
             }
-            InstrumentationRegistry.getInstrumentation().waitForIdleSync()
+            val expected = if (orientation == ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE) android.content.res.Configuration.ORIENTATION_LANDSCAPE else android.content.res.Configuration.ORIENTATION_PORTRAIT
+            val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+            var changed = false
+            while (System.nanoTime() < deadline) {
+                ui { changed = activity.resources.configuration.orientation == expected && host.getView().width == 420 && host.getView().height == 300 }
+                if (changed) break
+                android.os.SystemClock.sleep(50)
+            }
+            assertTrue("Actual orientation and layout did not settle", changed)
             ui { host.probe("rotate-$orientation") }
             assertEquals("rotate-$orientation", event(events, "probe")["nonce"])
         }
@@ -118,6 +132,35 @@ class GodotHostTest {
                 ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "method-gdscript-event")), result) }
                 assertEquals("method-gdscript-event", event(events, "probe")["nonce"])
             } finally { ui { channel.dispose(); engine.destroy() } }
+        }
+    }
+
+    @Test fun activityRecreationKeepsHostAlive() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var original: MainActivity
+            lateinit var initial: GodotHostView
+            var restored: GodotHostView? = null
+            val initialEvents = LinkedBlockingQueue<Map<String, Any>>()
+            val restoredEvents = LinkedBlockingQueue<Map<String, Any>>()
+            scenario.onActivity { activity ->
+                original = activity
+                initial = GodotHostView(activity) { initialEvents.offer(it) }
+                activity.addContentView(initial.getView(), FrameLayout.LayoutParams(600, 600))
+                initial.open()
+            }
+            try {
+                event(initialEvents, "ready")
+                scenario.recreate()
+                scenario.onActivity { activity ->
+                    assertNotSame("Activity recreation must be real", original, activity)
+                    assertFalse("Flutter Activity must remain alive", activity.isFinishing)
+                    restored = GodotHostView(activity) { restoredEvents.offer(it) }.also {
+                        activity.addContentView(it.getView(), FrameLayout.LayoutParams(600, 600))
+                        it.open()
+                    }
+                }
+                assertTrue((event(restoredEvents, "ready")["version"] as String).startsWith("4.5.1"))
+            } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }
 

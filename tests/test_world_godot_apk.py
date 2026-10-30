@@ -33,3 +33,8 @@ class GodotApkPackagingTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             with self.assertRaisesRegex(ValueError,'Godot'):
                 module.inspect(self.apk(td,['lib/arm64-v8a/libflutter.so','assets/world_godot.pck']))
+
+    def test_rejects_missing_flutter_runtime(self):
+        with tempfile.TemporaryDirectory() as td:
+            with self.assertRaisesRegex(ValueError,'Flutter'):
+                module.inspect(self.apk(td,['lib/arm64-v8a/libgodot_android.so','assets/world_godot.pck']))

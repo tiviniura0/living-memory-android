@@ -17,6 +17,8 @@ def inspect(apk):
             raise ValueError(f'ARM64-only APK required, found {abis}')
         if library not in names:
             raise ValueError('Official Godot library is absent')
+        if 'lib/arm64-v8a/libflutter.so' not in names:
+            raise ValueError('Flutter runtime is absent')
         if pack not in names:
             raise ValueError('Godot PCK is absent')
         pack_sha = hashlib.sha256(archive.read(pack)).hexdigest()
