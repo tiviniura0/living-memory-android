@@ -49,8 +49,16 @@ jobs:
           assert json.loads(Path("evidence/godot-preparation/flutter-version.json").read_text())["frameworkVersion"] == "3.47.3"
           PY
           java -version 2>&1 | tee "$evidence/java-version.txt"
-          sdkmanager --version | tee "$evidence/sdkmanager-version.txt"
-          sdkmanager --list_installed > "$evidence/android-installed.txt"
+          sdk_manager="$(command -v sdkmanager || true)"
+          if [ -z "$sdk_manager" ]; then
+            android_sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+            test -n "$android_sdk"
+            sdk_manager="$android_sdk/cmdline-tools/latest/bin/sdkmanager"
+          fi
+          test -x "$sdk_manager"
+          printf '%s\n' "$sdk_manager" > "$evidence/sdkmanager-path.txt"
+          "$sdk_manager" --version | tee "$evidence/sdkmanager-version.txt"
+          "$sdk_manager" --list_installed > "$evidence/android-installed.txt"
           flutter doctor -v > "$evidence/flutter-doctor.txt" 2>&1
       - name: Download fixed official Godot CLI templates and AAR
         shell: bash
