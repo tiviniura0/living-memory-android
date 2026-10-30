@@ -1,0 +1,16 @@
+config_version=5
+
+[application]
+config/name="Living World Godot Host Smoke"
+run/main_scene="res://scenes/world.tscn"
+
+[display]
+window/size/viewport_width=640
+window/size/viewport_height=480
+window/stretch/mode="canvas_items"
+
+[rendering]
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/vram_compression/import_etc2_astc=true
+environment/defaults/default_clear_color=Color(0.04, 0.09, 0.12, 1)

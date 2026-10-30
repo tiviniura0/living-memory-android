@@ -27,6 +27,19 @@ jobs:
           flutter-version: '3.47.3'
           channel: stable
           cache: true
+      - name: Fixed official Godot CLI and PCK
+        run: |
+          set -euo pipefail
+          mkdir -p evidence/godot-task1
+          downloads="$RUNNER_TEMP/godot-task1"
+          mkdir -p "$downloads"
+          archive="$downloads/godot.zip"
+          curl --fail --show-error --location --proto '=https' --proto-redir '=https' --connect-timeout 20 --max-time 600 https://github.com/godotengine/godot-builds/releases/download/4.5.1-stable/Godot_v4.5.1-stable_linux.x86_64.zip -o "$archive"
+          printf '%s  %s\n' 02ec53d1cc7dbb9cc6355393c61b9ab43d1244751a124f10248a4802830788cd "$archive" | sha256sum --check
+          unzip -q "$archive" -d "$downloads/cli"
+          export GODOT_BIN="$downloads/cli/Godot_v4.5.1-stable_linux.x86_64"
+          echo "GODOT_BIN=$GODOT_BIN" >> "$GITHUB_ENV"
+          bash scripts/build_world_godot.sh 2>&1 | tee evidence/godot-task1/pack-build.log
       - name: Record source and bootstrap non-destructive shell
         run: |
           set -euo pipefail
@@ -45,7 +58,7 @@ jobs:
           cd packages/living_world_godot
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/channel-tests.log
-      - name: Build native RED scaffold with aligned AndroidX runner
+      - name: Build official native host for x86_64 emulator
         run: |
           set -euo pipefail
           cd apps/world_observer
@@ -57,7 +70,7 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Native RED on matching x86_64 official Godot AAR
+      - name: Native host GREEN and channel RED on matching x86_64
         uses: reactivecircus/android-emulator-runner@1dcd0090116d15e7c562f8db72807de5e036a4ed
         with:
           api-level: 35

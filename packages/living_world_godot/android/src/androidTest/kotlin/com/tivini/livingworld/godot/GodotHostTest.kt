@@ -92,4 +92,31 @@ class GodotHostTest {
         }
         assertFalse(activity.isFinishing)
     }
+    @Test fun realChannelReadyAndProbe() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var channel: GodotPlatformView
+            val events = LinkedBlockingQueue<Map<String, Any>>()
+            val result = object : io.flutter.plugin.common.MethodChannel.Result {
+                override fun success(value: Any?) {}
+                override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
+                override fun notImplemented() { throw AssertionError("Missing channel handler") }
+            }
+            scenario.onActivity { activity ->
+                channel = GodotPlatformView(activity, activity.flutterEngine!!.dartExecutor.binaryMessenger, 900)
+                activity.addContentView(channel.getView(), FrameLayout.LayoutParams(600, 600))
+                channel.onListen(null, object : io.flutter.plugin.common.EventChannel.EventSink {
+                    override fun success(value: Any?) { @Suppress("UNCHECKED_CAST") events.offer(value as Map<String, Any>) }
+                    override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
+                    override fun endOfStream() {}
+                })
+                channel.onMethodCall(io.flutter.plugin.common.MethodCall("open", null), result)
+            }
+            try {
+                assertTrue((event(events, "ready")["version"] as String).startsWith("4.5.1"))
+                ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "method-gdscript-event")), result) }
+                assertEquals("method-gdscript-event", event(events, "probe")["nonce"])
+            } finally { ui { channel.dispose() } }
+        }
+    }
+
 }
