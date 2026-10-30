@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
 set -euo pipefail
-# Reproducible Android shell from the pinned SDK. Preserve the audited main manifest.
-scaffold=$(mktemp -d)
-flutter create --no-pub --platforms=android --org=com.tivini --project-name=livingworld "$scaffold/livingworld"
-cp apps/world_observer/android/app/src/main/AndroidManifest.xml "$scaffold/world-manifest.xml"
-cp -a "$scaffold/livingworld/android/." apps/world_observer/android/
-cp "$scaffold/world-manifest.xml" apps/world_observer/android/app/src/main/AndroidManifest.xml
+# Bootstrap only missing Flutter-owned files; never overwrite the tracked host.
+android=apps/world_observer/android
+if [ ! -f "$android/gradlew" ]; then
+  scaffold=$(mktemp -d)
+  trap 'rm -rf "$scaffold"' EXIT
+  flutter create --no-pub --platforms=android --org=com.tivini --project-name=livingworld "$scaffold/livingworld"
+  cp -an "$scaffold/livingworld/android/." "$android/"
+fi
 python3 scripts/check_world_boundaries.py

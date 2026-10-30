@@ -6,6 +6,8 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  living_world_godot:
+    path: ../../packages/living_world_godot
   world_contracts:
     path: ../../packages/world_contracts
   world_core:
