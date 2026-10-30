@@ -106,47 +106,46 @@ class GodotHostTest {
         }
         assertFalse(activity.isFinishing)
     }
+
+    private fun registeredChannel(activity: MainActivity, id: Int, events: LinkedBlockingQueue<Map<String, Any>>): GodotPlatformView {
+        val flutter = activity.supportFragmentManager.fragments.filterIsInstance<io.flutter.embedding.android.FlutterFragment>().single()
+        val channel = io.flutter.plugin.platform.RegistryTestAccess.create(flutter.flutterEngine!!, activity, id) as GodotPlatformView
+        activity.addContentView(channel.getView(), FrameLayout.LayoutParams(600, 600))
+        channel.onListen(null, object : io.flutter.plugin.common.EventChannel.EventSink {
+            override fun success(value: Any?) { @Suppress("UNCHECKED_CAST") events.offer(value as Map<String, Any>) }
+            override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
+            override fun endOfStream() {}
+        })
+        channel.onMethodCall(io.flutter.plugin.common.MethodCall("open", null), channelResult)
+        return channel
+    }
+    private val channelResult = object : io.flutter.plugin.common.MethodChannel.Result {
+        override fun success(value: Any?) {}
+        override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
+        override fun notImplemented() { throw AssertionError("Missing channel handler") }
+    }
     @Test fun realChannelReadyAndProbe() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var channel: GodotPlatformView
-            lateinit var engine: io.flutter.embedding.engine.FlutterEngine
             val events = LinkedBlockingQueue<Map<String, Any>>()
-            val result = object : io.flutter.plugin.common.MethodChannel.Result {
-                override fun success(value: Any?) {}
-                override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
-                override fun notImplemented() { throw AssertionError("Missing channel handler") }
-            }
-            scenario.onActivity { activity ->
-                engine = io.flutter.embedding.engine.FlutterEngine(activity)
-                channel = GodotPlatformView(activity, engine.dartExecutor.binaryMessenger, 900)
-                activity.addContentView(channel.getView(), FrameLayout.LayoutParams(600, 600))
-                channel.onListen(null, object : io.flutter.plugin.common.EventChannel.EventSink {
-                    override fun success(value: Any?) { @Suppress("UNCHECKED_CAST") events.offer(value as Map<String, Any>) }
-                    override fun error(code: String, message: String?, details: Any?) { throw AssertionError(code) }
-                    override fun endOfStream() {}
-                })
-                channel.onMethodCall(io.flutter.plugin.common.MethodCall("open", null), result)
-            }
+            scenario.onActivity { channel = registeredChannel(it, 900, events) }
             try {
                 assertTrue((event(events, "ready")["version"] as String).startsWith("4.5.1"))
-                ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "method-gdscript-event")), result) }
+                ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "method-gdscript-event")), channelResult) }
                 assertEquals("method-gdscript-event", event(events, "probe")["nonce"])
-            } finally { ui { channel.dispose(); engine.destroy() } }
+            } finally { ui { channel.dispose() } }
         }
     }
-
     @Test fun activityRecreationKeepsHostAlive() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var original: MainActivity
-            lateinit var initial: GodotHostView
-            var restored: GodotHostView? = null
+            lateinit var initial: GodotPlatformView
+            var restored: GodotPlatformView? = null
             val initialEvents = LinkedBlockingQueue<Map<String, Any>>()
             val restoredEvents = LinkedBlockingQueue<Map<String, Any>>()
             scenario.onActivity { activity ->
                 original = activity
-                initial = GodotHostView(activity) { initialEvents.offer(it) }
-                activity.addContentView(initial.getView(), FrameLayout.LayoutParams(600, 600))
-                initial.open()
+                initial = registeredChannel(activity, 901, initialEvents)
             }
             try {
                 event(initialEvents, "ready")
@@ -154,14 +153,12 @@ class GodotHostTest {
                 scenario.onActivity { activity ->
                     assertNotSame("Activity recreation must be real", original, activity)
                     assertFalse("Flutter Activity must remain alive", activity.isFinishing)
-                    restored = GodotHostView(activity) { restoredEvents.offer(it) }.also {
-                        activity.addContentView(it.getView(), FrameLayout.LayoutParams(600, 600))
-                        it.open()
-                    }
+                    // Both views belong to the actual plugin registry, so ActivityAware
+                    // owns old-view cleanup, exactly as in the Flutter application.
+                    restored = registeredChannel(activity, 902, restoredEvents)
                 }
                 assertTrue((event(restoredEvents, "ready")["version"] as String).startsWith("4.5.1"))
             } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }
-
 }

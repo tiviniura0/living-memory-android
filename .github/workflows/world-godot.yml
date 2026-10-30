@@ -48,16 +48,16 @@ jobs:
           python3 -m unittest discover -s tests -v 2>&1 | tee evidence/godot-task1/python.log
           bash scripts/prepare_world_android.sh
           cd apps/world_observer
-          flutter pub get
+          flutter pub get --enforce-lockfile
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/observer-tests.log
           flutter analyze
       - name: Flutter channel and hybrid surface tests
-        continue-on-error: true
         run: |
           set -euo pipefail
           cd packages/living_world_godot
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/channel-tests.log
+          flutter analyze 2>&1 | tee ../../evidence/godot-task1/plugin-analysis.log
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -66,6 +66,7 @@ jobs:
           if-no-files-found: warn
           retention-days: 14
       - name: Build official native host for x86_64 emulator
+        if: ${{ !cancelled() }}
         run: |
           set -euo pipefail
           cd apps/world_observer
