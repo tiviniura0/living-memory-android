@@ -51,7 +51,7 @@ jobs:
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/observer-tests.log
           flutter analyze
-      - name: Flutter channel GREEN and surface RED
+      - name: Flutter channel and hybrid surface tests
         continue-on-error: true
         run: |
           set -euo pipefail
@@ -92,7 +92,7 @@ jobs:
         run: |
           set -euo pipefail
           cd apps/world_observer
-          flutter build apk --debug --target-platform android-arm64
+          flutter build apk --debug --target-platform android-arm64 -t lib/godot_host_smoke.dart
           cd ../..
           apk=apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
           python3 scripts/inspect_world_godot_apk.py "$apk" evidence/godot-task1/arm64-apk.json
