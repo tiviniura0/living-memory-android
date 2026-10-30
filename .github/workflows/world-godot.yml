@@ -1,6 +1,9 @@
 name: Living World Godot preparation
 on:
   workflow_dispatch:
+  push:
+    branches: ['work/living-world-godot2d']
+    paths: ['.github/workflows/world-godot.yml']
 permissions:
   contents: read
 concurrency:
