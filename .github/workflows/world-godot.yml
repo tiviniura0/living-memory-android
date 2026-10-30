@@ -80,6 +80,25 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/test_world_godot_native.sh
+      - name: Build and inspect ARM64 work actually present
+        if: ${{ !cancelled() }}
+        run: |
+          set -euo pipefail
+          cd apps/world_observer
+          flutter build apk --debug --target-platform android-arm64
+          cd ../..
+          apk=apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
+          python3 scripts/inspect_world_godot_apk.py "$apk" evidence/godot-task1/arm64-apk.json
+          tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
+          "$tools/apksigner" verify --verbose --print-certs "$apk" > evidence/godot-task1/apk-signature.txt
+          "$tools/aapt" dump badging "$apk" > evidence/godot-task1/apk-badging.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-godot-task1-arm64-${{ github.sha }}
+          path: apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
+          if-no-files-found: warn
+          retention-days: 14
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
@@ -89,5 +108,51 @@ jobs:
             apps/world_observer/build/app/reports/androidTests/
             apps/world_observer/build/app/outputs/androidTest-results/
             apps/world_observer/android/
+          if-no-files-found: error
+          retention-days: 14
+  regressions:
+    if: github.ref == 'refs/heads/work/living-world-godot2d'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: World portable suites and extracted module analysis
+        run: |
+          set -euo pipefail
+          evidence="$PWD/evidence/godot-regressions"
+          mkdir -p "$evidence"
+          git rev-parse HEAD > "$evidence/source-sha.txt"
+          failed=0
+          for package in world_contracts world_core agent_runtime world_persistence; do
+            (cd packages/$package && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded) 2>&1 | tee "$evidence/$package.log" || failed=1
+          done
+          for package in living_memory_core living_memory_extensions living_world_memory; do
+            (cd packages/$package && dart pub get && dart analyze) 2>&1 | tee "$evidence/$package.log" || failed=1
+          done
+          (cd tools/world_headless && dart pub get --enforce-lockfile && dart analyze && dart test --reporter expanded && dart run bin/world_headless.dart --fixture ../../fixtures/world/l1_world.json --ticks 10000 --out "$evidence/headless.json") 2>&1 | tee "$evidence/headless.log" || failed=1
+          exit "$failed"
+      - name: Existing Living Memory full Flutter suite
+        if: ${{ !cancelled() }}
+        working-directory: samples/litert/flutter
+        run: |
+          set -euo pipefail
+          evidence="$GITHUB_WORKSPACE/evidence/godot-regressions"
+          bash tool/flutter_litert/vendor.sh
+          bash tool/fetch_models.sh
+          flutter pub get
+          flutter test --reporter expanded 2>&1 | tee "$evidence/memory-tests.log"
+          flutter analyze 2>&1 | tee "$evidence/memory-analysis.log"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-godot-task1-regressions-${{ github.sha }}
+          path: evidence/godot-regressions/
           if-no-files-found: error
           retention-days: 14
