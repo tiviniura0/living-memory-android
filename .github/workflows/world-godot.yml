@@ -1,4 +1,4 @@
-name: Living World Godot preparation
+name: Living World Godot Task 1
 on:
   workflow_dispatch:
   push:
@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: world-godot-preparation-${{ github.ref }}
+  group: world-godot-task1-${{ github.ref }}
   cancel-in-progress: false
 jobs:
   task1:
