@@ -1,0 +1,42 @@
+name: Living World Godot Flutter contracts
+on:
+  workflow_dispatch:
+  push:
+    branches: ['work/living-world-godot2d']
+    paths: ['.github/workflows/world-godot-contracts.yml']
+permissions:
+  contents: read
+concurrency:
+  group: world-godot-contracts-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contracts:
+    if: github.ref == 'refs/heads/work/living-world-godot2d'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2
+        with:
+          flutter-version: '3.47.3'
+          channel: stable
+          cache: true
+      - name: Check per-view Flutter contracts and analysis
+        run: |
+          set -euo pipefail
+          evidence="$PWD/evidence/godot-contracts"
+          mkdir -p "$evidence"
+          git rev-parse HEAD > "$evidence/source-sha.txt"
+          cd packages/living_world_godot
+          flutter pub get
+          flutter test --reporter expanded 2>&1 | tee "$evidence/tests.log"
+          flutter analyze 2>&1 | tee "$evidence/analysis.log"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: world-godot-contracts-${{ github.sha }}
+          path: evidence/godot-contracts/
+          if-no-files-found: error
+          retention-days: 14
