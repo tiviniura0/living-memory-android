@@ -1,84 +1,63 @@
-# Godot preparation via GitHub Actions — blocked before dispatch
+# Préparation GitHub Actions Godot — résultat vérifié
 
-Date: 29 octobre 2026 (Tahiti).
+Date : 29 octobre 2026, Tahiti.
 
-## Scope and source
+## Résultat actuel
 
-Mission: reuse the approved plan `docs/superpowers/plans/2026-10-29-living-world-godot2d.md`, add a manual prerequisite check on `work/living-world-godot2d`, and start Task 1 only after a successful preparation run.
-The user's current mission constitutes approval of the existing plan; its older “PLAN À VALIDER” label does not require another approval.
-Starting branch head: `bb9d10940391566e9a06e77e2dd6324dd12d0668`.
-Preparation workflow commit: [34b55c704978bc98418baff84a82f166b79eb1ef](https://github.com/tiviniura0/living-memory-android/commit/34b55c704978bc98418baff84a82f166b79eb1ef).
+La préparation est **RÉUSSIE** au commit `4801903664c75f5fc1c492bd701c8a311e02a20d`.
+- Exécution : https://github.com/tiviniura0/living-memory-android/actions/runs/41036150448
+- Preuves : https://github.com/tiviniura0/living-memory-android/actions/runs/41036150448/artifacts/12968097316
+- SHA256 du ZIP des preuves : `239fc5a46b50c019feb24d08e82d1bc389ba98406e0c55206a628adc7054ad30`.
 
-No application, simulation, memory, schema, asset, signing or stable-branch changes.
+Le blocage de déclenchement décrit par la version précédente de ce document est levé : l'utilisateur a autorisé le push sur la seule branche Godot, limité au chemin du workflow.
+`workflow_dispatch`, `contents: read`, checkout sans credentials persistants et garde sur la branche Godot sont conservés.
+Aucun secret ajouté, aucune branche stable modifiée.
 
-## Existing workflows and permissions
+## Exécutions et corrections
 
-Read against the Godot branch. Runtime GITHUB_TOKEN permissions are distinct from the connector's available operations.
+| Commit | Exécution | Résultat | Preuves |
+| --- | --- | --- | --- |
+| b61193afa0bd1a4616f62ef70e62e8f59b2ef429 | https://github.com/tiviniura0/living-memory-android/actions/runs/41035347115 | Échec : sdkmanager absent du PATH, exit 127 | https://github.com/tiviniura0/living-memory-android/actions/runs/41035347115/artifacts/12967178899 |
+| 7a4e819b6b3e90cd6174022ce3a6afd75c4791ba | https://github.com/tiviniura0/living-memory-android/actions/runs/41035578784 | APK compilé ; assertion ABI échouée : arm64-v8a, armeabi-v7a, x86_64 | https://github.com/tiviniura0/living-memory-android/actions/runs/41035578784/artifacts/12968411596 |
+| 4801903664c75f5fc1c492bd701c8a311e02a20d | https://github.com/tiviniura0/living-memory-android/actions/runs/41036150448 | Préparation complète réussie ; ARM64 seul | https://github.com/tiviniura0/living-memory-android/actions/runs/41036150448/artifacts/12968097316 |
 
-| Workflow | Trigger relevant here | Declared permissions |
-| --- | --- | --- |
-| world-l1.yml | push restricted to work/living-world-l1-observable; no manual trigger | contents: read |
-| living-memory-v14.yml | manual; push restricted to V1.4 | contents: read |
-| build-apk.yml | manual and existing branch/path filters; Godot branch absent from push list | contents: read |
-| verify-apk.yml | manual; push restricted to local-rag | actions: read, contents: read |
-| test_builds.yml | manual; push/PR main; schedule | build-and-test job: actions: write, contents: write |
-| zizmor.yml | push/PR main with workflow path filter | job: contents: read |
+Corrections minimales : localisation de sdkmanager via ANDROID_HOME/ANDROID_SDK_ROOT et filtre Gradle `ndk.abiFilters` ARM64. L'assertion stricte ABI a été conservée. Aucune relance à l'identique après échec.
 
-The repository metadata reports default branch `main` and authenticated-user repository permissions including admin/push. This does **not** establish the GitHub App's Actions-write scope or administrative endpoint access.
-The new workflow uses only `contents: read`, checkout without persisted credentials, fixed existing action SHAs, no secrets, no automatic event and an exact Godot-branch job guard.
-No permissions were elevated.
+## Vérifications réellement effectuées
 
-## New preparation workflow
+- Runner GitHub Ubuntu 24.04 ; permissions effectives Contents: read, Metadata: read.
+- Flutter 3.47.3, Dart 3.13.3, Temurin Java 17.0.21.
+- Android SDK observé par flutter doctor : 37.0.0 ; configuration compileSdk conservée sous le contrôle de Flutter.
+- CLI officiel Godot 4.5.1.stable.official.f62fdbde1 et templates téléchargés ; deux contrôles SHA512 publiés réussis.
+- POM/AAR officiel `org.godotengine:godot:4.5.1.stable` téléchargés depuis Maven Central.
+- Résolution transitive et compilation réelle d'une application Flutter jetable avec ce Godot AAR, minSdk 30.
+- Gradle 9.3.1, AGP 9.1.0 et plugin Kotlin déclaré 2.4.0 dans la coque générée ; ce dernier diffère de la version Kotlin 2.2.21 intégrée à Gradle.
+- Inspection ZIP de l'APK : ABI exacte `["arm64-v8a"]`, présence de `lib/arm64-v8a/libgodot_android.so`.
+- SHA256 de l'APK de sonde : `e3ff204fcef711aa8b4b864da4c0a9df795ea65e4bde79b152ef7e659bbd23c4`.
+- Journaux et métadonnées conservés dans l'artefact CI, puis lus pour préparer DEPENDENCIES.md.
 
-File: [world-godot.yml](https://github.com/tiviniura0/living-memory-android/blob/34b55c704978bc98418baff84a82f166b79eb1ef/.github/workflows/world-godot.yml).
+La sonde est jetable : elle ne remplace ni l'observateur ni Living Memory, n'héberge aucune scène et ne constitue pas un APK Living World livrable. Son APK n'est pas conservé comme artefact installable ; le ZIP contient les preuves, configurations et empreintes.
+Le succès prouve une compatibilité de résolution/compilation de cette combinaison, pas le fonctionnement natif ou matériel.
 
-Planned runner checks:
-- Flutter 3.47.3, Java 17, installed Android SDK tools; record actual generated Gradle/AGP configuration.
-- Candidate Godot 4.5.1 CLI and export templates from the official release, checked against that release's SHA512 list; record observed SHA256 values.
-- Official Maven coordinate `org.godotengine:godot:4.5.1.stable`, POM/AAR download, AAR metadata and ARM64 contents.
-- Generate a disposable Flutter app outside the source tree with minSdk 30, resolve the real Godot dependency and build an ARM64 debug probe; require the Godot native library inside the APK.
-- Upload bounded evidence under `world-godot-preparation-<source SHA>` even on failure.
+## Tâche 1 commencée, barrière native non franchie
 
-The probe is **not** Living World, does not implement GodotHost or render a scene, and is not a delivery APK. It is not uploaded as an installable application.
-Version/security approval is still pending Task 1: a successful dependency probe cannot establish that the candidate Godot patch is acceptable or that a phone works.
+Reprise directe du plan existant, sans nouvel audit ni brainstorming.
+Travaux effectués : contrôle des dépendances et des API GodotHost/GodotFragment/Godot.kt de la version exacte, conservation des empreintes et examen de la cible native disponible.
+Le plugin, le PCK, la scène, les tests d'instrumentation et le rendu ne sont **pas implémentés** par cette préparation.
 
-## Exact dispatch blocker
+Preuve de l'absence de cible Android dans cette exécution : `flutter-doctor.txt` énumère uniquement Linux (linux-x64) et Chrome. Aucun téléphone ou émulateur Android n'est connecté. Aucune cible ARM64 d'instrumentation n'est configurée.
+Cela bloque l'exécution du RED natif exigé par le plan avant implémentation du host ; aucun échec de compilation ne sera présenté comme ce RED.
+Le skill TDD exige : « NO PRODUCTION CODE WITHOUT A FAILING TEST FIRST ». La préparation n'a pas inventé de ready ni substitué une simulation au moteur.
+Les quatre tests restent à écrire/exécuter : realGodotReadyHasEngineVersion, secondOwnerIsRejectedWithoutKillingFirst, reopenTwentyTimes, resizeAndRotateKeepsHostAlive.
+Tâche 1 **NON TERMINÉE**. Tâches suivantes non commencées ; jalon natif et recette S22 non validés.
 
-1. The available GitHub connector exposes file writes, Actions run/job/artifact reads and rerun operations for known existing runs. It exposes **no workflow_dispatch creation operation**. Its generic fetch tool is GET-only.
-2. An attempted GET of the workflow collection at `https://api.github.com/repos/tiviniura0/living-memory-android/actions/workflows` returned:
-   `HTTPError: 400: GitHub Fetch URL is not an allowed public GitHub repository or search endpoint.`
-   This is a connector endpoint restriction, **not evidence that GitHub Actions itself is disabled**.
-3. GitHub's official manual-run documentation states: “To trigger the workflow_dispatch event, your workflow must be in the default branch.” The verified default branch is main. Its workflows directory contains build-apk.yml, test_builds.yml, verify-apk.yml and zizmor.yml, but no world-godot.yml.
-4. The mission forbids stable-branch changes. No registration file was added to main. No push/PR trigger, alternate registered workflow or rerun workaround was used.
-5. The Actions runs query for preparation commit `34b55c704978bc98418baff84a82f166b79eb1ef` returned `{"total_count":0,"workflow_runs":[]}`.
+Pour reprendre : fournir une cible Android ARM64 accessible au runner de test (par exemple un runner dédié relié au S22 par ADB), puis exécuter les étapes RED/GREEN de la tâche 1. Ne pas inscrire aveuglément un label self-hosted qui mettrait le job indéfiniment en attente. Aucun runner ni appareil personnel n'est configuré par cette mission.
 
-No workflow dispatch request could be issued. There is no run ID, job log, CI error or artifact URL to provide.
-No repeated dispatch attempts, local SDK downloads, network/proxy changes or installation were performed.
-Actions enablement, billing/quota and GitHub App Actions-write authorization remain **unverified**, not failed.
+## Sources ciblées
 
-## Verification actually performed
-
-- Parsed workflow YAML.
-- Parsed all five embedded shell blocks with bash -n and embedded Python with ast.parse.
-- Checked that workflow_dispatch is the only trigger, permissions are contents: read, and the job is restricted to the Godot branch.
-- git diff --check passed for the local preparation.
-- Read the committed workflow back through GitHub at its exact commit; contents match the reviewed submission.
-
-These are static checks, not a GitHub-hosted execution.
-Task 1: **NOT STARTED** because preparation has not run.
-Flutter/Dart tests: **NOT EXECUTED**.
-Godot engine execution: **NOT EXECUTED**.
-ARM64 probe build and Living World APK: **NOT EXECUTED**.
-Native instrumentation and S22 tests: **NOT EXECUTED**.
-
-## Resumption without another audit
-
-Recommended smallest change to the launch strategy: permit a narrowly filtered push trigger for this preflight on work/living-world-godot2d only. That can bootstrap the workflow without changing main or requiring a dispatch operation. This changes the requested manual-only launch policy, so it was not silently applied.
-Alternatively, register a manual workflow on main and provide a dispatch-capable connection; this would require changing the stable-branch constraint.
-Neither change is a completed or authorized workaround in this report.
-
-Once a real preparation run succeeds, resume Task 1 from the existing plan, including native RED/GREEN tests, official API/security/version checks, lifecycle implementation and explicit ARM64 instrumentation gate. No claim of hardware success follows from compilation.
-
-Official references:
-- https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow
-- https://docs.godotengine.org/en/4.5/tutorials/platform/android/android_library.html
+- Plan : docs/superpowers/plans/2026-10-29-living-world-godot2d.md, tâche 1.
+- https://github.com/godotengine/godot/blob/4.5.1-stable/platform/android/java/lib/src/org/godotengine/godot/GodotHost.java
+- https://github.com/godotengine/godot/blob/4.5.1-stable/platform/android/java/lib/src/org/godotengine/godot/GodotFragment.java
+- https://github.com/godotengine/godot/blob/4.5.1-stable/platform/android/java/lib/src/org/godotengine/godot/Godot.kt
+- https://github.com/godotengine/godot/security : page consultée sans avis public publié ; ce constat ne vaut pas audit des dépendances transitives.
+- https://godotengine.org/download/archive/ : 4.5.2 existe ; aucune montée silencieuse depuis le candidat 4.5.1 du plan. Approbation finale de version pour le host toujours à terminer.
