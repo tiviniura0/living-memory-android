@@ -2,6 +2,8 @@
 
 Date : 29 octobre 2026, Tahiti.
 
+Document historique de préparation. Pour l’hôte implémenté et les limites actuelles, consulter [REPORT.md](REPORT.md).
+
 ## Résultat actuel
 
 La préparation est **RÉUSSIE** au commit `4801903664c75f5fc1c492bd701c8a311e02a20d`.

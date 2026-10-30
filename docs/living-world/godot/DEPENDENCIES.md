@@ -30,3 +30,9 @@ Sources : https://github.com/godotengine/godot-builds/releases/tag/4.5.1-stable 
 
 Licence du code officiel vérifiée : MIT, présente dans les en-têtes GodotHost.java/GodotFragment.java de 4.5.1-stable. Leurs sources et conditions doivent être conservées lors de la livraison. Les notices des composants transitifs restent à contrôler pour le host réel.
 La page sécurité officielle consultée ne présente pas d'avis public publié ; cela ne prouve pas l'absence de vulnérabilités. Le candidat demeure validé seulement pour la sonde de compilation, pas pour une livraison de production.
+
+## Hôte effectivement compilé et exécuté — 30 octobre 2026
+
+Le même AAR/CLI officiel 4.5.1 est gelé dans le host ; aucune mise à jour silencieuse. Le build utilise compileSdk/targetSdk 36 et minSdk 30, Java 17, Flutter 3.47.3, Fragment KTX 1.8.9. Les versions AndroidX d'instrumentation sont alignées sur les contraintes de Flutter integration_test.
+
+L'AAR officiel fournit x86_64 : le vrai moteur s'exécute sur l'émulateur API 35/x86_64 de la CI 41109881668. L'APK livré reste exclusivement ARM64. Licence MIT officielle incluse dans les assets du plugin. Cette vérification remplace le statut « compilation seulement » pour les cas natifs réussis décrits dans [REPORT.md](REPORT.md), sans validation de production ni réussite des réouvertures/recréations. Aucun nouveau bilan de sécurité n'est déduit d'un test de rendu.

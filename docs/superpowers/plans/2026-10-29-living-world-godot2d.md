@@ -10,7 +10,7 @@
 
 **Spec:** Mission utilisateur « MISSION — Superpowers : Living World AI + Godot 2D », reproduite sous forme d'exigences ci-dessous ; périmètre historique : `docs/superpowers/specs/2026-10-27-living-world-l1-design.md`, `docs/superpowers/specs/2026-10-28-living-memory-v1.4-design.md`. La présente mission remplace le choix de rendu provisoire Flutter ; elle ne rouvre pas les choix fonctionnels.
 
-**Statut :** PLAN À VALIDER. Aucun code d'intégration implémenté, aucun APK Godot produit. Date : 29 octobre 2026, Tahiti.
+**Statut :** Plan validé par la mission de reprise. Tâche 1 en cours, livraison partielle au 30 octobre 2026 : hôte et APK ARM64 produits, deux gates de cycle de vie en échec. Voir `docs/living-world/godot/REPORT.md`. Tâches 2–7 non commencées.
 
 ## Global Constraints
 
