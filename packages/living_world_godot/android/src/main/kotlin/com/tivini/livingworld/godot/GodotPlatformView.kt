@@ -25,6 +25,8 @@ class GodotPlatformView(
     private val events = EventChannel(messenger, "living_world/godot/events/$id")
     private val host = activity?.let { GodotHostView(it) { event -> sink?.success(event) } }
     private val fallback = if (host == null) FrameLayout(context) else null
+    private var listening = false
+    private var channelsDetached = false
     private var closed = false
     private var disposed = false
 
@@ -33,8 +35,22 @@ class GodotPlatformView(
         events.setStreamHandler(this)
     }
     override fun getView(): View = host?.getView() ?: fallback!!
-    override fun onListen(arguments: Any?, events: EventChannel.EventSink) { sink = events }
-    override fun onCancel(arguments: Any?) { sink = null }
+    override fun onListen(arguments: Any?, events: EventChannel.EventSink) {
+        listening = true
+        sink = events
+        if (disposed) events.endOfStream()
+    }
+    override fun onCancel(arguments: Any?) {
+        sink = null
+        listening = false
+        if (disposed) detachChannels()
+    }
+    private fun detachChannels() {
+        if (channelsDetached) return
+        channelsDetached = true
+        methods.setMethodCallHandler(null)
+        events.setStreamHandler(null)
+    }
     override fun onMethodCall(call: MethodCall, result: MethodChannel.Result) {
         if ((disposed || closed) && call.method != "close") {
             result.error("view_closed", "Renderer view is closed", null)
@@ -71,8 +87,10 @@ class GodotPlatformView(
         closed = true
         try { host?.dispose() } finally {
             sink = null
-            methods.setMethodCallHandler(null)
-            events.setStreamHandler(null)
+            // Flutter unmounts the child PlatformView before disposing the parent
+            // controller. Keep its close/cancel endpoint until that subscription
+            // cancels, so EventChannel can acknowledge cancellation normally.
+            if (!listening) detachChannels()
             onDisposed()
         }
     }
