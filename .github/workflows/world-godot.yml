@@ -38,6 +38,13 @@ jobs:
           flutter pub get
           flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/observer-tests.log
           flutter analyze
+      - name: Flutter channel RED
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          cd packages/living_world_godot
+          flutter pub get
+          flutter test --reporter expanded 2>&1 | tee ../../evidence/godot-task1/channel-tests.log
       - name: Build native RED scaffold for emulator
         run: |
           set -euo pipefail
