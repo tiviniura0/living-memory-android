@@ -33,7 +33,7 @@ class GodotHostView(private val activity: FragmentActivity, private var emit: ((
         surface.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) { attachSurface() }
             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-                if (!disposed && owner === this) fragment?.resize(width, height)
+                if (!disposed && owner === this@GodotHostView) fragment?.resize(width, height)
             }
             override fun surfaceDestroyed(holder: SurfaceHolder) {
                 // Only this presentation SurfacePackage is detached. The Godot
