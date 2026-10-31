@@ -138,6 +138,44 @@ class GodotHostTest {
             } finally { ui { channel.dispose() } }
         }
     }
+    @Test fun activityFinishAndRelaunchKeepsHostAlive() {
+        lateinit var original: MainActivity
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var first: GodotPlatformView
+            val events = LinkedBlockingQueue<Map<String, Any>>()
+            scenario.onActivity { original = it; first = registeredChannel(it, 903, events) }
+            try { event(events, "ready") } finally { ui { first.dispose() } }
+        }
+        assertTrue("First Activity must really be destroyed", original.isDestroyed)
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var next: GodotPlatformView
+            val events = LinkedBlockingQueue<Map<String, Any>>()
+            scenario.onActivity {
+                assertNotSame(original, it)
+                next = registeredChannel(it, 904, events)
+            }
+            try {
+                event(events, "ready")
+                ui { next.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "same-process-relaunch")), channelResult) }
+                assertEquals("same-process-relaunch", event(events, "probe")["nonce"])
+            } finally { ui { next.dispose() } }
+        }
+    }
+    @Test fun backgroundAndForegroundKeepsHostAlive() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var channel: GodotPlatformView
+            val events = LinkedBlockingQueue<Map<String, Any>>()
+            scenario.onActivity { channel = registeredChannel(it, 905, events) }
+            try {
+                event(events, "ready")
+                scenario.moveToState(androidx.lifecycle.Lifecycle.State.CREATED)
+                scenario.moveToState(androidx.lifecycle.Lifecycle.State.RESUMED)
+                ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "foreground")), channelResult) }
+                assertEquals("foreground", event(events, "probe")["nonce"])
+            } finally { ui { channel.dispose() } }
+        }
+    }
+
     @Test fun activityRecreationKeepsHostAlive() {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var original: MainActivity

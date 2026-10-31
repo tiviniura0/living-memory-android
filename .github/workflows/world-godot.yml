@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: retain the live Godot hierarchy via SurfaceControlViewHost.
+# Task 1 lifecycle regression: cover final Activity relaunch and background/foreground.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:

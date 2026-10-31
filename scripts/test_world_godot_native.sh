@@ -8,7 +8,7 @@ cd apps/world_observer/android
 failed=0
 # Each instrumentation starts a fresh target process. No data deletion or native
 # engine reset is used to hide a re-open failure INSIDE reopenTwentyTimes.
-for method in realGodotReadyHasEngineVersion secondOwnerIsRejectedWithoutKillingFirst reopenTwentyTimes resizeAndRotateKeepsHostAlive activityRecreationKeepsHostAlive realChannelReadyAndProbe; do
+for method in realGodotReadyHasEngineVersion secondOwnerIsRejectedWithoutKillingFirst reopenTwentyTimes resizeAndRotateKeepsHostAlive activityRecreationKeepsHostAlive activityFinishAndRelaunchKeepsHostAlive backgroundAndForegroundKeepsHostAlive realChannelReadyAndProbe; do
   report="$evidence/native/$method"
   mkdir -p "$report"
   timeout --kill-after=15s 180s ./gradlew :app:connectedDebugAndroidTest -PgodotTestAbi=x86_64 "-Pandroid.testInstrumentationRunnerArguments.class=com.tivini.livingworld.godot.GodotHostTest#$method" 2>&1 | tee "$report/gradle.log" || failed=1
