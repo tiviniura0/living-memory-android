@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: bound optional diagnostics and report every native command outcome.
+# Task 1 lifecycle regression: bounded diagnostics and inspectable native visual evidence.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:
@@ -95,6 +95,26 @@ jobs:
           ram-size: 4096M
           emulator-options: -no-window -gpu swangle -no-snapshot -noaudio -no-boot-anim
           script: bash scripts/test_world_godot_native.sh
+      - name: Expose actual rendered frames for review
+        if: ${{ always() && !cancelled() }}
+        run: |
+          python3 - <<'PY'
+          import base64
+          from pathlib import Path
+          frames = {
+              "flutter": Path("evidence/godot-task1/flutter-scene.png"),
+              "relaunched": Path("evidence/godot-task1/native/activityFinishAndRelaunchKeepsHostAlive/ready.png"),
+          }
+          for name, frame in frames.items():
+              if not frame.exists():
+                  print(f"GODOT_IMAGE_MISSING:{name}")
+                  continue
+              encoded = base64.b64encode(frame.read_bytes()).decode("ascii")
+              print(f"GODOT_IMAGE_BEGIN:{name}")
+              for start in range(0, len(encoded), 4096):
+                  print("GODOT_IMAGE_CHUNK:" + encoded[start:start+4096])
+              print(f"GODOT_IMAGE_END:{name}")
+          PY
       - name: Build and inspect ARM64 work actually present
         if: ${{ !cancelled() }}
         run: |
@@ -105,8 +125,10 @@ jobs:
           apk=apps/world_observer/build/app/outputs/flutter-apk/app-debug.apk
           mkdir -p evidence/godot-delivery
           python3 scripts/inspect_world_godot_apk.py "$apk" evidence/godot-task1/arm64-apk.json
+          cat evidence/godot-task1/arm64-apk.json
           tools=$(find "$ANDROID_HOME/build-tools" -mindepth 1 -maxdepth 1 -type d | sort -V | tail -1)
           "$tools/apksigner" verify --verbose --print-certs "$apk" > evidence/godot-task1/apk-signature.txt
+          cat evidence/godot-task1/apk-signature.txt
           "$tools/aapt" dump badging "$apk" > evidence/godot-task1/apk-badging.txt
           cp "$apk" evidence/godot-delivery/world-godot-task1-smoke-arm64.apk
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
