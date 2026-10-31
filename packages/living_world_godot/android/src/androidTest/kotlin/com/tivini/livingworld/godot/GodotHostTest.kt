@@ -1,6 +1,7 @@
 package com.tivini.livingworld.godot
 
 import android.content.pm.ActivityInfo
+import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.test.core.app.ActivityScenario
@@ -27,6 +28,30 @@ class GodotHostTest {
         }
         throw AssertionError("No real Godot $type event within 20 seconds")
     }
+    private fun captureScene(name: String) {
+        android.os.SystemClock.sleep(500)
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        assertNotNull(automation.takeScreenshot())
+        // Gradle uninstalls the target; shell evidence survives app cleanup.
+        val capture = automation.executeShellCommand("screencap -p /data/local/tmp/living-world-godot-$name.png")
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(capture).use { it.readBytes() }
+    }
+    private fun tapNativeView(view: View) {
+        val point = IntArray(2)
+        ui {
+            view.getLocationOnScreen(point)
+            point[0] += view.width / 2
+            point[1] += view.height / 2
+        }
+        val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
+        val down = android.os.SystemClock.uptimeMillis()
+        for (action in listOf(android.view.MotionEvent.ACTION_DOWN, android.view.MotionEvent.ACTION_UP)) {
+            val event = android.view.MotionEvent.obtain(down, android.os.SystemClock.uptimeMillis(), action, point[0].toFloat(), point[1].toFloat(), 0)
+            event.source = android.view.InputDevice.SOURCE_TOUCHSCREEN
+            try { assertTrue("Real native touch injection failed", automation.injectInputEvent(event, true)) }
+            finally { event.recycle() }
+        }
+    }
     private fun withHost(block: (MainActivity, GodotHostView, LinkedBlockingQueue<Map<String, Any>>) -> Unit) {
         ActivityScenario.launch(MainActivity::class.java).use { scenario ->
             lateinit var activity: MainActivity
@@ -45,14 +70,7 @@ class GodotHostTest {
         val ready = event(events, "ready")
         assertTrue("Engine version must come from Engine.get_version_info()", (ready["version"] as String).startsWith("4.5.1"))
         assertEquals("LivingWorldRender", ready["singleton"])
-        android.os.SystemClock.sleep(500)
-        val image = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
-        assertNotNull(image)
-        // connectedAndroidTest uninstalls the target before the collector runs.
-        // Capture as shell while ready is visible, outside the app data directory.
-        val capture = InstrumentationRegistry.getInstrumentation().uiAutomation
-            .executeShellCommand("screencap -p /data/local/tmp/living-world-godot-ready.png")
-        android.os.ParcelFileDescriptor.AutoCloseInputStream(capture).use { it.readBytes() }
+        captureScene("ready")
         ui { host.probe("android-scene-roundtrip") }
         assertEquals("android-scene-roundtrip", event(events, "probe")["nonce"])
     }
@@ -83,6 +101,7 @@ class GodotHostTest {
             event(events, "ready")
             ui { host.probe("reopen-$n") }
             assertEquals("reopen-$n", event(events, "probe")["nonce"])
+            if (n == 19) captureScene("reopened")
             ui { host.dispose(); (host.getView().parent as? ViewGroup)?.removeView(host.getView()) }
         }
         assertFalse(activity.isFinishing)
@@ -158,6 +177,9 @@ class GodotHostTest {
                 event(events, "ready")
                 ui { next.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "same-process-relaunch")), channelResult) }
                 assertEquals("same-process-relaunch", event(events, "probe")["nonce"])
+                tapNativeView(next.getView())
+                assertEquals("native-touch", event(events, "probe")["nonce"])
+                captureScene("relaunched")
             } finally { ui { next.dispose() } }
         }
     }
@@ -173,6 +195,25 @@ class GodotHostTest {
                 ui { channel.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "foreground")), channelResult) }
                 assertEquals("foreground", event(events, "probe")["nonce"])
             } finally { ui { channel.dispose() } }
+        }
+    }
+
+    @Test fun touchAfterRecreationReachesGodotScene() {
+        ActivityScenario.launch(MainActivity::class.java).use { scenario ->
+            lateinit var initial: GodotPlatformView
+            var restored: GodotPlatformView? = null
+            val before = LinkedBlockingQueue<Map<String, Any>>()
+            val after = LinkedBlockingQueue<Map<String, Any>>()
+            scenario.onActivity { initial = registeredChannel(it, 906, before) }
+            try {
+                event(before, "ready")
+                scenario.recreate()
+                scenario.onActivity { restored = registeredChannel(it, 907, after) }
+                event(after, "ready")
+                tapNativeView(restored!!.getView())
+                assertEquals("native-touch", event(after, "probe")["nonce"])
+                captureScene("touched")
+            } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }
 
@@ -200,6 +241,7 @@ class GodotHostTest {
                 assertTrue((event(restoredEvents, "ready")["version"] as String).startsWith("4.5.1"))
                 ui { restored!!.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "after-real-recreation")), channelResult) }
                 assertEquals("after-real-recreation", event(restoredEvents, "probe")["nonce"])
+                captureScene("recreated")
             } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }
