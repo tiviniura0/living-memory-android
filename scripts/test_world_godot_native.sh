@@ -1,11 +1,27 @@
 #!/usr/bin/env bash
 set -euo pipefail
 evidence="$PWD/evidence/godot-task1"
-trap 'adb logcat -d -t 2000 > "$evidence/logcat.txt"; adb shell screencap -p /sdcard/godot.png; adb pull /sdcard/godot.png "$evidence/screen.png"' EXIT
+mkdir -p "$evidence"
+collect_exit() {
+  local original_status=$?
+  trap - EXIT
+  adb logcat -d -t 2000 > "$evidence/logcat.txt" || true
+  adb exec-out screencap -p > "$evidence/screen.png" || echo "Final diagnostic screenshot unavailable"
+  exit "$original_status"
+}
+trap collect_exit EXIT
+diagnostic() {
+  local output="$1"
+  shift
+  local diagnostic_status=0
+  "$@" > "$output" 2>&1 || diagnostic_status=$?
+  printf '%s: diagnostic exit %s\n' "$output" "$diagnostic_status"
+  head -n 24 "$output"
+}
 adb shell rm -f /data/local/tmp/living-world-godot-ready.png /data/local/tmp/living-world-godot-reopened.png /data/local/tmp/living-world-godot-recreated.png /data/local/tmp/living-world-godot-relaunched.png /data/local/tmp/living-world-godot-touched.png
-"$ANDROID_HOME/emulator/emulator" -version > "$evidence/emulator-version.txt" 2>&1
-"$ANDROID_HOME/emulator/emulator" -help-gpu > "$evidence/emulator-gpu-options.txt" 2>&1 || true
-adb shell dumpsys SurfaceFlinger > "$evidence/graphics-driver.txt"
+diagnostic "$evidence/emulator-version.txt" "$ANDROID_HOME/emulator/emulator" -version
+diagnostic "$evidence/emulator-gpu-options.txt" "$ANDROID_HOME/emulator/emulator" -help-gpu
+diagnostic "$evidence/graphics-driver.txt" adb shell dumpsys SurfaceFlinger
 adb shell getprop ro.product.cpu.abi > "$evidence/emulator-abi.txt"
 cd apps/world_observer/android
 failed=0

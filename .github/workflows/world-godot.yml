@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: public Surface APIs and Canvas visible through the real Flutter widget.
+# Task 1 lifecycle regression: archive diagnostic exit codes without aborting native tests.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:
@@ -46,6 +46,8 @@ jobs:
           set -euo pipefail
           mkdir -p evidence/godot-task1
           git rev-parse HEAD > evidence/godot-task1/source-sha.txt
+          bash -n scripts/test_world_godot_native.sh
+          python3 -m py_compile scripts/verify_world_godot_capture.py
           python3 -m unittest discover -s tests -v 2>&1 | tee evidence/godot-task1/python.log
           bash scripts/prepare_world_android.sh
           cd apps/world_observer
