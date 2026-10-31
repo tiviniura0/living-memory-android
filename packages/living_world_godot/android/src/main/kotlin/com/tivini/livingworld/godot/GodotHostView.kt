@@ -98,14 +98,11 @@ class GodotHostView(private val activity: FragmentActivity, private var emit: ((
         ready = false
         if (owner !== this) return
         owner = null
-        // Mark before detaching, not in the asynchronous termination callback.
-        // A later owner receives an explicit error instead of calling freed JNI state.
-        terminated = true
-        val host = fragment
+        // Closing a Flutter view must not destroy the process-wide Godot engine.
+        // Keep its Fragment registered in the current Activity so the next view
+        // can reparent the existing surface and issue a fresh session handshake.
+        // A genuine engine shutdown is still reported by nativeTerminated().
         fragment = null
-        if (host != null && !activity.supportFragmentManager.isStateSaved) {
-            activity.supportFragmentManager.beginTransaction().remove(host).commitNow()
-        }
         container.removeAllViews()
     }
 }
