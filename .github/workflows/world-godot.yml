@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: retain Godot engine across Flutter view recreation.
+# Task 1 lifecycle regression: retain the live Godot hierarchy via SurfaceControlViewHost.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:

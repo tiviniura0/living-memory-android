@@ -48,9 +48,11 @@ class GodotHostTest {
         android.os.SystemClock.sleep(500)
         val image = InstrumentationRegistry.getInstrumentation().uiAutomation.takeScreenshot()
         assertNotNull(image)
-        java.io.File(InstrumentationRegistry.getInstrumentation().targetContext.cacheDir, "godot-ready.png").outputStream().use {
-            image!!.compress(android.graphics.Bitmap.CompressFormat.PNG, 100, it)
-        }
+        // connectedAndroidTest uninstalls the target before the collector runs.
+        // Capture as shell while ready is visible, outside the app data directory.
+        val capture = InstrumentationRegistry.getInstrumentation().uiAutomation
+            .executeShellCommand("screencap -p /data/local/tmp/living-world-godot-ready.png")
+        android.os.ParcelFileDescriptor.AutoCloseInputStream(capture).use { it.readBytes() }
         ui { host.probe("android-scene-roundtrip") }
         assertEquals("android-scene-roundtrip", event(events, "probe")["nonce"])
     }
@@ -158,6 +160,8 @@ class GodotHostTest {
                     restored = registeredChannel(activity, 902, restoredEvents)
                 }
                 assertTrue((event(restoredEvents, "ready")["version"] as String).startsWith("4.5.1"))
+                ui { restored!!.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "after-real-recreation")), channelResult) }
+                assertEquals("after-real-recreation", event(restoredEvents, "probe")["nonce"])
             } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }

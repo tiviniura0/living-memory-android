@@ -2,6 +2,7 @@
 set -euo pipefail
 evidence="$PWD/evidence/godot-task1"
 trap 'adb logcat -d -t 2000 > "$evidence/logcat.txt"; adb shell screencap -p /sdcard/godot.png; adb pull /sdcard/godot.png "$evidence/screen.png"' EXIT
+adb shell rm -f /data/local/tmp/living-world-godot-ready.png
 adb shell getprop ro.product.cpu.abi > "$evidence/emulator-abi.txt"
 cd apps/world_observer/android
 failed=0
@@ -15,7 +16,17 @@ for method in realGodotReadyHasEngineVersion secondOwnerIsRejectedWithoutKilling
   cp -a ../build/app/reports/androidTests "$report/" 2>/dev/null || true
   adb logcat -d -t 500 > "$report/logcat.txt"
   if [ "$method" = realGodotReadyHasEngineVersion ]; then
-    adb exec-out run-as com.tivini.livingworld cat cache/godot-ready.png > "$report/ready.png" || rm -f "$report/ready.png"
+    adb pull /data/local/tmp/living-world-godot-ready.png "$report/ready.png" || failed=1
+    python3 - "$report/ready.png" <<'PYPNG' || failed=1
+import struct
+import sys
+from pathlib import Path
+png = Path(sys.argv[1]).read_bytes()
+assert png[:8] == b"\x89PNG\r\n\x1a\n", "Native ready capture is not a PNG"
+width, height = struct.unpack(">II", png[16:24])
+assert width > 0 and height > 0, "Native ready capture is empty"
+print(f"Native ready capture: {width}x{height}")
+PYPNG
   fi
 done
 cd ..
