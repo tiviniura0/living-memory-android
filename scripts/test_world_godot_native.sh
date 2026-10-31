@@ -3,6 +3,9 @@ set -euo pipefail
 evidence="$PWD/evidence/godot-task1"
 trap 'adb logcat -d -t 2000 > "$evidence/logcat.txt"; adb shell screencap -p /sdcard/godot.png; adb pull /sdcard/godot.png "$evidence/screen.png"' EXIT
 adb shell rm -f /data/local/tmp/living-world-godot-ready.png /data/local/tmp/living-world-godot-reopened.png /data/local/tmp/living-world-godot-recreated.png /data/local/tmp/living-world-godot-relaunched.png /data/local/tmp/living-world-godot-touched.png
+"$ANDROID_HOME/emulator/emulator" -version > "$evidence/emulator-version.txt" 2>&1
+"$ANDROID_HOME/emulator/emulator" -help-gpu > "$evidence/emulator-gpu-options.txt" 2>&1 || true
+adb shell dumpsys SurfaceFlinger > "$evidence/graphics-driver.txt"
 adb shell getprop ro.product.cpu.abi > "$evidence/emulator-abi.txt"
 cd apps/world_observer/android
 failed=0
@@ -15,6 +18,7 @@ for method in realGodotReadyHasEngineVersion secondOwnerIsRejectedWithoutKilling
   cp -a ../build/app/outputs/androidTest-results "$report/" 2>/dev/null || true
   cp -a ../build/app/reports/androidTests "$report/" 2>/dev/null || true
   adb logcat -d -t 500 > "$report/logcat.txt"
+  adb logcat -d -t 4000 -s godot:V Godot:V GodotRenderer:V GodotGLRenderView:V AndroidRuntime:E '*:S' > "$report/godot-engine.log"
   capture=""
   case "$method" in
     realGodotReadyHasEngineVersion) capture=ready ;;

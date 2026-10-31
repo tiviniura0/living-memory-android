@@ -3,6 +3,9 @@ package com.tivini.livingworld.godot
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
+import android.graphics.PixelFormat
+import android.view.MotionEvent
+import android.view.WindowManager
 import android.os.Handler
 import android.os.Looper
 import android.view.SurfaceControlViewHost
@@ -44,7 +47,16 @@ internal object ProcessGodotHost : GodotHost {
             val root = checkNotNull(godot.onInitRenderView(this))
             val host = SurfaceControlViewHost(activity.applicationContext, surface.display, surface.hostToken)
             surfaceHost = host
-            host.setView(root, maxOf(1, surface.width), maxOf(1, surface.height))
+            // The embedded input channel belongs to the FIRST window and is
+            // removed when it closes. Use the current presentation's input,
+            // forwarding local MotionEvents to this unchanged Godot hierarchy.
+            val layout = WindowManager.LayoutParams(
+                maxOf(1, surface.width), maxOf(1, surface.height),
+                WindowManager.LayoutParams.TYPE_APPLICATION,
+                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
+                PixelFormat.TRANSLUCENT,
+            )
+            host.setView(root, layout)
         }
         val host = checkNotNull(surfaceHost)
         resize(activity, surface.width, surface.height)
@@ -52,6 +64,13 @@ internal object ProcessGodotHost : GodotHost {
         presenting = true
         if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)) godot.onStart(this)
         if (activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) godot.onResume(this)
+    }
+    fun touch(activity: FragmentActivity, event: MotionEvent): Boolean {
+        if (!presenting || boundEngine(activity) == null) return false
+        val root = surfaceHost?.view ?: return false
+        val local = MotionEvent.obtain(event)
+        try { root.dispatchTouchEvent(local) } finally { local.recycle() }
+        return true
     }
     fun resize(activity: FragmentActivity, width: Int, height: Int) {
         if (activityRef.get() === activity && width > 0 && height > 0) surfaceHost?.relayout(width, height)

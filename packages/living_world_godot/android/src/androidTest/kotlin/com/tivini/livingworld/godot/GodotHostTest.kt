@@ -28,13 +28,32 @@ class GodotHostTest {
         }
         throw AssertionError("No real Godot $type event within 20 seconds")
     }
-    private fun captureScene(name: String) {
-        android.os.SystemClock.sleep(500)
+    private fun captureScene(name: String, view: View) {
+        val point = IntArray(2)
+        ui {
+            view.getLocationOnScreen(point)
+            point[0] += view.width / 2
+            point[1] += view.height / 2
+        }
         val automation = InstrumentationRegistry.getInstrumentation().uiAutomation
-        assertNotNull(automation.takeScreenshot())
-        // Gradle uninstalls the target; shell evidence survives app cleanup.
+        val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
+        var visible = false
+        while (System.nanoTime() < deadline) {
+            val image = automation.takeScreenshot()
+            assertNotNull(image)
+            if (point[0] in 0 until image!!.width && point[1] in 0 until image.height) {
+                val color = image.getPixel(point[0], point[1])
+                visible = android.graphics.Color.red(color) > 240 &&
+                    android.graphics.Color.blue(color) > 240 && android.graphics.Color.green(color) < 20
+            }
+            image.recycle()
+            if (visible) break
+            android.os.SystemClock.sleep(100)
+        }
+        // Keep the last image even when the marker assertion fails.
         val capture = automation.executeShellCommand("screencap -p /data/local/tmp/living-world-godot-$name.png")
         android.os.ParcelFileDescriptor.AutoCloseInputStream(capture).use { it.readBytes() }
+        assertTrue("Real Godot Canvas marker missing; clear-color-only is not a rendered scene", visible)
     }
     private fun tapNativeView(view: View) {
         val point = IntArray(2)
@@ -70,7 +89,7 @@ class GodotHostTest {
         val ready = event(events, "ready")
         assertTrue("Engine version must come from Engine.get_version_info()", (ready["version"] as String).startsWith("4.5.1"))
         assertEquals("LivingWorldRender", ready["singleton"])
-        captureScene("ready")
+        captureScene("ready", host.getView())
         ui { host.probe("android-scene-roundtrip") }
         assertEquals("android-scene-roundtrip", event(events, "probe")["nonce"])
     }
@@ -101,7 +120,7 @@ class GodotHostTest {
             event(events, "ready")
             ui { host.probe("reopen-$n") }
             assertEquals("reopen-$n", event(events, "probe")["nonce"])
-            if (n == 19) captureScene("reopened")
+            if (n == 19) captureScene("reopened", host.getView())
             ui { host.dispose(); (host.getView().parent as? ViewGroup)?.removeView(host.getView()) }
         }
         assertFalse(activity.isFinishing)
@@ -179,7 +198,7 @@ class GodotHostTest {
                 assertEquals("same-process-relaunch", event(events, "probe")["nonce"])
                 tapNativeView(next.getView())
                 assertEquals("native-touch", event(events, "probe")["nonce"])
-                captureScene("relaunched")
+                captureScene("relaunched", next.getView())
             } finally { ui { next.dispose() } }
         }
     }
@@ -212,7 +231,7 @@ class GodotHostTest {
                 event(after, "ready")
                 tapNativeView(restored!!.getView())
                 assertEquals("native-touch", event(after, "probe")["nonce"])
-                captureScene("touched")
+                captureScene("touched", restored!!.getView())
             } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }
@@ -241,7 +260,7 @@ class GodotHostTest {
                 assertTrue((event(restoredEvents, "ready")["version"] as String).startsWith("4.5.1"))
                 ui { restored!!.onMethodCall(io.flutter.plugin.common.MethodCall("probe", mapOf("nonce" to "after-real-recreation")), channelResult) }
                 assertEquals("after-real-recreation", event(restoredEvents, "probe")["nonce"])
-                captureScene("recreated")
+                captureScene("recreated", restored!!.getView())
             } finally { ui { restored?.dispose(); initial.dispose() } }
         }
     }

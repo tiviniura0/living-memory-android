@@ -26,6 +26,10 @@ class GodotHostView(private val activity: FragmentActivity, private var emit: ((
 
     init {
         container.addView(surface, FrameLayout.LayoutParams(-1, -1))
+        surface.setOnTouchListener { _, event ->
+            if (disposed || owner !== this@GodotHostView) false
+            else ProcessGodotHost.touch(activity, event)
+        }
         surface.holder.addCallback(object : SurfaceHolder.Callback {
             override fun surfaceCreated(holder: SurfaceHolder) { attachSurface() }
             override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
