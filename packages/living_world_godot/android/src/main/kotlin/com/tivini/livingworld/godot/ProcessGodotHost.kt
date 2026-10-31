@@ -3,9 +3,7 @@ package com.tivini.livingworld.godot
 import android.app.Activity
 import android.content.Intent
 import android.content.res.Configuration
-import android.graphics.PixelFormat
 import android.view.MotionEvent
-import android.view.WindowManager
 import android.os.Handler
 import android.os.Looper
 import android.view.SurfaceControlViewHost
@@ -47,16 +45,7 @@ internal object ProcessGodotHost : GodotHost {
             val root = checkNotNull(godot.onInitRenderView(this))
             val host = SurfaceControlViewHost(activity.applicationContext, surface.display, surface.hostToken)
             surfaceHost = host
-            // The embedded input channel belongs to the FIRST window and is
-            // removed when it closes. Use the current presentation's input,
-            // forwarding local MotionEvents to this unchanged Godot hierarchy.
-            val layout = WindowManager.LayoutParams(
-                maxOf(1, surface.width), maxOf(1, surface.height),
-                WindowManager.LayoutParams.TYPE_APPLICATION,
-                WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
-                PixelFormat.TRANSLUCENT,
-            )
-            host.setView(root, layout)
+            host.setView(root, maxOf(1, surface.width), maxOf(1, surface.height))
         }
         val host = checkNotNull(surfaceHost)
         resize(activity, surface.width, surface.height)

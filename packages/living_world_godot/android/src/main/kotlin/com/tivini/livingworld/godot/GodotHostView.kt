@@ -18,7 +18,9 @@ import java.util.UUID
 /** One native engine per process. No simulation or access to MemoryStore. */
 class GodotHostView(private val activity: FragmentActivity, private var emit: ((Map<String, Any>) -> Unit)?) : PlatformView {
     private val container = FrameLayout(activity)
-    private val surface = SurfaceView(activity).apply { setZOrderOnTop(true) }
+    // Below the host window: input belongs to the current presentation,
+    // not SCVH's embedded input channel from the first Activity.
+    private val surface = SurfaceView(activity).apply { setZOrderOnTop(false) }
     private val session = UUID.randomUUID().toString()
     private var disposed = false
     private var fragment: WorldGodotFragment? = null

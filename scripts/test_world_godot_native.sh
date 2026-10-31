@@ -42,5 +42,24 @@ PYPNG
   fi
 done
 cd ..
-ORG_GRADLE_PROJECT_godotTestAbi=x86_64 timeout --kill-after=15s 180s flutter test integration_test/godot_host_smoke_test.dart -d emulator-5554 --reporter expanded 2>&1 | tee "$evidence/flutter-native-integration.log" || failed=1
+ORG_GRADLE_PROJECT_godotTestAbi=x86_64 timeout --kill-after=15s 180s flutter test integration_test/godot_host_smoke_test.dart -d emulator-5554 --reporter expanded > "$evidence/flutter-native-integration.log" 2>&1 &
+flutter_pid=$!
+flutter_canvas=0
+while kill -0 "$flutter_pid" 2>/dev/null; do
+  if [[ "$(< "$evidence/flutter-native-integration.log")" == *GODOT_CANVAS_CAPTURE_READY* ]]; then
+    if adb exec-out screencap -p > "$evidence/flutter-scene.png" && \
+       python3 ../../scripts/verify_world_godot_capture.py "$evidence/flutter-scene.png" > "$evidence/flutter-scene.json" 2>&1; then
+      flutter_canvas=1
+      break
+    fi
+  fi
+  sleep 0.2
+done
+wait "$flutter_pid" || failed=1
+cat "$evidence/flutter-native-integration.log"
+if [ "$flutter_canvas" -ne 1 ]; then
+  echo "Real Flutter PlatformView did not expose the Godot Canvas signature"
+  cat "$evidence/flutter-scene.json" 2>/dev/null || true
+  failed=1
+fi
 exit "$failed"

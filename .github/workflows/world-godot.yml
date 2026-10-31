@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: verify process lifetime, touch and a real Canvas frame.
+# Task 1 lifecycle regression: public Surface APIs and Canvas visible through the real Flutter widget.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:

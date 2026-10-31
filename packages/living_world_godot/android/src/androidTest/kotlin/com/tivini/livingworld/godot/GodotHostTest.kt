@@ -39,9 +39,8 @@ class GodotHostTest {
         val deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(10)
         var visible = false
         while (System.nanoTime() < deadline) {
-            val image = automation.takeScreenshot()
-            assertNotNull(image)
-            if (point[0] in 0 until image!!.width && point[1] in 0 until image.height) {
+            val image = automation.takeScreenshot() ?: throw AssertionError("Native screenshot unavailable")
+            if (point[0] in 0 until image.width && point[1] in 0 until image.height) {
                 val color = image.getPixel(point[0], point[1])
                 visible = android.graphics.Color.red(color) > 240 &&
                     android.graphics.Color.blue(color) > 240 && android.graphics.Color.green(color) < 20
