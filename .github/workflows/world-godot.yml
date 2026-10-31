@@ -1,4 +1,4 @@
-# Task 1 lifecycle regression: archive diagnostic exit codes without aborting native tests.
+# Task 1 lifecycle regression: bound optional diagnostics and report every native command outcome.
 name: Living World Godot Task 1
 on:
   workflow_dispatch:

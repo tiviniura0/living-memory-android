@@ -5,8 +5,8 @@ mkdir -p "$evidence"
 collect_exit() {
   local original_status=$?
   trap - EXIT
-  adb logcat -d -t 2000 > "$evidence/logcat.txt" || true
-  adb exec-out screencap -p > "$evidence/screen.png" || echo "Final diagnostic screenshot unavailable"
+  timeout 10s adb logcat -d -t 2000 > "$evidence/logcat.txt" || true
+  timeout 10s adb exec-out screencap -p > "$evidence/screen.png" || echo "Final diagnostic screenshot unavailable"
   exit "$original_status"
 }
 trap collect_exit EXIT
@@ -14,14 +14,13 @@ diagnostic() {
   local output="$1"
   shift
   local diagnostic_status=0
-  "$@" > "$output" 2>&1 || diagnostic_status=$?
+  timeout --kill-after=3s 15s "$@" > "$output" 2>&1 || diagnostic_status=$?
   printf '%s: diagnostic exit %s\n' "$output" "$diagnostic_status"
   head -n 24 "$output"
 }
 adb shell rm -f /data/local/tmp/living-world-godot-ready.png /data/local/tmp/living-world-godot-reopened.png /data/local/tmp/living-world-godot-recreated.png /data/local/tmp/living-world-godot-relaunched.png /data/local/tmp/living-world-godot-touched.png
 diagnostic "$evidence/emulator-version.txt" "$ANDROID_HOME/emulator/emulator" -version
 diagnostic "$evidence/emulator-gpu-options.txt" "$ANDROID_HOME/emulator/emulator" -help-gpu
-diagnostic "$evidence/graphics-driver.txt" adb shell dumpsys SurfaceFlinger
 adb shell getprop ro.product.cpu.abi > "$evidence/emulator-abi.txt"
 cd apps/world_observer/android
 failed=0
@@ -30,7 +29,14 @@ failed=0
 for method in realGodotReadyHasEngineVersion secondOwnerIsRejectedWithoutKillingFirst reopenTwentyTimes resizeAndRotateKeepsHostAlive activityRecreationKeepsHostAlive touchAfterRecreationReachesGodotScene activityFinishAndRelaunchKeepsHostAlive backgroundAndForegroundKeepsHostAlive realChannelReadyAndProbe; do
   report="$evidence/native/$method"
   mkdir -p "$report"
-  timeout --kill-after=15s 180s ./gradlew :app:connectedDebugAndroidTest -PgodotTestAbi=x86_64 "-Pandroid.testInstrumentationRunnerArguments.class=com.tivini.livingworld.godot.GodotHostTest#$method" 2>&1 | tee "$report/gradle.log" || failed=1
+  if timeout --kill-after=15s 180s ./gradlew :app:connectedDebugAndroidTest -PgodotTestAbi=x86_64 "-Pandroid.testInstrumentationRunnerArguments.class=com.tivini.livingworld.godot.GodotHostTest#$method" 2>&1 | tee "$report/gradle.log"; then
+    printf '%s: native command exit 0\n' "$method"
+  else
+    native_pipeline=("${PIPESTATUS[@]}")
+    failed=1
+    printf '%s: native command exit %s, log writer exit %s\n' "$method" "${native_pipeline[0]}" "${native_pipeline[1]}"
+    diagnostic "$report/thread-dump-request.log" adb shell 'pid=$(pidof com.tivini.livingworld); [ -z "$pid" ] || run-as com.tivini.livingworld kill -3 "$pid"'
+  fi
   cp -a ../build/app/outputs/androidTest-results "$report/" 2>/dev/null || true
   cp -a ../build/app/reports/androidTests "$report/" 2>/dev/null || true
   adb logcat -d -t 500 > "$report/logcat.txt"
@@ -78,4 +84,5 @@ if [ "$flutter_canvas" -ne 1 ]; then
   cat "$evidence/flutter-scene.json" 2>/dev/null || true
   failed=1
 fi
+diagnostic "$evidence/graphics-driver.txt" adb shell dumpsys SurfaceFlinger
 exit "$failed"

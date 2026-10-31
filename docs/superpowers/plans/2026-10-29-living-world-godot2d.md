@@ -223,3 +223,6 @@ Correction de visibilité SDK après revue : l'overload `setView(View, WindowMan
 
 
 CI `41167672187` au SHA `76c6abe9` : compilation et inspection ARM64 réussies, mais arrêt du script avant toute méthode native lors des diagnostics de l'émulateur ; ces tests sont NON EXÉCUTÉS, pas annoncés rouges ni verts. Les commandes informatives enregistrent désormais explicitement leur code de sortie sans empêcher les tests. Le trap conserve le code de sortie original et prend sa capture par `adb exec-out`, sans `/sdcard`. Un échec de test continue à rendre la CI rouge. La vérification Bash est exécutée avant le build natif.
+
+
+Supervision T1 : les diagnostics optionnels sont bornés à 15 secondes (collecte finale à 10 secondes) ; `dumpsys SurfaceFlinger` est déplacé après les tests. Chaque commande native publie son code de sortie, y compris un éventuel timeout, et demande une trace Java non destructive après un échec. Aucun timeout ou test échoué n'est converti en réussite. Cette modification ne préjuge pas de la cause de la longue exécution précédente et ne modifie pas le code de l'hôte.
